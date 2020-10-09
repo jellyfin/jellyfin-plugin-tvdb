@@ -9,14 +9,6 @@ namespace Jellyfin.Plugin.Tvdb
     public static class TvdbUtils
     {
         /// <summary>
-        /// Tvdb api key.
-        /// </summary>
-        /// <remarks>
-        /// TODO allow configure.
-        /// </remarks>
-        public const string TvdbApiKey = "OG4V3YJ3FAP7FP2K";
-
-        /// <summary>
         /// Base url for all requests.
         /// </summary>
         public const string TvdbBaseUrl = "https://www.thetvdb.com/";

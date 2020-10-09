@@ -34,13 +34,15 @@ namespace Jellyfin.Plugin.Tvdb
             _tvDbClient = new TvDbClient();
         }
 
+        private static string? ApiKey => TvdbPlugin.Instance?.Configuration.ApiKey;
+
         private TvDbClient TvDbClient
         {
             get
             {
                 if (string.IsNullOrEmpty(_tvDbClient.Authentication.Token))
                 {
-                    _tvDbClient.Authentication.AuthenticateAsync(TvdbUtils.TvdbApiKey).GetAwaiter().GetResult();
+                    _tvDbClient.Authentication.AuthenticateAsync(ApiKey).GetAwaiter().GetResult();
                     _tokenCreatedAt = DateTime.Now;
                 }
 
@@ -53,7 +55,7 @@ namespace Jellyfin.Plugin.Tvdb
                     }
                     catch
                     {
-                        _tvDbClient.Authentication.AuthenticateAsync(TvdbUtils.TvdbApiKey).GetAwaiter().GetResult();
+                        _tvDbClient.Authentication.AuthenticateAsync(ApiKey).GetAwaiter().GetResult();
                     }
 
                     _tokenCreatedAt = DateTime.Now;

@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using Jellyfin.Plugin.Tvdb.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
+using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
 
 namespace Jellyfin.Plugin.Tvdb
@@ -9,7 +11,7 @@ namespace Jellyfin.Plugin.Tvdb
     /// <summary>
     /// Tvdb Plugin.
     /// </summary>
-    public class TvdbPlugin : BasePlugin<PluginConfiguration>/*, IHasWebPages*/
+    public class TvdbPlugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         /// <summary>
         /// Gets the provider id.
@@ -38,7 +40,7 @@ namespace Jellyfin.Plugin.Tvdb
         /// <inheritdoc />
         public override Guid Id => new Guid("a677c0da-fac5-4cde-941a-7134223f14c8");
 
-        /*/// <inheritdoc />
+        /// <inheritdoc />
         public IEnumerable<PluginPageInfo> GetPages()
         {
             yield return new PluginPageInfo
@@ -46,6 +48,6 @@ namespace Jellyfin.Plugin.Tvdb
                 Name = Name,
                 EmbeddedResourcePath = $"{GetType().Namespace}.Configuration.config.html"
             };
-        }*/
+        }
     }
 }
