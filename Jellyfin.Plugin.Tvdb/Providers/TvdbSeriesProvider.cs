@@ -25,6 +25,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
     /// </summary>
     public class TvdbSeriesProvider : IRemoteMetadataProvider<Series, SeriesInfo>
     {
+        private static int MaxSearchResults = 10;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<TvdbSeriesProvider> _logger;
         private readonly ILibraryManager _libraryManager;
@@ -115,9 +116,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <returns>True, if the dictionary contains a valid TV provider ID, otherwise false.</returns>
         internal static bool IsValidSeries(Dictionary<string, string> seriesProviderIds)
         {
-            return seriesProviderIds.ContainsKey(TvdbPlugin.ProviderName) ||
-                   seriesProviderIds.ContainsKey(MetadataProvider.Imdb.ToString()) ||
-                   seriesProviderIds.ContainsKey(MetadataProvider.Zap2It.ToString());
+            return seriesProviderIds.TryGetValue(TvdbPlugin.ProviderName, out var tvdbId) && !string.IsNullOrEmpty(tvdbId) ||
+                   seriesProviderIds.TryGetValue(MetadataProvider.Imdb.ToString(), out var imdbId) && !string.IsNullOrEmpty(imdbId) ||
+                   seriesProviderIds.TryGetValue(MetadataProvider.Zap2It.ToString(), out var zap2ItId) && !string.IsNullOrEmpty(zap2ItId);
         }
 
         private async Task FetchSeriesData(MetadataResult<Series> result, string metadataLanguage, Dictionary<string, string> seriesProviderIds, CancellationToken cancellationToken)
@@ -214,18 +215,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <returns>Task{System.String}.</returns>
         private async Task<IEnumerable<RemoteSearchResult>> FindSeries(string name, int? year, string language, CancellationToken cancellationToken)
         {
+            _logger.LogDebug("TvdbSearch: Finding id for item: {0} ({1})", name, year);
             var results = await FindSeriesInternal(name, language, cancellationToken).ConfigureAwait(false);
-
-            if (results.Count == 0)
-            {
-                var parsedName = _libraryManager.ParseName(name);
-                var nameWithoutYear = parsedName.Name;
-
-                if (!string.IsNullOrWhiteSpace(nameWithoutYear) && !string.Equals(nameWithoutYear, name, StringComparison.OrdinalIgnoreCase))
-                {
-                    results = await FindSeriesInternal(nameWithoutYear, language, cancellationToken).ConfigureAwait(false);
-                }
-            }
 
             return results.Where(i =>
             {
@@ -241,7 +232,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private async Task<List<RemoteSearchResult>> FindSeriesInternal(string name, string language, CancellationToken cancellationToken)
         {
-            var comparableName = GetComparableName(name);
+            var parsedName = _libraryManager.ParseName(name);
+            var comparableName = GetComparableName(parsedName.Name);
+
             var list = new List<Tuple<List<string>, RemoteSearchResult>>();
             TvDbResponse<SeriesSearchResult[]> result;
             try
@@ -259,9 +252,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             {
                 var tvdbTitles = new List<string>
                 {
-                    GetComparableName(seriesSearchResult.SeriesName)
+                    seriesSearchResult.SeriesName
                 };
-                tvdbTitles.AddRange(seriesSearchResult.Aliases.Select(GetComparableName));
+                tvdbTitles.AddRange(seriesSearchResult.Aliases);
 
                 DateTime? firstAired = null;
                 if (DateTime.TryParse(seriesSearchResult.FirstAired, out var parsedFirstAired))
@@ -276,10 +269,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     SearchProviderName = Name
                 };
 
-                if (!string.IsNullOrEmpty(seriesSearchResult.Banner))
+                if (!string.IsNullOrEmpty(seriesSearchResult.Poster))
                 {
                     // Results from their Search endpoints already include the /banners/ part in the url, because reasons...
-                    remoteSearchResult.ImageUrl = TvdbUtils.TvdbBaseUrl + seriesSearchResult.Banner;
+                    remoteSearchResult.ImageUrl = TvdbUtils.TvdbBaseUrl + seriesSearchResult.Poster;
                 }
 
                 try
@@ -300,9 +293,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             return list
-                .OrderBy(i => i.Item1.Contains(comparableName, StringComparer.OrdinalIgnoreCase) ? 0 : 1)
+                .OrderBy(i => i.Item1.Contains(name, StringComparer.OrdinalIgnoreCase) ? 0 : 1)
+                .ThenBy(i => i.Item1.Any(title => title.Contains(parsedName.Name, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
+                .ThenBy(i => i.Item2.ProductionYear.HasValue && i.Item2.ProductionYear.Equals(parsedName.Year) ? 0 : 1)
+                .ThenBy(i => i.Item1.Any(title => title.Contains(comparableName, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
                 .ThenBy(i => list.IndexOf(i))
                 .Select(i => i.Item2)
+                .Take(MaxSearchResults)   // TVDB returns a lot of unrelated results
                 .ToList();
         }
 
