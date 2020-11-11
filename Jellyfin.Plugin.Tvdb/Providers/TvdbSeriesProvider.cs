@@ -125,7 +125,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         {
             var series = result.Item;
 
-            if (seriesProviderIds.TryGetValue(MetadataProvider.Tvdb.ToString(), out var tvdbId) && !string.IsNullOrEmpty(tvdbId))
+            if (seriesProviderIds.TryGetValue(TvdbPlugin.ProviderName, out var tvdbId) && !string.IsNullOrEmpty(tvdbId))
             {
                 series.SetProviderId(TvdbPlugin.ProviderName, tvdbId);
             }
@@ -370,7 +370,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         private async Task MapSeriesToResult(MetadataResult<Series> result, TvDbSharper.Dto.Series tvdbSeries, string metadataLanguage)
         {
             Series series = result.Item;
-            series.SetProviderId(MetadataProvider.Tvdb, tvdbSeries.Id.ToString(CultureInfo.InvariantCulture));
+            series.SetProviderId(TvdbPlugin.ProviderName, tvdbSeries.Id.ToString(CultureInfo.InvariantCulture));
             series.Name = tvdbSeries.SeriesName;
             series.Overview = (tvdbSeries.Overview ?? string.Empty).Trim();
             result.ResultLanguage = metadataLanguage;
