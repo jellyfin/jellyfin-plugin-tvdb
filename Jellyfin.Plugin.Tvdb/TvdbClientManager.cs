@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Providers;
 using Microsoft.Extensions.Caching.Memory;
 using TvDbSharper;
@@ -28,10 +29,11 @@ namespace Jellyfin.Plugin.Tvdb
         /// Initializes a new instance of the <see cref="TvdbClientManager"/> class.
         /// </summary>
         /// <param name="memoryCache">Instance of the <see cref="IMemoryCache"/> interface.</param>
-        public TvdbClientManager(IMemoryCache memoryCache)
+        /// <param name="httpClientFactory">Instance of the <see cref="IHttpClientFactory"/> interface.</param>
+        public TvdbClientManager(IMemoryCache memoryCache, IHttpClientFactory httpClientFactory)
         {
             _cache = memoryCache;
-            _tvDbClient = new TvDbClient();
+            _tvDbClient = new TvDbClient(httpClientFactory.CreateClient(NamedClient.Default));
         }
 
         private static string? ApiKey => TvdbPlugin.Instance?.Configuration.ApiKey;
@@ -238,7 +240,7 @@ namespace Jellyfin.Plugin.Tvdb
             string language,
             CancellationToken cancellationToken)
         {
-            searchInfo.SeriesProviderIds.TryGetValue(TvdbPlugin.ProviderName, out var seriesTvdbId);
+            searchInfo.SeriesProviderIds.TryGetValue(TvdbPlugin.ProviderId, out var seriesTvdbId);
 
             var episodeQuery = new EpisodeQuery();
 

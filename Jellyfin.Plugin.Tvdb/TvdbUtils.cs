@@ -16,7 +16,7 @@ namespace Jellyfin.Plugin.Tvdb
         /// <summary>
         /// Base url for banners.
         /// </summary>
-        public const string BannerUrl = TvdbBaseUrl + "/banners/";
+        public const string BannerUrl = TvdbBaseUrl + "banners/";
 
         /// <summary>
         /// Get image type from key type.

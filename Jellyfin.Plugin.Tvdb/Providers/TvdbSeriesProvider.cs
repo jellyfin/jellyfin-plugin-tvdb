@@ -25,7 +25,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
     /// </summary>
     public class TvdbSeriesProvider : IRemoteMetadataProvider<Series, SeriesInfo>
     {
-        private static int MaxSearchResults = 10;
+        private const int MaxSearchResults = 10;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<TvdbSeriesProvider> _logger;
         private readonly ILibraryManager _libraryManager;
@@ -106,7 +106,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <inheritdoc />
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
-            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(url, cancellationToken);
+            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
         }
 
         /// <summary>
@@ -116,18 +116,18 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <returns>True, if the dictionary contains a valid TV provider ID, otherwise false.</returns>
         internal static bool IsValidSeries(Dictionary<string, string> seriesProviderIds)
         {
-            return seriesProviderIds.TryGetValue(TvdbPlugin.ProviderName, out var tvdbId) && !string.IsNullOrEmpty(tvdbId)
-                   || seriesProviderIds.TryGetValue(MetadataProvider.Imdb.ToString(), out var imdbId) && !string.IsNullOrEmpty(imdbId)
-                   || seriesProviderIds.TryGetValue(MetadataProvider.Zap2It.ToString(), out var zap2ItId) && !string.IsNullOrEmpty(zap2ItId);
+            return (seriesProviderIds.TryGetValue(TvdbPlugin.ProviderId, out var tvdbId) && !string.IsNullOrEmpty(tvdbId))
+                   || (seriesProviderIds.TryGetValue(MetadataProvider.Imdb.ToString(), out var imdbId) && !string.IsNullOrEmpty(imdbId))
+                   || (seriesProviderIds.TryGetValue(MetadataProvider.Zap2It.ToString(), out var zap2ItId) && !string.IsNullOrEmpty(zap2ItId));
         }
 
         private async Task FetchSeriesData(MetadataResult<Series> result, string metadataLanguage, Dictionary<string, string> seriesProviderIds, CancellationToken cancellationToken)
         {
             var series = result.Item;
 
-            if (seriesProviderIds.TryGetValue(TvdbPlugin.ProviderName, out var tvdbId) && !string.IsNullOrEmpty(tvdbId))
+            if (seriesProviderIds.TryGetValue(TvdbPlugin.ProviderId, out var tvdbId) && !string.IsNullOrEmpty(tvdbId))
             {
-                series.SetProviderId(TvdbPlugin.ProviderName, tvdbId);
+                series.SetProviderId(TvdbPlugin.ProviderId, tvdbId);
             }
 
             if (seriesProviderIds.TryGetValue(MetadataProvider.Imdb.ToString(), out var imdbId) && !string.IsNullOrEmpty(imdbId))
@@ -288,7 +288,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     _logger.LogError(e, "Unable to retrieve series with id {TvdbId}", seriesSearchResult.Id);
                 }
 
-                remoteSearchResult.SetProviderId(TvdbPlugin.ProviderName, seriesSearchResult.Id.ToString(CultureInfo.InvariantCulture));
+                remoteSearchResult.SetProviderId(TvdbPlugin.ProviderId, seriesSearchResult.Id.ToString(CultureInfo.InvariantCulture));
                 list.Add(new Tuple<List<string>, RemoteSearchResult>(tvdbTitles, remoteSearchResult));
             }
 
@@ -299,7 +299,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 .ThenBy(i => i.Item1.Any(title => title.Contains(comparableName, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
                 .ThenBy(i => list.IndexOf(i))
                 .Select(i => i.Item2)
-                .Take(MaxSearchResults)   // TVDB returns a lot of unrelated results
+                .Take(MaxSearchResults) // TVDB returns a lot of unrelated results
                 .ToList();
         }
 
@@ -347,7 +347,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private async Task Identify(SeriesInfo info)
         {
-            if (!string.IsNullOrWhiteSpace(info.GetProviderId(TvdbPlugin.ProviderName)))
+            if (!string.IsNullOrWhiteSpace(info.GetProviderId(TvdbPlugin.ProviderId)))
             {
                 return;
             }
@@ -359,10 +359,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (entry != null)
             {
-                var id = entry.GetProviderId(TvdbPlugin.ProviderName);
+                var id = entry.GetProviderId(TvdbPlugin.ProviderId);
                 if (!string.IsNullOrEmpty(id))
                 {
-                    info.SetProviderId(TvdbPlugin.ProviderName, id);
+                    info.SetProviderId(TvdbPlugin.ProviderId, id);
                 }
             }
         }
@@ -370,7 +370,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         private async Task MapSeriesToResult(MetadataResult<Series> result, TvDbSharper.Dto.Series tvdbSeries, string metadataLanguage)
         {
             Series series = result.Item;
-            series.SetProviderId(TvdbPlugin.ProviderName, tvdbSeries.Id.ToString(CultureInfo.InvariantCulture));
+            series.SetProviderId(TvdbPlugin.ProviderId, tvdbSeries.Id.ToString(CultureInfo.InvariantCulture));
             series.Name = tvdbSeries.SeriesName;
             series.Overview = (tvdbSeries.Overview ?? string.Empty).Trim();
             result.ResultLanguage = metadataLanguage;

@@ -12,7 +12,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
         public string ProviderName => TvdbPlugin.ProviderName;
 
         /// <inheritdoc />
-        public string Key => TvdbPlugin.ProviderName;
+        public string Key => TvdbPlugin.ProviderId;
 
         /// <inheritdoc />
         public ExternalIdMediaType? Type => null;
