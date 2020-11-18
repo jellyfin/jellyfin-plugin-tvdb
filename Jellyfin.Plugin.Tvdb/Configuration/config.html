@@ -38,8 +38,8 @@
             loadConfiguration: function () {
                 Dashboard.showLoadingMsg();
 
-                ApiClient.getPluginConfiguration(TvdbPluginConfiguration.pluginUniqueId).then(function (config) {
-                    document.getElementById('txtTvdbApiKey').value = config.ApiKey;
+                ApiClient.getPluginConfiguration(TvdbPluginConfiguration.uniquePluginId).then(function (config) {
+                    document.getElementById('txtTvdbApiKey').value = config.ApiKey || '';
                     Dashboard.hideLoadingMsg();
                 });
             },
@@ -47,10 +47,10 @@
             saveConfiguration: function () {
                 Dashboard.showLoadingMsg();
 
-                ApiClient.getPluginConfiguration(TvdbPluginConfiguration.pluginUniqueId).then(function (config) {
+                ApiClient.getPluginConfiguration(TvdbPluginConfiguration.uniquePluginId).then(function (config) {
                     config.ApiKey = document.getElementById('txtTvdbApiKey').value;
 
-                    ApiClient.updatePluginConfiguration(TvdbPluginConfiguration.pluginUniqueId, config).then(function (result) {
+                    ApiClient.updatePluginConfiguration(TvdbPluginConfiguration.uniquePluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
                     });
                 });
