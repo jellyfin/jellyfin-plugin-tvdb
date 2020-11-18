@@ -36,7 +36,6 @@
             uniquePluginId: "a677c0da-fac5-4cde-941a-7134223f14c8",
 
             loadConfiguration: function () {
-                console.warn("load configuration");
                 Dashboard.showLoadingMsg();
 
                 ApiClient.getPluginConfiguration(TvdbPluginConfiguration.uniquePluginId).then(function (config) {
@@ -46,7 +45,6 @@
             },
 
             saveConfiguration: function () {
-                console.warn("save configuration");
                 Dashboard.showLoadingMsg();
 
                 ApiClient.getPluginConfiguration(TvdbPluginConfiguration.uniquePluginId).then(function (config) {
