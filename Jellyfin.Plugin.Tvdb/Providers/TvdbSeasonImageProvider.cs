@@ -68,7 +68,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 return Enumerable.Empty<RemoteImageInfo>();
             }
 
-            var tvdbId = Convert.ToInt32(series.GetProviderId(TvdbPlugin.ProviderName), CultureInfo.InvariantCulture);
+            var tvdbId = Convert.ToInt32(series.GetProviderId(TvdbPlugin.ProviderId), CultureInfo.InvariantCulture);
             var seasonNumber = season.IndexNumber.Value;
             var language = item.GetPreferredMetadataLanguage();
             var remoteImages = new List<RemoteImageInfo>();
@@ -99,7 +99,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <inheritdoc />
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
-            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(url, cancellationToken);
+            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
         }
 
         private IEnumerable<RemoteImageInfo> GetImages(Image[] images, string preferredLanguage)

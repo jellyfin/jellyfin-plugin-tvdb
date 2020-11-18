@@ -14,9 +14,14 @@ namespace Jellyfin.Plugin.Tvdb
     public class TvdbPlugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         /// <summary>
+        /// Gets the provider name.
+        /// </summary>
+        public const string ProviderName = "TheTVDB";
+
+        /// <summary>
         /// Gets the provider id.
         /// </summary>
-        public const string ProviderName = "Tvdb";
+        public const string ProviderId = "Tvdb";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TvdbPlugin"/> class.

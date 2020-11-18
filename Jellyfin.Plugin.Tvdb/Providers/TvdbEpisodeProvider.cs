@@ -105,7 +105,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 QueriedById = true
             };
 
-            var seriesTvdbId = searchInfo.GetProviderId(TvdbPlugin.ProviderName);
+            var seriesTvdbId = searchInfo.GetProviderId(TvdbPlugin.ProviderId);
             string? episodeTvdbId = null;
             try
             {
@@ -159,7 +159,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             result.ResetPeople();
 
             var item = result.Item;
-            item.SetProviderId(TvdbPlugin.ProviderName, episode.Id.ToString(CultureInfo.InvariantCulture));
+            item.SetProviderId(TvdbPlugin.ProviderId, episode.Id.ToString(CultureInfo.InvariantCulture));
             item.SetProviderId(MetadataProvider.Imdb, episode.ImdbId);
 
             if (string.Equals(id.SeriesDisplayOrder, "dvd", StringComparison.OrdinalIgnoreCase))
@@ -266,7 +266,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <inheritdoc />
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
-            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(url, cancellationToken);
+            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
         }
     }
 }

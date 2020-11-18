@@ -85,7 +85,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                             "Episode {SeasonNumber}x{EpisodeNumber} not found for series {SeriesTvdbId}",
                             episode.ParentIndexNumber,
                             episode.IndexNumber,
-                            series.GetProviderId(TvdbPlugin.ProviderName));
+                            series.GetProviderId(TvdbPlugin.ProviderId));
                         return imageResult;
                     }
 
@@ -102,7 +102,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
                 catch (TvDbServerException e)
                 {
-                    _logger.LogError(e, "Failed to retrieve episode images for series {TvDbId}", series.GetProviderId(TvdbPlugin.ProviderName));
+                    _logger.LogError(e, "Failed to retrieve episode images for series {TvDbId}", series.GetProviderId(TvdbPlugin.ProviderId));
                 }
             }
 
@@ -112,7 +112,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <inheritdoc />
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
-            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(url, cancellationToken);
+            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
         }
 
         private RemoteImageInfo? GetImageInfo(EpisodeRecord episode)

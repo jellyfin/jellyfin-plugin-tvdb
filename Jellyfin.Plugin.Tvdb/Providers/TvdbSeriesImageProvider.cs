@@ -67,7 +67,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             var language = item.GetPreferredMetadataLanguage();
             var remoteImages = new List<RemoteImageInfo>();
-            var tvdbId = Convert.ToInt32(item.GetProviderId(TvdbPlugin.ProviderName), CultureInfo.InvariantCulture);
+            var tvdbId = Convert.ToInt32(item.GetProviderId(TvdbPlugin.ProviderId), CultureInfo.InvariantCulture);
             var allowedKeyTypes = _tvdbClientManager.GetImageKeyTypesForSeriesAsync(tvdbId, language, cancellationToken)
                 .ConfigureAwait(false);
             await foreach (KeyType keyType in allowedKeyTypes)
@@ -155,7 +155,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <inheritdoc />
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
-            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(url, cancellationToken);
+            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
         }
     }
 }
