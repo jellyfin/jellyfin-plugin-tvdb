@@ -60,7 +60,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <inheritdoc />
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
         {
-            if (!TvdbSeriesProvider.IsValidSeries(item.ProviderIds))
+            if (!TvdbSeriesProvider.IsValidSeries(item))
             {
                 return Enumerable.Empty<RemoteImageInfo>();
             }
