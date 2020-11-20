@@ -38,7 +38,7 @@ namespace Jellyfin.Plugin.Tvdb
         public TvdbClientManager(IMemoryCache memoryCache, IHttpClientFactory httpClientFactory)
         {
             _cache = memoryCache;
-            _httpClientFactory = httpClientFactory.CreateClient(NamedClient.Default);
+            _httpClientFactory = httpClientFactory;
         }
 
         private static string? ApiKey => TvdbPlugin.Instance?.Configuration.ApiKey;
@@ -47,7 +47,7 @@ namespace Jellyfin.Plugin.Tvdb
         {
             var normalizedLanguage = TvdbUtils.NormalizeLanguage(language) ?? DefaultLanguage;
 
-            var tvDbClientInfo = _tvDbClients.GetOrAdd(normalizedLanguage, key => new TvDbClientInfo(key));
+            var tvDbClientInfo = _tvDbClients.GetOrAdd(normalizedLanguage, key => new TvDbClientInfo(_httpClientFactory, key));
 
             var tvDbClient = tvDbClientInfo.Client;
 
@@ -439,9 +439,9 @@ namespace Jellyfin.Plugin.Tvdb
 
         private class TvDbClientInfo
         {
-            public TvDbClientInfo(string language)
+            public TvDbClientInfo(IHttpClientFactory httpClientFactory, string language)
             {
-                Client = new TvDbClient()
+                Client = new TvDbClient(httpClientFactory.CreateClient(NamedClient.Default))
                 {
                     AcceptedLanguage = language
                 };
