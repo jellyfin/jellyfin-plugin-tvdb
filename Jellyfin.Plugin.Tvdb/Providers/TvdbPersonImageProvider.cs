@@ -71,7 +71,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     EnableImages = false
                 }
             }).Cast<Series>()
-                .Where(i => TvdbSeriesProvider.IsValidSeries(i.ProviderIds))
+                .Where(TvdbSeriesProvider.IsValidSeries)
                 .ToList();
 
             var infos = (await Task.WhenAll(seriesWithPerson.Select(async i =>

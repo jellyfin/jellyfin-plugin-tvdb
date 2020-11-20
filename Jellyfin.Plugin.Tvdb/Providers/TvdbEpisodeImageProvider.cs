@@ -58,7 +58,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var series = episode.Series;
             var imageResult = new List<RemoteImageInfo>();
             var language = item.GetPreferredMetadataLanguage();
-            if (series != null && TvdbSeriesProvider.IsValidSeries(series.ProviderIds))
+            if (series != null && TvdbSeriesProvider.IsValidSeries(series))
             {
                 // Process images
                 try
