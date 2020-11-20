@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -7,7 +8,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Providers;
 using Microsoft.Extensions.Caching.Memory;
 using TvDbSharper;
@@ -23,8 +23,12 @@ namespace Jellyfin.Plugin.Tvdb
         private const string DefaultLanguage = "en";
 
         private readonly IMemoryCache _cache;
-        private readonly TvDbClient _tvDbClient;
-        private DateTime _tokenCreatedAt;
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        /// <summary>
+        /// TvDbClients per language.
+        /// </summary>
+        private readonly ConcurrentDictionary<string, TvDbClientInfo> _tvDbClients = new ConcurrentDictionary<string, TvDbClientInfo>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TvdbClientManager"/> class.
@@ -34,38 +38,66 @@ namespace Jellyfin.Plugin.Tvdb
         public TvdbClientManager(IMemoryCache memoryCache, IHttpClientFactory httpClientFactory)
         {
             _cache = memoryCache;
-            _tvDbClient = new TvDbClient(httpClientFactory.CreateClient(NamedClient.Default));
+            _httpClientFactory = httpClientFactory;
         }
 
         private static string? ApiKey => TvdbPlugin.Instance?.Configuration.ApiKey;
 
-        private TvDbClient TvDbClient
+        private async Task<TvDbClient> GetTvDbClient(string language)
         {
-            get
+            var normalizedLanguage = TvdbUtils.NormalizeLanguage(language) ?? DefaultLanguage;
+
+            var tvDbClientInfo = _tvDbClients.GetOrAdd(normalizedLanguage, key => new TvDbClientInfo(_httpClientFactory, key));
+
+            var tvDbClient = tvDbClientInfo.Client;
+
+            // First time authenticating if the token was never updated or if it's empty in the client
+            if (tvDbClientInfo.TokenUpdatedAt == DateTime.MinValue || string.IsNullOrEmpty(tvDbClient.Authentication.Token))
             {
-                if (string.IsNullOrEmpty(_tvDbClient.Authentication.Token))
+                await tvDbClientInfo.TokenUpdateLock.WaitAsync().ConfigureAwait(false);
+
+                try
                 {
-                    _tvDbClient.Authentication.AuthenticateAsync(ApiKey).GetAwaiter().GetResult();
-                    _tokenCreatedAt = DateTime.Now;
+                    if (string.IsNullOrEmpty(tvDbClient.Authentication.Token))
+                    {
+                        await tvDbClient.Authentication.AuthenticateAsync(ApiKey).ConfigureAwait(false);
+                        tvDbClientInfo.TokenUpdatedAt = DateTime.UtcNow;
+                    }
                 }
-
-                // Refresh if necessary
-                if (_tokenCreatedAt < DateTime.Now.Subtract(TimeSpan.FromHours(20)))
+                finally
                 {
-                    try
-                    {
-                        _tvDbClient.Authentication.RefreshTokenAsync().GetAwaiter().GetResult();
-                    }
-                    catch
-                    {
-                        _tvDbClient.Authentication.AuthenticateAsync(ApiKey).GetAwaiter().GetResult();
-                    }
-
-                    _tokenCreatedAt = DateTime.Now;
+                    tvDbClientInfo.TokenUpdateLock.Release();
                 }
-
-                return _tvDbClient;
             }
+
+            // Refresh if necessary
+            if (tvDbClientInfo.TokenUpdatedAt < DateTime.UtcNow.Subtract(TimeSpan.FromHours(20)))
+            {
+                await tvDbClientInfo.TokenUpdateLock.WaitAsync().ConfigureAwait(false);
+
+                try
+                {
+                    if (tvDbClientInfo.TokenUpdatedAt < DateTime.UtcNow.Subtract(TimeSpan.FromHours(20)))
+                    {
+                        try
+                        {
+                            await tvDbClient.Authentication.RefreshTokenAsync().ConfigureAwait(false);
+                        }
+                        catch
+                        {
+                            await tvDbClient.Authentication.AuthenticateAsync(ApiKey).ConfigureAwait(false);
+                        }
+
+                        tvDbClientInfo.TokenUpdatedAt = DateTime.UtcNow;
+                    }
+                }
+                finally
+                {
+                    tvDbClientInfo.TokenUpdateLock.Release();
+                }
+            }
+
+            return tvDbClient;
         }
 
         /// <summary>
@@ -81,7 +113,7 @@ namespace Jellyfin.Plugin.Tvdb
             CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey("series", name, language);
-            return TryGetValue(cacheKey, language, () => TvDbClient.Search.SearchSeriesByNameAsync(name, cancellationToken));
+            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Search.SearchSeriesByNameAsync(name, cancellationToken));
         }
 
         /// <summary>
@@ -97,7 +129,7 @@ namespace Jellyfin.Plugin.Tvdb
             CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey("series", tvdbId, language);
-            return TryGetValue(cacheKey, language, () => TvDbClient.Series.GetAsync(tvdbId, cancellationToken));
+            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Series.GetAsync(tvdbId, cancellationToken));
         }
 
         /// <summary>
@@ -113,7 +145,7 @@ namespace Jellyfin.Plugin.Tvdb
             CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey("episode", episodeTvdbId, language);
-            return TryGetValue(cacheKey, language, () => TvDbClient.Episodes.GetAsync(episodeTvdbId, cancellationToken));
+            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Episodes.GetAsync(episodeTvdbId, cancellationToken));
         }
 
         /// <summary>
@@ -129,7 +161,7 @@ namespace Jellyfin.Plugin.Tvdb
             CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey("series", imdbId, language);
-            return TryGetValue(cacheKey, language, () => TvDbClient.Search.SearchSeriesByImdbIdAsync(imdbId, cancellationToken));
+            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Search.SearchSeriesByImdbIdAsync(imdbId, cancellationToken));
         }
 
         /// <summary>
@@ -145,7 +177,7 @@ namespace Jellyfin.Plugin.Tvdb
             CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey("series", zap2ItId, language);
-            return TryGetValue(cacheKey, language, () => TvDbClient.Search.SearchSeriesByZap2ItIdAsync(zap2ItId, cancellationToken));
+            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Search.SearchSeriesByZap2ItIdAsync(zap2ItId, cancellationToken));
         }
 
         /// <summary>
@@ -161,7 +193,7 @@ namespace Jellyfin.Plugin.Tvdb
             CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey("actors", tvdbId, language);
-            return TryGetValue(cacheKey, language, () => TvDbClient.Series.GetActorsAsync(tvdbId, cancellationToken));
+            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Series.GetActorsAsync(tvdbId, cancellationToken));
         }
 
         /// <summary>
@@ -179,7 +211,7 @@ namespace Jellyfin.Plugin.Tvdb
             CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey("images", tvdbId, language, imageQuery);
-            return TryGetValue(cacheKey, language, () => TvDbClient.Series.GetImagesAsync(tvdbId, imageQuery, cancellationToken));
+            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Series.GetImagesAsync(tvdbId, imageQuery, cancellationToken));
         }
 
         /// <summary>
@@ -189,7 +221,7 @@ namespace Jellyfin.Plugin.Tvdb
         /// <returns>All tvdb languages.</returns>
         public Task<TvDbResponse<Language[]>> GetLanguagesAsync(CancellationToken cancellationToken)
         {
-            return TryGetValue("languages", null, () => TvDbClient.Languages.GetAllAsync(cancellationToken));
+            return TryGetValue("languages", string.Empty, tvDbClient => tvDbClient.Languages.GetAllAsync(cancellationToken));
         }
 
         /// <summary>
@@ -205,7 +237,7 @@ namespace Jellyfin.Plugin.Tvdb
             CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey("seriesepisodesummary", tvdbId, language);
-            return TryGetValue(cacheKey, language, () => TvDbClient.Series.GetEpisodesSummaryAsync(tvdbId, cancellationToken));
+            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Series.GetEpisodesSummaryAsync(tvdbId, cancellationToken));
         }
 
         /// <summary>
@@ -225,8 +257,7 @@ namespace Jellyfin.Plugin.Tvdb
             CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey(language, tvdbId, episodeQuery);
-
-            return TryGetValue(cacheKey, language, () => TvDbClient.Series.GetEpisodesAsync(tvdbId, page, episodeQuery, cancellationToken));
+            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Series.GetEpisodesAsync(tvdbId, page, episodeQuery, cancellationToken));
         }
 
         /// <summary>
@@ -320,7 +351,7 @@ namespace Jellyfin.Plugin.Tvdb
         public async IAsyncEnumerable<KeyType> GetImageKeyTypesForSeriesAsync(int tvdbId, string language, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey(nameof(TvDbClient.Series.GetImagesSummaryAsync), tvdbId);
-            var imagesSummary = await TryGetValue(cacheKey, language, () => TvDbClient.Series.GetImagesSummaryAsync(tvdbId, cancellationToken)).ConfigureAwait(false);
+            var imagesSummary = await TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Series.GetImagesSummaryAsync(tvdbId, cancellationToken)).ConfigureAwait(false);
 
             if (imagesSummary.Data.Fanart > 0)
             {
@@ -348,7 +379,7 @@ namespace Jellyfin.Plugin.Tvdb
         public async IAsyncEnumerable<KeyType> GetImageKeyTypesForSeasonAsync(int tvdbId, string language, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey(nameof(TvDbClient.Series.GetImagesSummaryAsync), tvdbId);
-            var imagesSummary = await TryGetValue(cacheKey, language, () => TvDbClient.Series.GetImagesSummaryAsync(tvdbId, cancellationToken)).ConfigureAwait(false);
+            var imagesSummary = await TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Series.GetImagesSummaryAsync(tvdbId, cancellationToken)).ConfigureAwait(false);
 
             if (imagesSummary.Data.Season > 0)
             {
@@ -392,17 +423,38 @@ namespace Jellyfin.Plugin.Tvdb
             return key;
         }
 
-        private async Task<T> TryGetValue<T>(string key, string? language, Func<Task<T>> resultFactory)
+        private Task<T> TryGetValue<T>(string key, string language, Func<TvDbClient, Task<T>> resultFactory)
         {
-            if (_cache.TryGetValue(key, out T cachedValue))
+            return _cache.GetOrCreateAsync(key, async entry =>
             {
-                return cachedValue;
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
+
+                var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
+
+                var result = await resultFactory.Invoke(tvDbClient).ConfigureAwait(false);
+
+                return result;
+            });
+        }
+
+        private class TvDbClientInfo
+        {
+            public TvDbClientInfo(IHttpClientFactory httpClientFactory, string language)
+            {
+                Client = new TvDbClient(httpClientFactory.CreateClient(NamedClient.Default))
+                {
+                    AcceptedLanguage = language
+                };
+
+                TokenUpdateLock = new SemaphoreSlim(1, 1);
+                TokenUpdatedAt = DateTime.MinValue;
             }
 
-            _tvDbClient.AcceptedLanguage = TvdbUtils.NormalizeLanguage(language) ?? DefaultLanguage;
-            var result = await resultFactory.Invoke().ConfigureAwait(false);
-            _cache.Set(key, result, TimeSpan.FromHours(1));
-            return result;
+            public TvDbClient Client { get; }
+
+            public SemaphoreSlim TokenUpdateLock { get; }
+
+            public DateTime TokenUpdatedAt { get; set; }
         }
     }
 }
