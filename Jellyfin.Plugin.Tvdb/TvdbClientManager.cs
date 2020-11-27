@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Providers;
 using Microsoft.Extensions.Caching.Memory;
 using TvDbSharper;
