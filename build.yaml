@@ -10,7 +10,7 @@ description: >
   Get TV metadata from TheTvdb
 category: "Metadata"
 artifacts:
-- "Jellyfin.Plugins.TheTvdb.dll"
+- "Jellyfin.Plugin.TheTvdb.dll"
 - "TvDbSharper.dll"
 changelog: >
   Remove from Jellyfin core.
