@@ -328,7 +328,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 if (!string.IsNullOrEmpty(seriesSearchResult.Poster))
                 {
                     // Results from their Search endpoints already include the /banners/ part in the url, because reasons...
-                    remoteSearchResult.ImageUrl = TvdbUtils.TvdbBaseUrl + seriesSearchResult.Poster;
+                    remoteSearchResult.ImageUrl = TvdbUtils.TvdbBaseUrl + seriesSearchResult.Poster.TrimStart('/');
                 }
 
                 try
