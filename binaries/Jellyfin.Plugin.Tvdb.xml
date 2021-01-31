@@ -1,0 +1,487 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Jellyfin.Plugin.Tvdb</name>
+    </assembly>
+    <members>
+        <member name="T:Jellyfin.Plugin.Tvdb.Configuration.PluginConfiguration">
+            <summary>
+            Configuration for tvdb.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Configuration.PluginConfiguration.ApiKey">
+            <summary>
+            Gets or sets the tvdb api key.
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbEpisodeExternalId">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbEpisodeExternalId.ProviderName">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbEpisodeExternalId.Key">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbEpisodeExternalId.Type">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbEpisodeExternalId.UrlFormatString">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbEpisodeExternalId.Supports(MediaBrowser.Model.Entities.IHasProviderIds)">
+            <inheritdoc />
+        </member>
+        <member name="T:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbExternalId">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbExternalId.ProviderName">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbExternalId.Key">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbExternalId.Type">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbExternalId.UrlFormatString">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbExternalId.Supports(MediaBrowser.Model.Entities.IHasProviderIds)">
+            <inheritdoc />
+        </member>
+        <member name="T:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbSeasonExternalId">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbSeasonExternalId.ProviderName">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbSeasonExternalId.Key">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbSeasonExternalId.Type">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbSeasonExternalId.UrlFormatString">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.ExternalId.TvdbSeasonExternalId.Supports(MediaBrowser.Model.Entities.IHasProviderIds)">
+            <inheritdoc />
+        </member>
+        <member name="T:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeImageProvider">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeImageProvider.#ctor(System.Net.Http.IHttpClientFactory,Microsoft.Extensions.Logging.ILogger{Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeImageProvider},Jellyfin.Plugin.Tvdb.TvdbClientManager)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeImageProvider"/> class.
+            </summary>
+            <param name="httpClientFactory">Instance of the <see cref="T:System.Net.Http.IHttpClientFactory"/> interface.</param>
+            <param name="logger">Instance of the <see cref="T:Microsoft.Extensions.Logging.ILogger`1"/> interface.</param>
+            <param name="tvdbClientManager">Instance of <see cref="T:Jellyfin.Plugin.Tvdb.TvdbClientManager"/>.</param>
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeImageProvider.Name">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeImageProvider.Supports(MediaBrowser.Controller.Entities.BaseItem)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeImageProvider.GetSupportedImages(MediaBrowser.Controller.Entities.BaseItem)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeImageProvider.GetImages(MediaBrowser.Controller.Entities.BaseItem,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeImageProvider.GetImageResponse(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeProvider">
+            <summary>
+            TvdbEpisodeProvider.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeProvider.#ctor(System.Net.Http.IHttpClientFactory,Microsoft.Extensions.Logging.ILogger{Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeProvider},Jellyfin.Plugin.Tvdb.TvdbClientManager)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeProvider"/> class.
+            </summary>
+            <param name="httpClientFactory">Instance of the <see cref="T:System.Net.Http.IHttpClientFactory"/> interface.</param>
+            <param name="logger">Instance of the <see cref="T:Microsoft.Extensions.Logging.ILogger`1"/> interface.</param>
+            <param name="tvdbClientManager">Instance of <see cref="T:Jellyfin.Plugin.Tvdb.TvdbClientManager"/>.</param>
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeProvider.Name">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeProvider.GetSearchResults(MediaBrowser.Controller.Providers.EpisodeInfo,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeProvider.GetMetadata(MediaBrowser.Controller.Providers.EpisodeInfo,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbEpisodeProvider.GetImageResponse(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Jellyfin.Plugin.Tvdb.Providers.TvdbPersonImageProvider">
+            <summary>
+            Tvdb person image provider.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbPersonImageProvider.#ctor(MediaBrowser.Controller.Library.ILibraryManager,System.Net.Http.IHttpClientFactory,Microsoft.Extensions.Logging.ILogger{Jellyfin.Plugin.Tvdb.Providers.TvdbPersonImageProvider},Jellyfin.Plugin.Tvdb.TvdbClientManager)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Jellyfin.Plugin.Tvdb.Providers.TvdbPersonImageProvider"/> class.
+            </summary>
+            <param name="libraryManager">Instance of the <see cref="T:MediaBrowser.Controller.Library.ILibraryManager"/> interface.</param>
+            <param name="httpClientFactory">Instance of the <see cref="T:System.Net.Http.IHttpClientFactory"/> interface.</param>
+            <param name="logger">Instance of the <see cref="T:Microsoft.Extensions.Logging.ILogger`1"/> interface.</param>
+            <param name="tvdbClientManager">Instance of <see cref="T:Jellyfin.Plugin.Tvdb.TvdbClientManager"/> interface.</param>
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.TvdbPersonImageProvider.Name">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbPersonImageProvider.Supports(MediaBrowser.Controller.Entities.BaseItem)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbPersonImageProvider.GetSupportedImages(MediaBrowser.Controller.Entities.BaseItem)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbPersonImageProvider.GetImages(MediaBrowser.Controller.Entities.BaseItem,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbPersonImageProvider.GetImageResponse(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Jellyfin.Plugin.Tvdb.Providers.TvdbSeasonImageProvider">
+            <summary>
+            Tvdb season image provider.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeasonImageProvider.#ctor(System.Net.Http.IHttpClientFactory,Microsoft.Extensions.Logging.ILogger{Jellyfin.Plugin.Tvdb.Providers.TvdbSeasonImageProvider},Jellyfin.Plugin.Tvdb.TvdbClientManager)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Jellyfin.Plugin.Tvdb.Providers.TvdbSeasonImageProvider"/> class.
+            </summary>
+            <param name="httpClientFactory">Instance of the <see cref="T:System.Net.Http.IHttpClientFactory"/> interface.</param>
+            <param name="logger">Instance of the <see cref="T:Microsoft.Extensions.Logging.ILogger`1"/> interface.</param>
+            <param name="tvdbClientManager">Instance of <see cref="T:Jellyfin.Plugin.Tvdb.TvdbClientManager"/>.</param>
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.TvdbSeasonImageProvider.Name">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeasonImageProvider.Supports(MediaBrowser.Controller.Entities.BaseItem)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeasonImageProvider.GetSupportedImages(MediaBrowser.Controller.Entities.BaseItem)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeasonImageProvider.GetImages(MediaBrowser.Controller.Entities.BaseItem,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeasonImageProvider.GetImageResponse(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesImageProvider">
+            <summary>
+            Tvdb series image provider.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesImageProvider.#ctor(System.Net.Http.IHttpClientFactory,Microsoft.Extensions.Logging.ILogger{Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesImageProvider},Jellyfin.Plugin.Tvdb.TvdbClientManager)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesImageProvider"/> class.
+            </summary>
+            <param name="httpClientFactory">Instance of the <see cref="T:System.Net.Http.IHttpClientFactory"/> interface.</param>
+            <param name="logger">Instance of the <see cref="T:Microsoft.Extensions.Logging.ILogger`1"/> interface.</param>
+            <param name="tvdbClientManager">Instance of <see cref="T:Jellyfin.Plugin.Tvdb.TvdbClientManager"/>.</param>
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesImageProvider.Name">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesImageProvider.Supports(MediaBrowser.Controller.Entities.BaseItem)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesImageProvider.GetSupportedImages(MediaBrowser.Controller.Entities.BaseItem)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesImageProvider.GetImages(MediaBrowser.Controller.Entities.BaseItem,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesImageProvider.GetImageResponse(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesProvider">
+            <summary>
+            Tvdb series provider.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesProvider.#ctor(System.Net.Http.IHttpClientFactory,Microsoft.Extensions.Logging.ILogger{Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesProvider},MediaBrowser.Controller.Library.ILibraryManager,Jellyfin.Plugin.Tvdb.TvdbClientManager)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesProvider"/> class.
+            </summary>
+            <param name="httpClientFactory">Instance of the <see cref="T:System.Net.Http.IHttpClientFactory"/> interface.</param>
+            <param name="logger">Instance of the <see cref="T:Microsoft.Extensions.Logging.ILogger`1"/> interface.</param>
+            <param name="libraryManager">Instance of the <see cref="T:MediaBrowser.Controller.Library.ILibraryManager"/> interface.</param>
+            <param name="tvdbClientManager">Instance of <see cref="T:Jellyfin.Plugin.Tvdb.TvdbClientManager"/>.</param>
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesProvider.Name">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesProvider.GetSearchResults(MediaBrowser.Controller.Providers.SeriesInfo,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesProvider.GetMetadata(MediaBrowser.Controller.Providers.SeriesInfo,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesProvider.GetImageResponse(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesProvider.IsValidSeries(MediaBrowser.Model.Entities.IHasProviderIds)">
+            <summary>
+            Check whether a dictionary of provider IDs includes an entry for a valid TV metadata provider.
+            </summary>
+            <param name="series">The instance of <see cref="T:MediaBrowser.Model.Entities.IHasProviderIds"/> to check.</param>
+            <returns>True, if the series contains a valid TV provider ID, otherwise false.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesProvider.FindSeries(System.String,System.Nullable{System.Int32},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Finds the series.
+            </summary>
+            <param name="name">The name.</param>
+            <param name="year">The year.</param>
+            <param name="language">The language.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>Task{System.String}.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.Providers.TvdbSeriesProvider.GetComparableName(System.String)">
+            <summary>
+            Gets the name of the comparable.
+            </summary>
+            <param name="name">The name.</param>
+            <returns>System.String.</returns>
+        </member>
+        <member name="T:Jellyfin.Plugin.Tvdb.TvdbClientManager">
+            <summary>
+            Tvdb client manager.
+            </summary>
+        </member>
+        <member name="F:Jellyfin.Plugin.Tvdb.TvdbClientManager._tvDbClients">
+            <summary>
+            TvDbClients per language.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.#ctor(Microsoft.Extensions.Caching.Memory.IMemoryCache,System.Net.Http.IHttpClientFactory)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Jellyfin.Plugin.Tvdb.TvdbClientManager"/> class.
+            </summary>
+            <param name="memoryCache">Instance of the <see cref="T:Microsoft.Extensions.Caching.Memory.IMemoryCache"/> interface.</param>
+            <param name="httpClientFactory">Instance of the <see cref="T:System.Net.Http.IHttpClientFactory"/> interface.</param>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetSeriesByNameAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get series by name.
+            </summary>
+            <param name="name">Series name.</param>
+            <param name="language">Metadata language.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The series search result.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetSeriesByIdAsync(System.Int32,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get series by id.
+            </summary>
+            <param name="tvdbId">The series tvdb id.</param>
+            <param name="language">Metadata language.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The series response.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetEpisodesAsync(System.Int32,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get episode record.
+            </summary>
+            <param name="episodeTvdbId">The episode tvdb id.</param>
+            <param name="language">Metadata language.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The episode record.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetSeriesByImdbIdAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get series by imdb.
+            </summary>
+            <param name="imdbId">The imdb id.</param>
+            <param name="language">Metadata language.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The series search result.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetSeriesByZap2ItIdAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get series by zap2it id.
+            </summary>
+            <param name="zap2ItId">Zap2it id.</param>
+            <param name="language">Metadata language.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The series search result.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetActorsAsync(System.Int32,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get actors by tvdb id.
+            </summary>
+            <param name="tvdbId">Tvdb id.</param>
+            <param name="language">Metadata language.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The actors attached to the id.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetImagesAsync(System.Int32,TvDbSharper.Dto.ImagesQuery,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get images by tvdb id.
+            </summary>
+            <param name="tvdbId">Tvdb id.</param>
+            <param name="imageQuery">The image query.</param>
+            <param name="language">Metadata language.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The images attached to the id.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetLanguagesAsync(System.Threading.CancellationToken)">
+            <summary>
+            Get all tvdb languages.
+            </summary>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>All tvdb languages.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetSeriesEpisodeSummaryAsync(System.Int32,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get series episode summary.
+            </summary>
+            <param name="tvdbId">Tvdb id.</param>
+            <param name="language">Metadata language.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The episode summary.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetEpisodesPageAsync(System.Int32,System.Int32,TvDbSharper.Dto.EpisodeQuery,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets a page of episodes.
+            </summary>
+            <param name="tvdbId">Tvdb series id.</param>
+            <param name="page">Episode page.</param>
+            <param name="episodeQuery">Episode query.</param>
+            <param name="language">Metadata language.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The page of episodes.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetEpisodeTvdbId(MediaBrowser.Controller.Providers.EpisodeInfo,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get an episode's tvdb id.
+            </summary>
+            <param name="searchInfo">Episode search info.</param>
+            <param name="language">Metadata language.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The tvdb id.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetEpisodeTvdbId(System.Int32,TvDbSharper.Dto.EpisodeQuery,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get an episode's tvdb id.
+            </summary>
+            <param name="seriesTvdbId">The series tvdb id.</param>
+            <param name="episodeQuery">Episode query.</param>
+            <param name="language">Metadata language.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The tvdb id.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetEpisodesPageAsync(System.Int32,TvDbSharper.Dto.EpisodeQuery,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get episode page.
+            </summary>
+            <param name="tvdbId">Tvdb series id.</param>
+            <param name="episodeQuery">Episode query.</param>
+            <param name="language">Metadata language.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The page of episodes.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetImageKeyTypesForSeriesAsync(System.Int32,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get image key types for series.
+            </summary>
+            <param name="tvdbId">Tvdb series id.</param>
+            <param name="language">Metadata language.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The image key types.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbClientManager.GetImageKeyTypesForSeasonAsync(System.Int32,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get image key types for season.
+            </summary>
+            <param name="tvdbId">Tvdb series id.</param>
+            <param name="language">Metadata language.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>The image key types.</returns>
+        </member>
+        <member name="T:Jellyfin.Plugin.Tvdb.TvdbPlugin">
+            <summary>
+            Tvdb Plugin.
+            </summary>
+        </member>
+        <member name="F:Jellyfin.Plugin.Tvdb.TvdbPlugin.ProviderName">
+            <summary>
+            Gets the provider name.
+            </summary>
+        </member>
+        <member name="F:Jellyfin.Plugin.Tvdb.TvdbPlugin.ProviderId">
+            <summary>
+            Gets the provider id.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbPlugin.#ctor(MediaBrowser.Common.Configuration.IApplicationPaths,MediaBrowser.Model.Serialization.IXmlSerializer)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Jellyfin.Plugin.Tvdb.TvdbPlugin"/> class.
+            </summary>
+            <param name="applicationPaths">Instance of the <see cref="T:MediaBrowser.Common.Configuration.IApplicationPaths"/> interface.</param>
+            <param name="xmlSerializer">Instance of the <see cref="T:MediaBrowser.Model.Serialization.IXmlSerializer"/> interface.</param>
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.TvdbPlugin.Instance">
+            <summary>
+            Gets current plugin instance.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.TvdbPlugin.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.Tvdb.TvdbPlugin.Id">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbPlugin.GetPages">
+            <inheritdoc />
+        </member>
+        <member name="T:Jellyfin.Plugin.Tvdb.TvdbPluginServiceRegistrator">
+            <summary>
+            Register tvdb services.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbPluginServiceRegistrator.RegisterServices(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <inheritdoc />
+        </member>
+        <member name="T:Jellyfin.Plugin.Tvdb.TvdbUtils">
+            <summary>
+            Tvdb utils.
+            </summary>
+        </member>
+        <member name="F:Jellyfin.Plugin.Tvdb.TvdbUtils.TvdbBaseUrl">
+            <summary>
+            Base url for all requests.
+            </summary>
+        </member>
+        <member name="F:Jellyfin.Plugin.Tvdb.TvdbUtils.BannerUrl">
+            <summary>
+            Base url for banners.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbUtils.GetImageTypeFromKeyType(System.String)">
+            <summary>
+            Get image type from key type.
+            </summary>
+            <param name="keyType">Key type.</param>
+            <returns>Image type.</returns>
+            <exception cref="T:System.ArgumentException">Unknown key type.</exception>
+        </member>
+        <member name="M:Jellyfin.Plugin.Tvdb.TvdbUtils.NormalizeLanguage(System.String)">
+            <summary>
+            Normalize language to tvdb format.
+            </summary>
+            <param name="language">Language.</param>
+            <returns>Normalized language.</returns>
+        </member>
+    </members>
+</doc>
