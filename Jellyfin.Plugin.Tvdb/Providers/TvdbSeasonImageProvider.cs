@@ -110,7 +110,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             foreach (Image image in images)
             {
                 // The API returns everything that contains the subkey eg. 2 matches 20, 21, 22, 23 etc.
-                if (!string.Equals(image.SubKey, seasonNumber, StringComparison.InvariantCulture))
+                if (!string.Equals(image.SubKey, seasonNumber, StringComparison.Ordinal))
                 {
                     continue;
                 }
