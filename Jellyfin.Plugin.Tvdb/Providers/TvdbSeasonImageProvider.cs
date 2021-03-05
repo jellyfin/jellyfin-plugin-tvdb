@@ -85,7 +85,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 {
                     var imageResults = await _tvdbClientManager
                         .GetImagesAsync(tvdbId, imageQuery, language, cancellationToken).ConfigureAwait(false);
-                    remoteImages.AddRange(GetImages(imageResults.Data, language));
+                    remoteImages.AddRange(GetImages(imageResults.Data, imageQuery.SubKey, language));
                 }
                 catch (TvDbServerException)
                 {
@@ -102,13 +102,19 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
         }
 
-        private IEnumerable<RemoteImageInfo> GetImages(Image[] images, string preferredLanguage)
+        private IEnumerable<RemoteImageInfo> GetImages(Image[] images, string seasonNumber, string preferredLanguage)
         {
             var list = new List<RemoteImageInfo>();
             // any languages with null ids are ignored
             var languages = _tvdbClientManager.GetLanguagesAsync(CancellationToken.None).Result.Data.Where(x => x.Id.HasValue).ToArray();
             foreach (Image image in images)
             {
+                // The API returns everything that contains the subkey eg. 2 matches 20, 21, 22, 23 etc.
+                if (!string.Equals(image.SubKey, seasonNumber, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
                 var imageInfo = new RemoteImageInfo
                 {
                     RatingType = RatingType.Score,
