@@ -48,7 +48,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             // Either an episode number or date must be provided; and the dictionary of provider ids must be valid
             if ((searchInfo.IndexNumber == null && searchInfo.PremiereDate == null)
-                || !TvdbSeriesProvider.IsValidSeries(searchInfo))
+                || !TvdbSeriesProvider.IsValidSeries(searchInfo.SeriesProviderIds))
             {
                 return list;
             }
@@ -85,7 +85,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 QueriedById = true
             };
 
-            if (TvdbSeriesProvider.IsValidSeries(searchInfo) &&
+            if (TvdbSeriesProvider.IsValidSeries(searchInfo.SeriesProviderIds) &&
                 (searchInfo.IndexNumber.HasValue || searchInfo.PremiereDate.HasValue))
             {
                 result = await GetEpisode(searchInfo, cancellationToken).ConfigureAwait(false);

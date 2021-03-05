@@ -52,7 +52,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <inheritdoc />
         public async Task<IEnumerable<RemoteSearchResult>> GetSearchResults(SeriesInfo searchInfo, CancellationToken cancellationToken)
         {
-            if (IsValidSeries(searchInfo))
+            if (IsValidSeries(searchInfo.ProviderIds))
             {
                 return await FetchSeriesSearchResult(searchInfo, cancellationToken).ConfigureAwait(false);
             }
@@ -68,7 +68,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 QueriedById = true
             };
 
-            if (!IsValidSeries(itemId))
+            if (!IsValidSeries(itemId.ProviderIds))
             {
                 result.QueriedById = false;
                 await Identify(itemId).ConfigureAwait(false);
@@ -76,7 +76,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (IsValidSeries(itemId))
+            if (IsValidSeries(itemId.ProviderIds))
             {
                 result.Item = new Series();
                 result.HasMetadata = true;
@@ -97,13 +97,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <summary>
         /// Check whether a dictionary of provider IDs includes an entry for a valid TV metadata provider.
         /// </summary>
-        /// <param name="series">The instance of <see cref="IHasProviderIds"/> to check.</param>
+        /// <param name="ids">The provider IDs to check.</param>
         /// <returns>True, if the series contains a valid TV provider ID, otherwise false.</returns>
-        internal static bool IsValidSeries(IHasProviderIds series)
+        internal static bool IsValidSeries(Dictionary<string, string> ids)
         {
-            return !string.IsNullOrEmpty(series.GetProviderId(MetadataProvider.Tvdb)) ||
-                   !string.IsNullOrEmpty(series.GetProviderId(MetadataProvider.Imdb)) ||
-                   !string.IsNullOrEmpty(series.GetProviderId(MetadataProvider.Zap2It));
+            return (ids.TryGetValue(MetadataProvider.Tvdb.ToString(), out var tvdbId) && !string.IsNullOrEmpty(tvdbId))
+                   || (ids.TryGetValue(MetadataProvider.Imdb.ToString(), out var imdbId) && !string.IsNullOrEmpty(imdbId))
+                   || (ids.TryGetValue(MetadataProvider.Zap2It.ToString(), out var zap2ItId) && !string.IsNullOrEmpty(zap2ItId));
         }
 
         private async Task<IEnumerable<RemoteSearchResult>> FetchSeriesSearchResult(SeriesInfo seriesInfo, CancellationToken cancellationToken)

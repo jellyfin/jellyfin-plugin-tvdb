@@ -63,7 +63,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var season = (Season)item;
             var series = season.Series;
 
-            if (series == null || !season.IndexNumber.HasValue || !TvdbSeriesProvider.IsValidSeries(series))
+            if (series == null || !season.IndexNumber.HasValue || !TvdbSeriesProvider.IsValidSeries(series.ProviderIds))
             {
                 return Enumerable.Empty<RemoteImageInfo>();
             }
