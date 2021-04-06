@@ -257,7 +257,7 @@ namespace Jellyfin.Plugin.Tvdb
             string language,
             CancellationToken cancellationToken)
         {
-            var cacheKey = GenerateKey(language, tvdbId, episodeQuery);
+            var cacheKey = GenerateKey(language, tvdbId, episodeQuery, page);
             return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Series.GetEpisodesAsync(tvdbId, page, episodeQuery, cancellationToken));
         }
 
@@ -351,6 +351,7 @@ namespace Jellyfin.Plugin.Tvdb
         /// <returns>The image key types.</returns>
         public async IAsyncEnumerable<KeyType> GetImageKeyTypesForSeriesAsync(int tvdbId, string language, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
+            // Images summary is language agnostic
             var cacheKey = GenerateKey(nameof(TvDbClient.Series.GetImagesSummaryAsync), tvdbId);
             var imagesSummary = await TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Series.GetImagesSummaryAsync(tvdbId, cancellationToken)).ConfigureAwait(false);
 
@@ -379,6 +380,7 @@ namespace Jellyfin.Plugin.Tvdb
         /// <returns>The image key types.</returns>
         public async IAsyncEnumerable<KeyType> GetImageKeyTypesForSeasonAsync(int tvdbId, string language, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
+            // Images summary is language agnostic
             var cacheKey = GenerateKey(nameof(TvDbClient.Series.GetImagesSummaryAsync), tvdbId);
             var imagesSummary = await TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Series.GetImagesSummaryAsync(tvdbId, cancellationToken)).ConfigureAwait(false);
 
@@ -392,7 +394,10 @@ namespace Jellyfin.Plugin.Tvdb
                 yield return KeyType.Fanart;
             }
 
-            // TODO seasonwide is not supported in TvDbSharper
+            if (imagesSummary.Data.SeasonWide > 0)
+            {
+                yield return KeyType.Seasonwide;
+            }
         }
 
         private static string GenerateKey(params object[] objects)
