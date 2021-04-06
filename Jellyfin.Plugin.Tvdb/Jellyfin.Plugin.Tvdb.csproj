@@ -1,38 +1,36 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
-        <AssemblyVersion>4.0.0.0</AssemblyVersion>
-        <FileVersion>4.0.0.0</FileVersion>
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <AssemblyVersion>4.0.0.0</AssemblyVersion>
+    <FileVersion>4.0.0.0</FileVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Nullable>enable</Nullable>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <CodeAnalysisRuleSet>../jellyfin.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <None Remove="Configuration\config.html" />
-        <EmbeddedResource Include="Configuration\config.html" />
-    </ItemGroup>
+  <ItemGroup>
+    <None Remove="Configuration\config.html"/>
+    <EmbeddedResource Include="Configuration\config.html"/>
+  </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Jellyfin.Data" Version="10.*-*" />
-        <PackageReference Include="Jellyfin.Controller" Version="10.*-*" />
-        <PackageReference Include="Jellyfin.Common" Version="10.*-*" />
-        <PackageReference Include="Jellyfin.Model" Version="10.*-*" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
-        <PackageReference Include="TvDbSharper" Version="3.2.2" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Jellyfin.Data" Version="10.*-*"/>
+    <PackageReference Include="Jellyfin.Controller" Version="10.*-*"/>
+    <PackageReference Include="Jellyfin.Common" Version="10.*-*"/>
+    <PackageReference Include="Jellyfin.Model" Version="10.*-*"/>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0"/>
+    <PackageReference Include="TvDbSharper" Version="3.2.2"/>
+  </ItemGroup>
 
-    <!-- Code Analyzers-->
-    <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8" PrivateAssets="All" />
-        <PackageReference Include="SerilogAnalyzer" Version="0.15.0" PrivateAssets="All" />
-        <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="All" />
-        <PackageReference Include="SmartAnalyzers.MultithreadingAnalyzer" Version="1.1.31" PrivateAssets="All" />
-    </ItemGroup>
-
-    <PropertyGroup>
-        <CodeAnalysisRuleSet>../jellyfin.ruleset</CodeAnalysisRuleSet>
-    </PropertyGroup>
+  <!-- Code Analyzers-->
+  <ItemGroup>
+    <PackageReference Include="SerilogAnalyzer" Version="0.15.0" PrivateAssets="All"/>
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="All"/>
+    <PackageReference Include="SmartAnalyzers.MultithreadingAnalyzer" Version="1.1.31" PrivateAssets="All"/>
+  </ItemGroup>
 
 </Project>
