@@ -78,21 +78,21 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         }
 
         /// <inheritdoc />
-        public async Task<MetadataResult<Episode>> GetMetadata(EpisodeInfo searchInfo, CancellationToken cancellationToken)
+        public async Task<MetadataResult<Episode>> GetMetadata(EpisodeInfo info, CancellationToken cancellationToken)
         {
             var result = new MetadataResult<Episode>
             {
                 QueriedById = true
             };
 
-            if (TvdbSeriesProvider.IsValidSeries(searchInfo.SeriesProviderIds) &&
-                (searchInfo.IndexNumber.HasValue || searchInfo.PremiereDate.HasValue))
+            if (TvdbSeriesProvider.IsValidSeries(info.SeriesProviderIds) &&
+                (info.IndexNumber.HasValue || info.PremiereDate.HasValue))
             {
-                result = await GetEpisode(searchInfo, cancellationToken).ConfigureAwait(false);
+                result = await GetEpisode(info, cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                _logger.LogDebug("No series identity found for {EpisodeName}", searchInfo.Name);
+                _logger.LogDebug("No series identity found for {EpisodeName}", info.Name);
             }
 
             return result;
@@ -228,9 +228,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 for (var j = i + 1; j < episode.GuestStars.Length; ++j)
                 {
                     var currentRole = episode.GuestStars[j];
-                    var roleEndIndex = currentRole.IndexOf(')', StringComparison.Ordinal);
+                    var roleEndIndex = currentRole.Contains(')', StringComparison.Ordinal);
 
-                    if (roleEndIndex == -1)
+                    if (!roleEndIndex)
                     {
                         roles.Add(currentRole);
                         continue;

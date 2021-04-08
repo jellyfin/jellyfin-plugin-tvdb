@@ -61,27 +61,27 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         }
 
         /// <inheritdoc />
-        public async Task<MetadataResult<Series>> GetMetadata(SeriesInfo itemId, CancellationToken cancellationToken)
+        public async Task<MetadataResult<Series>> GetMetadata(SeriesInfo info, CancellationToken cancellationToken)
         {
             var result = new MetadataResult<Series>
             {
                 QueriedById = true
             };
 
-            if (!IsValidSeries(itemId.ProviderIds))
+            if (!IsValidSeries(info.ProviderIds))
             {
                 result.QueriedById = false;
-                await Identify(itemId).ConfigureAwait(false);
+                await Identify(info).ConfigureAwait(false);
             }
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (IsValidSeries(itemId.ProviderIds))
+            if (IsValidSeries(info.ProviderIds))
             {
                 result.Item = new Series();
                 result.HasMetadata = true;
 
-                await FetchSeriesMetadata(result, itemId.MetadataLanguage, itemId.ProviderIds, cancellationToken)
+                await FetchSeriesMetadata(result, info.MetadataLanguage, info.ProviderIds, cancellationToken)
                     .ConfigureAwait(false);
             }
 
