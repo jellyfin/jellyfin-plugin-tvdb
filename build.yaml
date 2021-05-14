@@ -2,7 +2,7 @@
 name: "TheTVDB"
 guid: "a677c0da-fac5-4cde-941a-7134223f14c8"
 imageUrl: "https://repo.jellyfin.org/releases/plugin/images/jellyfin-plugin-tvdb.png"
-version: "4.0.0.0"
+version: "5.0.0.0"
 targetAbi: "10.7.0.0"
 framework: "net5.0"
 owner: "jellyfin"
@@ -14,4 +14,4 @@ artifacts:
   - "Jellyfin.Plugin.Tvdb.dll"
   - "TvDbSharper.dll"
 changelog: >
-  * fix getting metadata
+  * fix catching exceptions

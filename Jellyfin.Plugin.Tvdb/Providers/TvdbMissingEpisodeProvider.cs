@@ -15,6 +15,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Globalization;
 using Microsoft.Extensions.Logging;
+using TvDbSharper;
 using TvDbSharper.Dto;
 using Series = MediaBrowser.Controller.Entities.TV.Series;
 
@@ -310,28 +311,36 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private async Task<IReadOnlyList<EpisodeRecord>> GetAllEpisodes(int tvdbId, string acceptedLanguage, EpisodeQuery? episodeQuery = null)
         {
-            // Fetch all episodes for the series
-            var allEpisodes = new List<EpisodeRecord>();
-            var page = 1;
-            while (true)
+            try
             {
-                episodeQuery ??= new EpisodeQuery();
-                var episodes = await _tvdbClientManager.GetEpisodesPageAsync(
-                    tvdbId,
-                    page,
-                    episodeQuery,
-                    acceptedLanguage,
-                    CancellationToken.None).ConfigureAwait(false);
-                allEpisodes.AddRange(episodes.Data);
-                if (!episodes.Links.Next.HasValue)
+                // Fetch all episodes for the series
+                var allEpisodes = new List<EpisodeRecord>();
+                var page = 1;
+                while (true)
                 {
-                    break;
+                    episodeQuery ??= new EpisodeQuery();
+                    var episodes = await _tvdbClientManager.GetEpisodesPageAsync(
+                        tvdbId,
+                        page,
+                        episodeQuery,
+                        acceptedLanguage,
+                        CancellationToken.None).ConfigureAwait(false);
+                    allEpisodes.AddRange(episodes.Data);
+                    if (!episodes.Links.Next.HasValue)
+                    {
+                        break;
+                    }
+
+                    page = episodes.Links.Next.Value;
                 }
 
-                page = episodes.Links.Next.Value;
+                return allEpisodes;
             }
-
-            return allEpisodes;
+            catch (TvDbServerException ex)
+            {
+                _logger.LogWarning(ex, "Unable to get episodes from TVDB");
+                return Array.Empty<EpisodeRecord>();
+            }
         }
 
         private IEnumerable<Season> AddMissingSeasons(Series series, List<Season> existingSeasons, IReadOnlyList<int> allSeasons)
