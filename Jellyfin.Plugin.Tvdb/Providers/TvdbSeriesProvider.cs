@@ -367,7 +367,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         private static string GetComparableName(string name)
         {
             name = name.ToLowerInvariant();
-            name = name.Normalize(NormalizationForm.FormKD);
+            name = name.Normalize(NormalizationForm.FormC);
             name = name.Replace(", the", string.Empty, StringComparison.OrdinalIgnoreCase)
                 .Replace("the ", " ", StringComparison.OrdinalIgnoreCase)
                 .Replace(" the ", " ", StringComparison.OrdinalIgnoreCase);
