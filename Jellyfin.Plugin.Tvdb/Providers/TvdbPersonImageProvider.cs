@@ -60,7 +60,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         }
 
         /// <inheritdoc />
-        public async Task<IEnumerable<RemoteImageInfo?>> GetImages(BaseItem item, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
         {
             var seriesWithPerson = _libraryManager.GetItemList(new InternalItemsQuery
             {
@@ -78,6 +78,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                         await GetImageFromSeriesData(i, item.Name, cancellationToken).ConfigureAwait(false)))
                     .ConfigureAwait(false))
                 .Where(i => i != null)
+                .Cast<RemoteImageInfo>()
                 .Take(1);
 
             return infos;
