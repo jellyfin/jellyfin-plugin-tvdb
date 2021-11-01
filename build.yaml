@@ -1,8 +1,8 @@
 name: "TheTVDB"
 guid: "a677c0da-fac5-4cde-941a-7134223f14c8"
 imageUrl: "https://repo.jellyfin.org/releases/plugin/images/jellyfin-plugin-tvdb.png"
-version: "6"
-targetAbi: "10.7.0.0"
+version: "7"
+targetAbi: "10.8.0.0"
 framework: "net6.0"
 owner: "jellyfin"
 overview: "Get TV metadata from TheTvdb"
@@ -13,9 +13,5 @@ category: "Metadata"
 artifacts:
   - "Jellyfin.Plugin.Tvdb.dll"
   - "TvDbSharper.dll"
-changelog: |2-
-  ### Bug Fixes ###
-  - Changed NormalizationForm to FormC (#45) @sushilicious
-
-  ### CI & build changes ###
-  - Update ci (#42) @h1dden-da3m0n
+changelog: |-
+  - 10.8 support (#52) @crobibero
