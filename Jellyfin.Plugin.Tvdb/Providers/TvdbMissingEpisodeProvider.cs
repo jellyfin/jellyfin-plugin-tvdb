@@ -410,7 +410,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 SeriesPresentationUniqueKey = series.GetPresentationUniqueKey()
             };
 
-            series.AddChild(newSeason, CancellationToken.None);
+            series.AddChild(newSeason);
 
             return newSeason;
         }
@@ -460,7 +460,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 episode.AiredSeason,
                 episode.AiredEpisodeNumber);
 
-            season.AddChild(newEpisode, CancellationToken.None);
+            season.AddChild(newEpisode);
         }
     }
 }
