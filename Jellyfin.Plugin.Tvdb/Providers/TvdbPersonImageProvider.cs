@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Data.Enums;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
@@ -64,7 +65,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         {
             var seriesWithPerson = _libraryManager.GetItemList(new InternalItemsQuery
             {
-                IncludeItemTypes = new[] { nameof(Series) },
+                IncludeItemTypes = new[] { BaseItemKind.Series },
                 PersonIds = new[] { item.Id },
                 DtoOptions = new DtoOptions(false)
                 {
