@@ -246,7 +246,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 IsVirtualItem = true,
                 IndexNumber = indexNumber,
                 ParentIndexNumber = parentIndexNumber,
-                IncludeItemTypes = new[] { itemChangeEventArgs.Item.GetType().Name },
+                IncludeItemTypes = new[] { itemChangeEventArgs.Item.GetBaseItemKind() },
                 Parent = itemChangeEventArgs.Parent,
                 GroupByPresentationUniqueKey = false,
                 DtoOptions = new DtoOptions(true)
