@@ -11,7 +11,7 @@ namespace Jellyfin.Plugin.Tvdb
         /// <summary>
         /// Base url for all requests.
         /// </summary>
-        public const string TvdbBaseUrl = "https://www.thetvdb.com/";
+        public const string TvdbBaseUrl = "https://thetvdb.com/";
 
         /// <summary>
         /// Base url for banners.
