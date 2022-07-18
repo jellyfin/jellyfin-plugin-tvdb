@@ -10,6 +10,6 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         /// <summary>
         /// Gets or sets the tvdb api key.
         /// </summary>
-        public string ApiKey { get; set; } = "OG4V3YJ3FAP7FP2K";
+        public string ApiKey { get; set; } = "e2dbbd55-0a17-456d-b7ce-fa72c5fbee90";
     }
 }
