@@ -325,6 +325,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                         episodeQuery,
                         acceptedLanguage,
                         CancellationToken.None).ConfigureAwait(false);
+
+                    if (episodes.Data == null)
+                    {
+                        throw new TvDbServerException($"Episode Query returned null for tvdbId: {tvdbId}", -1);
+                    }
+
                     allEpisodes.AddRange(episodes.Data);
                     if (!episodes.Links.Next.HasValue)
                     {
