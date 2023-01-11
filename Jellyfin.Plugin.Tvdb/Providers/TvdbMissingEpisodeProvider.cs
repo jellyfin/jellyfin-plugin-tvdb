@@ -328,7 +328,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
                     if (episodes.Data == null)
                     {
-                        throw new TvDbServerException($"Episode Query returned null for tvdbId: {tvdbId}", -1);
+                        _logger.LogWarning("Unable to get episodes from TVDB: Episode Query returned null for TVDB Id: {TvdbId}", tvdbId);
+                        return Array.Empty<EpisodeRecord>();
                     }
 
                     allEpisodes.AddRange(episodes.Data);
