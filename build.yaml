@@ -1,8 +1,8 @@
 name: "TheTVDB"
 guid: "a677c0da-fac5-4cde-941a-7134223f14c8"
 imageUrl: "https://repo.jellyfin.org/releases/plugin/images/jellyfin-plugin-tvdb.png"
-version: "9"
-targetAbi: "10.8.0.0"
+version: 9
+targetAbi: "10.8.8.0"
 framework: "net6.0"
 owner: "jellyfin"
 overview: "Get TV metadata from TheTvdb"
@@ -14,9 +14,12 @@ artifacts:
   - "Jellyfin.Plugin.Tvdb.dll"
   - "TvDbSharper.dll"
 changelog: |2-
-  ### Code or Repo Maintenance ###
-  - Use BaseItemKind (#59) @crobibero
-  - update ruleset (#55) @crobibero
+  ### Bug Fixes ###
+  - Fix GetAllEpisodes breaking library scan on missing Episode Data (#83) @Hayajiro
 
-  ### Dependency updates ###
-  - chore(deps): bump Microsoft.Extensions.Http from 5.0.0 to 6.0.0 (#54) @dependabot
+  ### Code or Repo Maintenance ###
+  - Use meta ci (#67) @crobibero
+
+  ### CI & build changes ###
+  - fix: meta ci workflows (#72) @h1dden-da3m0n
+  - Use meta ci (#67) @crobibero
