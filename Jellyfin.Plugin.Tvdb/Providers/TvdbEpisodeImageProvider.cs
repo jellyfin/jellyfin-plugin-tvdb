@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
@@ -82,10 +82,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     if (string.IsNullOrEmpty(episodeTvdbId))
                     {
                         _logger.LogError(
-                            "Episode {SeasonNumber}x{EpisodeNumber} not found for series {SeriesTvdbId}",
+                            "Episode {SeasonNumber}x{EpisodeNumber} not found for series {SeriesTvdbId}:{Name}",
                             episode.ParentIndexNumber,
                             episode.IndexNumber,
-                            series.GetProviderId(TvdbPlugin.ProviderId));
+                            series.GetProviderId(TvdbPlugin.ProviderId),
+                            series.Name);
                         return imageResult;
                     }
 
@@ -102,7 +103,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
                 catch (TvDbServerException e)
                 {
-                    _logger.LogError(e, "Failed to retrieve episode images for series {TvDbId}", series.GetProviderId(TvdbPlugin.ProviderId));
+                    _logger.LogError(e, "Failed to retrieve episode images for series {TvDbId}:{Name}", series.GetProviderId(TvdbPlugin.ProviderId), series.Name);
                 }
             }
 

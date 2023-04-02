@@ -117,7 +117,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
             catch (TvDbServerException e)
             {
-                _logger.LogError(e, "Failed to retrieve actor {ActorName} from series {SeriesTvdbId}", personName, tvdbId);
+                _logger.LogError(e, "Failed to retrieve actor {ActorName} from series {SeriesTvdbId}:{Name}", personName, tvdbId, series.Name);
                 return null;
             }
         }

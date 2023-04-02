@@ -87,9 +87,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 catch (TvDbServerException)
                 {
                     _logger.LogDebug(
-                        "No images of type {KeyType} exist for series {TvDbId}",
+                        "No images of type {KeyType} exist for series {TvDbId}:{Name}",
                         keyType,
-                        tvdbId);
+                        tvdbId,
+                        item.Name);
                 }
             }
 
