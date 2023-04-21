@@ -402,7 +402,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     season.ToString(CultureInfo.InvariantCulture));
             }
 
-            _logger.LogInformation("Creating Season {SeasonName} entry for {SeriesName}", seasonName, series.Name);
+            _logger.LogDebug("Creating Season {SeasonName} entry for {SeriesName}", seasonName, series.Name);
 
             var newSeason = new Season
             {
@@ -461,7 +461,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             newEpisode.PresentationUniqueKey = newEpisode.GetPresentationUniqueKey();
             newEpisode.SetProviderId(MetadataProvider.Tvdb, episode.Id.ToString(CultureInfo.InvariantCulture));
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Creating virtual episode {0} {1}x{2}",
                 season.Series.Name,
                 episode.AiredSeason,
