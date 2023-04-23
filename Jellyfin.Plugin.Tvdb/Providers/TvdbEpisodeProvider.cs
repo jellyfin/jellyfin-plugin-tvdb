@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Net;
@@ -88,12 +89,64 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             if (TvdbSeriesProvider.IsValidSeries(info.SeriesProviderIds) &&
                 (info.IndexNumber.HasValue || info.PremiereDate.HasValue))
             {
-                result = await GetEpisode(info, cancellationToken).ConfigureAwait(false);
+                // Check for multiple episodes per file, if not run one query.
+                if (info.IndexNumberEnd.HasValue)
+                {
+                    _logger.LogDebug("Multiple episodes found in {Path}", info.Path);
+
+                    result = await GetCombinedEpisode(info, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    result = await GetEpisode(info, cancellationToken).ConfigureAwait(false);
+                }
             }
             else
             {
                 _logger.LogDebug("No series identity found for {EpisodeName}", info.Name);
             }
+
+            return result;
+        }
+
+        private async Task<MetadataResult<Episode>> GetCombinedEpisode(EpisodeInfo info, CancellationToken cancellationToken)
+        {
+            var startIndex = info.IndexNumber;
+            var endIndex = info.IndexNumberEnd;
+
+            List<MetadataResult<Episode>> results = new List<MetadataResult<Episode>>();
+
+            for (int? episode = startIndex; episode <= endIndex; episode++)
+            {
+                var tempEpisodeInfo = info;
+                info.IndexNumber = episode;
+
+                results.Add(await GetEpisode(tempEpisodeInfo, cancellationToken).ConfigureAwait(false));
+            }
+
+            var result = CombineResults(info, results);
+
+            return result;
+        }
+
+        private MetadataResult<Episode> CombineResults(EpisodeInfo id, List<MetadataResult<Episode>> results)
+        {
+            // Use first result as baseline
+            var result = results[0];
+
+            var name = new StringBuilder(result.Item.Name);
+            var overview = new StringBuilder(result.Item.Overview);
+
+            for (int res = 1; res < results.Count; res++)
+            {
+                name.Append(" / ");
+                name.Append(results[res].Item.Name);
+                overview.Append(" / ");
+                overview.Append(results[res].Item.Overview);
+            }
+
+            result.Item.Name = name.ToString();
+            result.Item.Overview = overview.ToString();
 
             return result;
         }
