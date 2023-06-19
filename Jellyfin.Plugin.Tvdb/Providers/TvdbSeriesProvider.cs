@@ -65,7 +65,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         {
             var result = new MetadataResult<Series>
             {
-                QueriedById = true
+                QueriedById = true,
             };
 
             if (!IsValidSeries(info.ProviderIds))
@@ -81,7 +81,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 result.Item = new Series();
                 result.HasMetadata = true;
 
-                await FetchSeriesMetadata(result, info.MetadataLanguage, info.ProviderIds, cancellationToken)
+                await FetchSeriesMetadata(result, info, cancellationToken)
                     .ConfigureAwait(false);
             }
 
@@ -118,6 +118,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                         imdbId,
                         MetadataProvider.Imdb.ToString(),
                         seriesInfo.MetadataLanguage,
+                        seriesInfo.Name,
                         cancellationToken).ConfigureAwait(false);
                 }
             }
@@ -131,6 +132,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                         zap2ItId,
                         MetadataProvider.Zap2It.ToString(),
                         seriesInfo.MetadataLanguage,
+                        seriesInfo.Name,
                         cancellationToken).ConfigureAwait(false);
                 }
             }
@@ -145,7 +147,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
             catch (TvDbServerException e)
             {
-                _logger.LogError(e, "Failed to retrieve series with id {TvdbId}", tvdbId);
+                _logger.LogError(e, "Failed to retrieve series with id {TvdbId}:{SeriesName}", tvdbId, seriesInfo.Name);
                 return Array.Empty<RemoteSearchResult>();
             }
         }
@@ -177,8 +179,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             return remoteResult;
         }
 
-        private async Task FetchSeriesMetadata(MetadataResult<Series> result, string metadataLanguage, Dictionary<string, string> seriesProviderIds, CancellationToken cancellationToken)
+        private async Task FetchSeriesMetadata(
+            MetadataResult<Series> result,
+            SeriesInfo info,
+            CancellationToken cancellationToken)
         {
+            string metadataLanguage = info.MetadataLanguage;
+            Dictionary<string, string> seriesProviderIds = info.ProviderIds;
             var series = result.Item;
 
             if (seriesProviderIds.TryGetValue(TvdbPlugin.ProviderId, out var tvdbId) && !string.IsNullOrEmpty(tvdbId))
@@ -193,6 +200,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     imdbId,
                     MetadataProvider.Imdb.ToString(),
                     metadataLanguage,
+                    info.Name,
                     cancellationToken).ConfigureAwait(false);
             }
 
@@ -203,6 +211,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     zap2It,
                     MetadataProvider.Zap2It.ToString(),
                     metadataLanguage,
+                    info.Name,
                     cancellationToken).ConfigureAwait(false);
             }
 
@@ -216,7 +225,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
             catch (TvDbServerException e)
             {
-                _logger.LogError(e, "Failed to retrieve series with id {TvdbId}", tvdbId);
+                _logger.LogError(e, "Failed to retrieve series with id {TvdbId}:{SeriesName}", tvdbId, info.Name);
                 return;
             }
 
@@ -232,11 +241,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
             catch (TvDbServerException e)
             {
-                _logger.LogError(e, "Failed to retrieve actors for series {TvdbId}", tvdbId);
+                _logger.LogError(e, "Failed to retrieve actors for series {TvdbId}:{SeriesName}", tvdbId, info.Name);
             }
         }
 
-        private async Task<string?> GetSeriesByRemoteId(string id, string idType, string language, CancellationToken cancellationToken)
+        private async Task<string?> GetSeriesByRemoteId(string id, string idType, string language, string seriesName, CancellationToken cancellationToken)
         {
             TvDbResponse<SeriesSearchResult[]>? result = null;
 
@@ -255,7 +264,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
             catch (TvDbServerException e)
             {
-                _logger.LogError(e, "Failed to retrieve series with remote id {RemoteId}", id);
+                _logger.LogError(e, "Failed to retrieve series with remote id {RemoteId}:{SeriesName}", id, seriesName);
             }
 
             return result?.Data.FirstOrDefault()?.Id.ToString(CultureInfo.InvariantCulture);
@@ -341,7 +350,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
                 catch (TvDbServerException e)
                 {
-                    _logger.LogError(e, "Unable to retrieve series with id {TvdbId}", seriesSearchResult.Id);
+                    _logger.LogError(e, "Unable to retrieve series with id {TvdbId}:{SeriesName}", seriesSearchResult.Id, seriesSearchResult.SeriesName);
                 }
 
                 remoteSearchResult.SetProviderId(TvdbPlugin.ProviderId, seriesSearchResult.Id.ToString(CultureInfo.InvariantCulture));
@@ -484,7 +493,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
                 catch (TvDbServerException e)
                 {
-                    _logger.LogError(e, "Failed to find series end date for series {TvdbId}", tvdbSeries.Id);
+                    _logger.LogError(e, "Failed to find series end date for series {TvdbId}:{SeriesName}", tvdbSeries.Id, tvdbSeries?.SeriesName ?? result.Item?.Name);
                 }
             }
         }

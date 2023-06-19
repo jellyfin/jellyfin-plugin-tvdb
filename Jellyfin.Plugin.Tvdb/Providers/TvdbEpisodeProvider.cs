@@ -168,10 +168,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 if (string.IsNullOrEmpty(episodeTvdbId))
                 {
                     _logger.LogError(
-                        "Episode {SeasonNumber}x{EpisodeNumber} not found for series {SeriesTvdbId}",
+                        "Episode {SeasonNumber}x{EpisodeNumber} not found for series {SeriesTvdbId}:{Name}",
                         searchInfo.ParentIndexNumber,
                         searchInfo.IndexNumber,
-                        seriesTvdbId);
+                        seriesTvdbId,
+                        searchInfo.Name);
                     return result;
                 }
 
@@ -184,7 +185,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
             catch (TvDbServerException e)
             {
-                _logger.LogError(e, "Failed to retrieve episode with id {EpisodeTvDbId}, series id {SeriesTvdbId}", episodeTvdbId, seriesTvdbId);
+                _logger.LogError(
+                    e,
+                    "Failed to retrieve episode with id {EpisodeTvDbId}, series id {SeriesTvdbId}:{Name}",
+                    episodeTvdbId,
+                    seriesTvdbId,
+                    searchInfo.Name);
             }
 
             return result;
