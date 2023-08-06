@@ -98,19 +98,21 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             try
             {
                 var actorsResult = await _tvdbClientManager
-                    .GetActorsAsync(tvdbId, series.GetPreferredMetadataLanguage(), cancellationToken)
+                    .GetSeriesByIdAsync(tvdbId, series.GetPreferredMetadataLanguage(), cancellationToken)
                     .ConfigureAwait(false);
-                var actor = actorsResult.Data.FirstOrDefault(a =>
-                    string.Equals(a.Name, personName, StringComparison.OrdinalIgnoreCase) &&
-                    !string.IsNullOrEmpty(a.Image));
-                if (actor == null)
+                var character = actorsResult.Data.Characters.FirstOrDefault(i => i.PersonName.Equals(personName, StringComparison.OrdinalIgnoreCase));
+
+                if (character == null)
                 {
                     return null;
                 }
 
+                var actor = await _tvdbClientManager
+                    .GetActorAsync(character.PeopleId, series.GetPreferredMetadataCountryCode(), cancellationToken)
+                    .ConfigureAwait(false);
                 return new RemoteImageInfo
                 {
-                    Url = TvdbUtils.BannerUrl + actor.Image,
+                    Url = actor.Data.Image,
                     Type = ImageType.Primary,
                     ProviderName = Name
                 };

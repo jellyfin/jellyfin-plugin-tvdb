@@ -12,7 +12,6 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
 using TvDbSharper;
-using TvDbSharper.Dto;
 
 namespace Jellyfin.Plugin.Tvdb.Providers
 {
@@ -116,19 +115,19 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
         }
 
-        private RemoteImageInfo? GetImageInfo(EpisodeRecord episode)
+        private RemoteImageInfo? GetImageInfo(EpisodeExtendedRecordDto episode)
         {
-            if (string.IsNullOrEmpty(episode.Filename))
+            if (string.IsNullOrEmpty(episode.Image))
             {
                 return null;
             }
 
             return new RemoteImageInfo
             {
-                Width = Convert.ToInt32(episode.ThumbWidth, CultureInfo.InvariantCulture),
-                Height = Convert.ToInt32(episode.ThumbHeight, CultureInfo.InvariantCulture),
+                // Width = Convert.ToInt32(episode.ThumbWidth, CultureInfo.InvariantCulture),
+                // Height = Convert.ToInt32(episode.ThumbHeight, CultureInfo.InvariantCulture),
                 ProviderName = Name,
-                Url = TvdbUtils.BannerUrl + episode.Filename,
+                Url = episode.Image,
                 Type = ImageType.Primary
             };
         }

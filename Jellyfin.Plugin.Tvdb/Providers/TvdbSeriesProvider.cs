@@ -15,7 +15,6 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
 using TvDbSharper;
-using TvDbSharper.Dto;
 using Series = MediaBrowser.Controller.Entities.TV.Series;
 
 namespace Jellyfin.Plugin.Tvdb.Providers
@@ -152,14 +151,14 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
         }
 
-        private RemoteSearchResult MapSeriesToRemoteSearchResult(TvDbSharper.Dto.Series series)
+        private RemoteSearchResult MapSeriesToRemoteSearchResult(SeriesExtendedRecordDto series)
         {
             var remoteResult = new RemoteSearchResult
             {
-                Name = series.SeriesName,
+                Name = series.Name,
                 Overview = series.Overview?.Trim() ?? string.Empty,
                 SearchProviderName = Name,
-                ImageUrl = TvdbUtils.BannerUrl + series.Poster
+                ImageUrl = series.Image
             };
 
             if (DateTime.TryParse(series.FirstAired, out var date))
@@ -432,14 +431,14 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
         }
 
-        private async Task MapSeriesToResult(MetadataResult<Series> result, TvDbSharper.Dto.Series tvdbSeries, string metadataLanguage)
+        private async Task MapSeriesToResult(MetadataResult<Series> result, SeriesExtendedRecordDto tvdbSeries, string metadataLanguage)
         {
             Series series = result.Item;
             series.SetProviderId(TvdbPlugin.ProviderId, tvdbSeries.Id.ToString(CultureInfo.InvariantCulture));
-            series.Name = tvdbSeries.SeriesName;
+            series.Name = tvdbSeries.Name;
             series.Overview = (tvdbSeries.Overview ?? string.Empty).Trim();
             result.ResultLanguage = metadataLanguage;
-            series.AirDays = TVUtils.GetAirDays(tvdbSeries.AirsDayOfWeek);
+            series.AirDays = TVUtils.GetAirDays(tvdbSeries.AirsDays.ToString());
             series.AirTime = tvdbSeries.AirsTime;
             series.CommunityRating = (float?)tvdbSeries.SiteRating;
             series.SetProviderId(MetadataProvider.Imdb, tvdbSeries.ImdbId);
