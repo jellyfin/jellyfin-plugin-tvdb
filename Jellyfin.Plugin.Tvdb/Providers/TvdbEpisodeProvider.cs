@@ -224,25 +224,32 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 item.SetProviderId(MetadataProvider.Imdb, imdbID);
             }
 
-            /*if (string.Equals(id.SeriesDisplayOrder, "dvd", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(id.SeriesDisplayOrder, "dvd", StringComparison.OrdinalIgnoreCase))
             {
-                item.IndexNumber = Convert.ToInt32(episode.DvdEpisodeNumber ?? episode.AiredEpisodeNumber, CultureInfo.InvariantCulture);
-                item.ParentIndexNumber = episode.DvdSeason ?? episode.AiredSeason;
+                var dvdInfo = episode.Seasons.FirstOrDefault(x => x.Type.Name == "dvd");
+                if (dvdInfo is null)
+                {
+                    item.IndexNumber = episode.Number;
+                }
+                else
+                {
+                    item.IndexNumber = Convert.ToInt32(dvdInfo.Number, CultureInfo.InvariantCulture);
+                }
+
+                item.ParentIndexNumber = episode.SeasonNumber;
             }
             else if (string.Equals(id.SeriesDisplayOrder, "absolute", StringComparison.OrdinalIgnoreCase))
             {
-                if (episode.AbsoluteNumber.GetValueOrDefault() != 0)
+                var absoluteInfo = episode.Seasons.FirstOrDefault(x => x.Type.Name == "absolute");
+                if (absoluteInfo is not null)
                 {
-                    item.IndexNumber = episode.AbsoluteNumber;
+                    item.IndexNumber = Convert.ToInt32(absoluteInfo.Number, CultureInfo.InvariantCulture);
                 }
             }
-            else if (episode.AiredEpisodeNumber.HasValue)
+            else
             {
-                item.IndexNumber = episode.AiredEpisodeNumber;
-            }
-            else if (episode.AiredSeason.HasValue)
-            {
-                item.ParentIndexNumber = episode.AiredSeason;
+                item.IndexNumber = episode.Number;
+                item.ParentIndexNumber = episode.SeasonNumber;
             }
 
             if (DateTime.TryParse(episode.Aired, out var date))
@@ -250,7 +257,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 // dates from tvdb are UTC but without offset or Z
                 item.PremiereDate = date;
                 item.ProductionYear = date.Year;
-            }*/
+            }
 
             for (var i = 0; i < episode.Characters.Length; ++i)
             {
