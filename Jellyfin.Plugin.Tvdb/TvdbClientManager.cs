@@ -161,7 +161,11 @@ namespace Jellyfin.Plugin.Tvdb
             CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey("episode", episodeTvdbId, language);
-            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.EpisodeExtended(episodeTvdbId, cancellationToken));
+            EpisodeExtendedOptionalParams optionalParams = new EpisodeExtendedOptionalParams
+            {
+                Meta = "translations",
+            };
+            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.EpisodeExtended(episodeTvdbId, optionalParams, cancellationToken));
         }
 
         /// <summary>
@@ -252,6 +256,16 @@ namespace Jellyfin.Plugin.Tvdb
         public Task<TvDbApiResponse<LanguageDto[]>> GetLanguagesAsync(CancellationToken cancellationToken)
         {
             return TryGetValue("languages", string.Empty, tvDbClient => tvDbClient.Languages(cancellationToken));
+        }
+
+        /// <summary>
+        /// Gets all tvdb artwork types.
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation Token.</param>
+        /// <returns>All tvdb artwork types.</returns>
+        public Task<TvDbApiResponse<ArtworkTypeDto[]>> GetArtworkTypeAsync(CancellationToken cancellationToken)
+        {
+            return TryGetValue("artworktypes", string.Empty, tvDbClient => tvDbClient.ArtworkTypes(cancellationToken));
         }
 
         /// <summary>

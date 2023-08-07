@@ -90,20 +90,22 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         {
             var list = new List<RemoteImageInfo>();
             var languages = _tvdbClientManager.GetLanguagesAsync(CancellationToken.None).Result.Data;
+            var artworkTypes = _tvdbClientManager.GetArtworkTypeAsync(CancellationToken.None).Result.Data;
 
             var imageInfo = new RemoteImageInfo
             {
                 RatingType = RatingType.Score,
                 Url = image.Image,
                 ProviderName = Name,
-                Language = languages.FirstOrDefault(lang => lang.Id == image.Language)?.Name,
-                ThumbnailUrl = TvdbUtils.BannerUrl + image.Thumbnail
+                // TVDb uses 3 character language codes
+                Language = languages.FirstOrDefault(lang => lang.Id == image.Language)?.Id.Substring(0, 2),
+                Type = TvdbUtils.GetImageTypeFromKeyType(artworkTypes.FirstOrDefault(x => x.Id == image.Type)?.Name),
+                ThumbnailUrl = image.Thumbnail
             };
 
             imageInfo.Width = Convert.ToInt32(image.Width, CultureInfo.InvariantCulture);
             imageInfo.Height = Convert.ToInt32(image.Height, CultureInfo.InvariantCulture);
 
-            // imageInfo.Type = TvdbUtils.GetImageTypeFromKeyType(image.KeyType);
             list.Add(imageInfo);
 
             var isLanguageEn = string.Equals(preferredLanguage, "en", StringComparison.OrdinalIgnoreCase);

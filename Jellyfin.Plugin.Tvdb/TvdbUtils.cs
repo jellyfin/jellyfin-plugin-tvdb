@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MediaBrowser.Model.Entities;
 
 namespace Jellyfin.Plugin.Tvdb
@@ -24,17 +24,22 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="keyType">Key type.</param>
         /// <returns>Image type.</returns>
         /// <exception cref="ArgumentException">Unknown key type.</exception>
-        public static ImageType GetImageTypeFromKeyType(string keyType)
+        public static ImageType GetImageTypeFromKeyType(string? keyType)
         {
-            switch (keyType.ToLowerInvariant())
+            if (!string.IsNullOrEmpty(keyType))
             {
-                case "poster":
-                case "season": return ImageType.Primary;
-                case "series":
-                case "seasonwide": return ImageType.Banner;
-                case "fanart": return ImageType.Backdrop;
-                default: throw new ArgumentException($"Invalid or unknown keytype: {keyType}", nameof(keyType));
+                switch (keyType.ToLowerInvariant())
+                {
+                    case "poster": return ImageType.Primary;
+                    case "banner": return ImageType.Banner;
+                    case "background": return ImageType.Backdrop;
+                    case "clearlogo":
+                    case "icon": return ImageType.Logo;
+                    default: throw new ArgumentException($"Invalid or unknown keytype: {keyType}", nameof(keyType));
+                }
             }
+
+            throw new ArgumentException($"Null keytype");
         }
 
         /// <summary>
