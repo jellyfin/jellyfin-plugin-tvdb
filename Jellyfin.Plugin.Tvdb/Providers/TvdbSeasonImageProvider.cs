@@ -13,7 +13,6 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
 using TvDbSharper;
-using TvDbSharper.Dto;
 using RatingType = MediaBrowser.Model.Dto.RatingType;
 
 namespace Jellyfin.Plugin.Tvdb.Providers
@@ -117,10 +116,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             imageInfo.Width = Convert.ToInt32(image.Width, CultureInfo.InvariantCulture);
             imageInfo.Height = Convert.ToInt32(image.Height, CultureInfo.InvariantCulture);
 
-
             // imageInfo.Type = TvdbUtils.GetImageTypeFromKeyType(image.Type);
             list.Add(imageInfo);
-            
 
             var isLanguageEn = string.Equals(preferredLanguage, "en", StringComparison.OrdinalIgnoreCase);
             return list.OrderByDescending(i =>

@@ -168,9 +168,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 remoteResult.ProductionYear = date.Year;
             }
 
-            if (!string.IsNullOrEmpty(series.ImdbId))
+            var imdbID = series.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id;
+            if (!string.IsNullOrEmpty(imdbID))
             {
-                remoteResult.SetProviderId(MetadataProvider.Imdb, series.ImdbId);
+                remoteResult.SetProviderId(MetadataProvider.Imdb, imdbID);
             }
 
             remoteResult.SetProviderId(MetadataProvider.Tvdb, series.Id.ToString(CultureInfo.InvariantCulture));

@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Extensions;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
@@ -195,7 +197,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             return result;
         }
 
-        private static async MetadataResult<Episode> MapEpisodeToResult(EpisodeInfo id, EpisodeExtendedRecordDto episode)
+        private static MetadataResult<Episode> MapEpisodeToResult(EpisodeInfo id, EpisodeExtendedRecordDto episode)
         {
             var result = new MetadataResult<Episode>
             {
@@ -216,16 +218,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             var item = result.Item;
             item.SetProviderId(TvdbPlugin.ProviderId, episode.Id.ToString(CultureInfo.InvariantCulture));
-            RemoteIDDto[] remoteIDs = episode.RemoteIds;
-            if (remoteIDs != null)
+            var imdbID = episode.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id;
+            if (!string.IsNullOrEmpty(imdbID))
             {
-                foreach (var remoteID in remoteIDs)
-                {
-                    if (remoteID.SourceName == "IMDB")
-                    {
-                        item.SetProviderId(MetadataProvider.Imdb, remoteID.Id);
-                    }
-                }
+                item.SetProviderId(MetadataProvider.Imdb, imdbID);
             }
 
             /*if (string.Equals(id.SeriesDisplayOrder, "dvd", StringComparison.OrdinalIgnoreCase))

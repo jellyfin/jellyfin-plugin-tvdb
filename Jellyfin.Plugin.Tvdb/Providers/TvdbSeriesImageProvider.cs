@@ -12,7 +12,6 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
 using TvDbSharper;
-using TvDbSharper.Dto;
 using RatingType = MediaBrowser.Model.Dto.RatingType;
 using Series = MediaBrowser.Controller.Entities.TV.Series;
 
@@ -68,63 +67,44 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var language = item.GetPreferredMetadataLanguage();
             var remoteImages = new List<RemoteImageInfo>();
             var tvdbId = Convert.ToInt32(item.GetProviderId(TvdbPlugin.ProviderId), CultureInfo.InvariantCulture);
-            var allowedKeyTypes = _tvdbClientManager.GetImageKeyTypesForSeriesAsync(tvdbId, language, cancellationToken)
-                .ConfigureAwait(false);
-            await foreach (KeyType keyType in allowedKeyTypes)
+            var seriesInfo = await _tvdbClientManager.GetSeriesImagesAsync(tvdbId, language, cancellationToken).ConfigureAwait(false);
+            var seriesImages = seriesInfo.Data.Artworks;
+
+            foreach (var image in seriesImages)
             {
-                var imageQuery = new ImagesQuery
-                {
-                    KeyType = keyType
-                };
                 try
                 {
-                    var imageResults =
-                        await _tvdbClientManager.GetImagesAsync(tvdbId, imageQuery, language, cancellationToken)
-                            .ConfigureAwait(false);
-
-                    remoteImages.AddRange(GetImages(imageResults.Data, language));
+                    var artworkExtended = await _tvdbClientManager.GetImageAsync(Convert.ToInt32(image.Id, CultureInfo.InvariantCulture), language, cancellationToken).ConfigureAwait(false);
+                    remoteImages.AddRange(GetImages(artworkExtended.Data, language));
                 }
                 catch (TvDbServerException)
                 {
-                    _logger.LogDebug(
-                        "No images of type {KeyType} exist for series {TvDbId}:{Name}",
-                        keyType,
-                        tvdbId,
-                        item.Name);
+                    // Ignore
                 }
             }
 
             return remoteImages;
         }
 
-        private IEnumerable<RemoteImageInfo> GetImages(Image[] images, string preferredLanguage)
+        private IEnumerable<RemoteImageInfo> GetImages(ArtworkExtendedRecordDto image, string preferredLanguage)
         {
             var list = new List<RemoteImageInfo>();
             var languages = _tvdbClientManager.GetLanguagesAsync(CancellationToken.None).Result.Data;
 
-            foreach (Image image in images)
+            var imageInfo = new RemoteImageInfo
             {
-                var imageInfo = new RemoteImageInfo
-                {
-                    RatingType = RatingType.Score,
-                    CommunityRating = (double?)image.RatingsInfo.Average,
-                    VoteCount = image.RatingsInfo.Count,
-                    Url = TvdbUtils.BannerUrl + image.FileName,
-                    ProviderName = Name,
-                    Language = languages.FirstOrDefault(lang => lang.Id == image.LanguageId)?.Abbreviation,
-                    ThumbnailUrl = TvdbUtils.BannerUrl + image.Thumbnail
-                };
+                RatingType = RatingType.Score,
+                Url = image.Image,
+                ProviderName = Name,
+                Language = languages.FirstOrDefault(lang => lang.Id == image.Language)?.Name,
+                ThumbnailUrl = TvdbUtils.BannerUrl + image.Thumbnail
+            };
 
-                var resolution = image.Resolution.Split('x');
-                if (resolution.Length == 2)
-                {
-                    imageInfo.Width = Convert.ToInt32(resolution[0], CultureInfo.InvariantCulture);
-                    imageInfo.Height = Convert.ToInt32(resolution[1], CultureInfo.InvariantCulture);
-                }
+            imageInfo.Width = Convert.ToInt32(image.Width, CultureInfo.InvariantCulture);
+            imageInfo.Height = Convert.ToInt32(image.Height, CultureInfo.InvariantCulture)
 
-                imageInfo.Type = TvdbUtils.GetImageTypeFromKeyType(image.KeyType);
-                list.Add(imageInfo);
-            }
+            // imageInfo.Type = TvdbUtils.GetImageTypeFromKeyType(image.KeyType);
+            list.Add(imageInfo);
 
             var isLanguageEn = string.Equals(preferredLanguage, "en", StringComparison.OrdinalIgnoreCase);
             return list.OrderByDescending(i =>

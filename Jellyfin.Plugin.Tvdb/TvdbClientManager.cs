@@ -79,7 +79,7 @@ namespace Jellyfin.Plugin.Tvdb
 
                 try
                 {
-                    if (tvDbClientInfo.TokenUpdatedAt < DateTime.UtcNow.Subtract(TimeSpan.FromHours(25)))
+                    if (tvDbClientInfo.TokenUpdatedAt < DateTime.UtcNow.Subtract(TimeSpan.FromDays(25)))
                     {
                         await tvDbClient.Login(ProjectApiKey, ApiKey).ConfigureAwait(false);
                         tvDbClientInfo.TokenUpdatedAt = DateTime.UtcNow;
