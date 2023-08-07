@@ -129,7 +129,11 @@ namespace Jellyfin.Plugin.Tvdb
             CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey("series", tvdbId, language);
-            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.SeriesExtended(tvdbId, cancellationToken));
+            SeriesExtendedOptionalParams optionalParams = new SeriesExtendedOptionalParams
+            {
+                Meta = "translations",
+            };
+            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.SeriesExtended(tvdbId, optionalParams, cancellationToken));
         }
 
         /// <summary>
@@ -169,35 +173,19 @@ namespace Jellyfin.Plugin.Tvdb
         }
 
         /// <summary>
-        /// Get series by imdb.
+        /// Get series by remoteId.
         /// </summary>
-        /// <param name="imdbId">The imdb id.</param>
+        /// <param name="remoteId">The remote id. Supported RemoteIds are: IMDB, TMDB, Zap2It, TV Maze and EIDR.</param>
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The series search result.</returns>
-        public Task<TvDbApiResponse<SearchByRemoteIdResultDto[]>> GetSeriesByImdbIdAsync(
-            string imdbId,
+        public Task<TvDbApiResponse<SearchByRemoteIdResultDto[]>> GetSeriesByRemoteIdAsync(
+            string remoteId,
             string language,
             CancellationToken cancellationToken)
         {
-            var cacheKey = GenerateKey("series", imdbId, language);
-            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.SearchResultsByRemoteId(imdbId, cancellationToken));
-        }
-
-        /// <summary>
-        /// Get series by zap2it id.
-        /// </summary>
-        /// <param name="zap2ItId">Zap2it id.</param>
-        /// <param name="language">Metadata language.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>The series search result.</returns>
-        public Task<TvDbApiResponse<SearchByRemoteIdResultDto[]>> GetSeriesByZap2ItIdAsync(
-            string zap2ItId,
-            string language,
-            CancellationToken cancellationToken)
-        {
-            var cacheKey = GenerateKey("series", zap2ItId, language);
-            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.SearchResultsByRemoteId(zap2ItId, cancellationToken));
+            var cacheKey = GenerateKey("series", remoteId, language);
+            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.SearchResultsByRemoteId(remoteId, cancellationToken));
         }
 
         /// <summary>
@@ -307,7 +295,18 @@ namespace Jellyfin.Plugin.Tvdb
                 episodeQuery.AirDate = searchInfo.PremiereDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             }
 
-            TvDbApiResponse<GetSeriesEpisodesResponseData> apiResponse = await TryGetValue("EpisodeTvdbId", language, tvDbClient => tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), "default", episodeQuery, cancellationToken)).ConfigureAwait(false);
+            TvDbApiResponse<GetSeriesEpisodesResponseData> apiResponse = new TvDbApiResponse<GetSeriesEpisodesResponseData>();
+            switch (searchInfo.SeriesDisplayOrder)
+            {
+                case "dvd":
+                case "absolute":
+                    apiResponse = await TryGetValue("EpisodeTvdbId", language, tvDbClient => tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), searchInfo.SeriesDisplayOrder, episodeQuery, cancellationToken)).ConfigureAwait(false);
+                    break;
+                default:
+                    apiResponse = await TryGetValue("EpisodeTvdbId", language, tvDbClient => tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), "default", episodeQuery, cancellationToken)).ConfigureAwait(false);
+                    break;
+            }
+
             GetSeriesEpisodesResponseData apiData = apiResponse.Data;
 
             if (apiData == null || apiData.Episodes == null || apiData.Episodes.Length == 0)

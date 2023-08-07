@@ -115,7 +115,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 {
                     tvdbId = await GetSeriesByRemoteId(
                         imdbId,
-                        MetadataProvider.Imdb.ToString(),
                         seriesInfo.MetadataLanguage,
                         seriesInfo.Name,
                         cancellationToken).ConfigureAwait(false);
@@ -129,7 +128,19 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 {
                     tvdbId = await GetSeriesByRemoteId(
                         zap2ItId,
-                        MetadataProvider.Zap2It.ToString(),
+                        seriesInfo.MetadataLanguage,
+                        seriesInfo.Name,
+                        cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            if (string.IsNullOrEmpty(tvdbId))
+            {
+                var tmdbId = seriesInfo.GetProviderId(MetadataProvider.Tmdb);
+                if (!string.IsNullOrEmpty(tmdbId))
+                {
+                    tvdbId = await GetSeriesByRemoteId(
+                        tmdbId,
                         seriesInfo.MetadataLanguage,
                         seriesInfo.Name,
                         cancellationToken).ConfigureAwait(false);
@@ -198,7 +209,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 series.SetProviderId(MetadataProvider.Imdb, imdbId);
                 tvdbId = await GetSeriesByRemoteId(
                     imdbId,
-                    MetadataProvider.Imdb.ToString(),
                     metadataLanguage,
                     info.Name,
                     cancellationToken).ConfigureAwait(false);
@@ -209,7 +219,16 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 series.SetProviderId(MetadataProvider.Zap2It, zap2It);
                 tvdbId = await GetSeriesByRemoteId(
                     zap2It,
-                    MetadataProvider.Zap2It.ToString(),
+                    metadataLanguage,
+                    info.Name,
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            if (seriesProviderIds.TryGetValue(MetadataProvider.Tmdb.ToString(), out var tmdbId) && !string.IsNullOrEmpty(tmdbId))
+            {
+                series.SetProviderId(MetadataProvider.Tmdb, tmdbId);
+                tvdbId = await GetSeriesByRemoteId(
+                    tmdbId,
                     metadataLanguage,
                     info.Name,
                     cancellationToken).ConfigureAwait(false);
@@ -241,7 +260,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 foreach (CharacterDto character in characterResult.Data.Characters)
                 {
                     var actor = await _tvdbClientManager
-                        .GetActorAsync(Convert.ToInt32(character.Id, CultureInfo.InvariantCulture), metadataLanguage, cancellationToken).ConfigureAwait(false);
+                        .GetActorAsync(Convert.ToInt32(character.PeopleId, CultureInfo.InvariantCulture), metadataLanguage, cancellationToken).ConfigureAwait(false);
                     people.Add(actor.Data);
                 }
 
@@ -253,29 +272,19 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
         }
 
-        private async Task<string?> GetSeriesByRemoteId(string id, string idType, string language, string seriesName, CancellationToken cancellationToken)
+        private async Task<string?> GetSeriesByRemoteId(string id, string language, string seriesName, CancellationToken cancellationToken)
         {
-            TvDbApiResponse<SearchByRemoteIdResultDto[]>? result = null;
+            var result = await _tvdbClientManager.GetSeriesByRemoteIdAsync(id, language, cancellationToken)
+                        .ConfigureAwait(false);
+            var resultData = result.Data;
 
-            try
+            if (resultData == null || resultData.Length == 0)
             {
-                if (string.Equals(idType, MetadataProvider.Zap2It.ToString(), StringComparison.OrdinalIgnoreCase))
-                {
-                    result = await _tvdbClientManager.GetSeriesByZap2ItIdAsync(id, language, cancellationToken)
-                        .ConfigureAwait(false);
-                }
-                else
-                {
-                    result = await _tvdbClientManager.GetSeriesByImdbIdAsync(id, language, cancellationToken)
-                        .ConfigureAwait(false);
-                }
-            }
-            catch (TvDbServerException e)
-            {
-                _logger.LogError(e, "Failed to retrieve series with remote id {RemoteId}:{SeriesName}", id, seriesName);
+                _logger.LogWarning("TvdbSearch: No series found for id: {0}", id);
+                return null;
             }
 
-            return result?.Data.FirstOrDefault()?.Series.Id.ToString(CultureInfo.InvariantCulture);
+            return resultData.FirstOrDefault()?.Series.Id.ToString(CultureInfo.InvariantCulture);
         }
 
         /// <summary>
@@ -453,14 +462,15 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         {
             Series series = result.Item;
             series.SetProviderId(TvdbPlugin.ProviderId, tvdbSeries.Id.ToString(CultureInfo.InvariantCulture));
-            series.Name = tvdbSeries.Name;
-            series.Overview = (tvdbSeries.Overview ?? string.Empty).Trim();
+            series.Name = tvdbSeries.Translations.NameTranslations.FirstOrDefault(x => x.Language.Substring(0, 2) == metadataLanguage)?.Name;
+            series.Overview = tvdbSeries.Translations.OverviewTranslations.FirstOrDefault(x => x.Language.Substring(0, 2) == metadataLanguage)?.Overview;
             result.ResultLanguage = metadataLanguage;
             series.AirDays = TVUtils.GetAirDays(tvdbSeries.AirsDays.ToString());
             series.AirTime = tvdbSeries.AirsTime;
             // series.CommunityRating = (float?)tvdbSeries.SiteRating;
             var imdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id.ToString();
             var zap2ItId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "Zap2It")?.Id.ToString();
+            var tmdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "TMDB")?.Id.ToString();
             if (!string.IsNullOrEmpty(imdbId))
             {
                 series.SetProviderId(MetadataProvider.Imdb, imdbId);
