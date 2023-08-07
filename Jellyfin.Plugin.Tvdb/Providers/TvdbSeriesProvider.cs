@@ -490,7 +490,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 series.AddGenre(genre.Name);
             }
 
-            if (!string.IsNullOrEmpty(tvdbSeries.OriginalNetwork.Name))
+            if (tvdbSeries.OriginalNetwork is not null)
             {
                 series.AddStudio(tvdbSeries.OriginalNetwork.Name);
             }

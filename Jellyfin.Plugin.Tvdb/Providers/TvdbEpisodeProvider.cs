@@ -259,42 +259,45 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 item.ProductionYear = date.Year;
             }
 
-            for (var i = 0; i < episode.Characters.Length; ++i)
+            if (episode.Characters is not null)
             {
-                var currentActor = episode.Characters[i];
-                if (currentActor.PeopleType == "Actor")
+                for (var i = 0; i < episode.Characters.Length; ++i)
                 {
-                    result.AddPerson(new PersonInfo
+                    var currentActor = episode.Characters[i];
+                    if (currentActor.PeopleType == "Actor")
                     {
-                        Type = PersonType.Actor,
-                        Name = currentActor.PersonName,
-                        Role = currentActor.Name
-                    });
-                }
-                else if (currentActor.PeopleType == "Director")
-                {
-                    result.AddPerson(new PersonInfo
+                        result.AddPerson(new PersonInfo
+                        {
+                            Type = PersonType.Actor,
+                            Name = currentActor.PersonName,
+                            Role = currentActor.Name
+                        });
+                    }
+                    else if (currentActor.PeopleType == "Director")
                     {
-                        Type = PersonType.Director,
-                        Name = currentActor.PersonName
-                    });
-                }
-                else if (currentActor.PeopleType == "Writer")
-                {
-                    result.AddPerson(new PersonInfo
+                        result.AddPerson(new PersonInfo
+                        {
+                            Type = PersonType.Director,
+                            Name = currentActor.PersonName
+                        });
+                    }
+                    else if (currentActor.PeopleType == "Writer")
                     {
-                        Type = PersonType.Writer,
-                        Name = currentActor.PersonName
-                    });
-                }
-                else if (currentActor.PeopleType == "Guest Star")
-                {
-                    result.AddPerson(new PersonInfo
+                        result.AddPerson(new PersonInfo
+                        {
+                            Type = PersonType.Writer,
+                            Name = currentActor.PersonName
+                        });
+                    }
+                    else if (currentActor.PeopleType == "Guest Star")
                     {
-                        Type = PersonType.GuestStar,
-                        Name = currentActor.PersonName,
-                        Role = currentActor.Name
-                    });
+                        result.AddPerson(new PersonInfo
+                        {
+                            Type = PersonType.GuestStar,
+                            Name = currentActor.PersonName,
+                            Role = currentActor.Name
+                        });
+                    }
                 }
             }
 
