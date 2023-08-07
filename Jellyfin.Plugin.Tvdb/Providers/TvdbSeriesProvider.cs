@@ -221,7 +221,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     await _tvdbClientManager
                         .GetSeriesByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, cancellationToken)
                         .ConfigureAwait(false);
-                await MapSeriesToResult(result, seriesResult.Data, metadataLanguage).ConfigureAwait(false);
+                MapSeriesToResult(result, seriesResult.Data, metadataLanguage);
             }
             catch (TvDbServerException e)
             {
@@ -235,9 +235,17 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             try
             {
-                var actorsResult = await _tvdbClientManager
-                    .GetActorsAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, cancellationToken).ConfigureAwait(false);
-                MapActorsToResult(result, actorsResult.Data);
+                var characterResult = await _tvdbClientManager
+                    .GetSeriesByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, cancellationToken).ConfigureAwait(false);
+                List<PeopleBaseRecordDto> people = new List<PeopleBaseRecordDto>();
+                foreach (CharacterDto character in characterResult.Data.Characters)
+                {
+                    var actor = await _tvdbClientManager
+                        .GetActorAsync(Convert.ToInt32(character.Id, CultureInfo.InvariantCulture), metadataLanguage, cancellationToken).ConfigureAwait(false);
+                    people.Add(actor.Data);
+                }
+
+                MapActorsToResult(result, people);
             }
             catch (TvDbServerException e)
             {
@@ -247,7 +255,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private async Task<string?> GetSeriesByRemoteId(string id, string idType, string language, string seriesName, CancellationToken cancellationToken)
         {
-            TvDbResponse<SeriesSearchResult[]>? result = null;
+            TvDbApiResponse<SearchByRemoteIdResultDto[]>? result = null;
 
             try
             {
@@ -267,7 +275,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 _logger.LogError(e, "Failed to retrieve series with remote id {RemoteId}:{SeriesName}", id, seriesName);
             }
 
-            return result?.Data.FirstOrDefault()?.Id.ToString(CultureInfo.InvariantCulture);
+            return result?.Data.FirstOrDefault()?.Series.Id.ToString(CultureInfo.InvariantCulture);
         }
 
         /// <summary>
@@ -301,7 +309,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var comparableName = GetComparableName(parsedName.Name);
 
             var list = new List<Tuple<List<string>, RemoteSearchResult>>();
-            TvDbResponse<SeriesSearchResult[]> result;
+            TvDbApiResponse<SearchResultDto[]> result;
             try
             {
                 result = await _tvdbClientManager.GetSeriesByNameAsync(comparableName, language, cancellationToken)
@@ -317,12 +325,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             {
                 var tvdbTitles = new List<string>
                 {
-                    seriesSearchResult.SeriesName
+                    seriesSearchResult.Name
                 };
                 tvdbTitles.AddRange(seriesSearchResult.Aliases);
 
                 DateTime? firstAired = null;
-                if (DateTime.TryParse(seriesSearchResult.FirstAired, out var parsedFirstAired))
+                if (DateTime.TryParse(seriesSearchResult.FirstAirTime, out var parsedFirstAired))
                 {
                     firstAired = parsedFirstAired;
                 }
@@ -342,15 +350,25 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
                 try
                 {
-                    var seriesSesult =
-                        await _tvdbClientManager.GetSeriesByIdAsync(seriesSearchResult.Id, language, cancellationToken)
+                    var seriesResult =
+                        await _tvdbClientManager.GetSeriesByIdAsync(Convert.ToInt32(seriesSearchResult.Id, CultureInfo.InvariantCulture), language, cancellationToken)
                             .ConfigureAwait(false);
-                    remoteSearchResult.SetProviderId(MetadataProvider.Imdb, seriesSesult.Data.ImdbId);
-                    remoteSearchResult.SetProviderId(MetadataProvider.Zap2It, seriesSesult.Data.Zap2itId);
+                    var imdbId = seriesResult.Data.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id.ToString();
+                    if (!string.IsNullOrEmpty(imdbId))
+                    {
+                        remoteSearchResult.SetProviderId(MetadataProvider.Imdb, imdbId);
+                    }
+
+                    var zap2ItId = seriesResult.Data.RemoteIds.FirstOrDefault(x => x.SourceName == "Zap2It")?.Id.ToString();
+
+                    if (!string.IsNullOrEmpty(zap2ItId))
+                    {
+                        remoteSearchResult.SetProviderId(MetadataProvider.Zap2It, zap2ItId);
+                    }
                 }
                 catch (TvDbServerException e)
                 {
-                    _logger.LogError(e, "Unable to retrieve series with id {TvdbId}:{SeriesName}", seriesSearchResult.Id, seriesSearchResult.SeriesName);
+                    _logger.LogError(e, "Unable to retrieve series with id {TvdbId}:{SeriesName}", seriesSearchResult.Id, seriesSearchResult.Name);
                 }
 
                 remoteSearchResult.SetProviderId(TvdbPlugin.ProviderId, seriesSearchResult.Id.ToString(CultureInfo.InvariantCulture));
@@ -386,21 +404,20 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             return name.Trim();
         }
 
-        private static void MapActorsToResult(MetadataResult<Series> result, IEnumerable<Actor> actors)
+        private static void MapActorsToResult(MetadataResult<Series> result, IEnumerable<PeopleBaseRecordDto> actors)
         {
-            foreach (Actor actor in actors)
+            foreach (PeopleBaseRecordDto actor in actors)
             {
                 var personInfo = new PersonInfo
                 {
                     Type = PersonType.Actor,
                     Name = (actor.Name ?? string.Empty).Trim(),
-                    Role = actor.Role,
-                    SortOrder = actor.SortOrder
+                    Role = actor.Name
                 };
 
                 if (!string.IsNullOrEmpty(actor.Image))
                 {
-                    personInfo.ImageUrl = TvdbUtils.BannerUrl + actor.Image;
+                    personInfo.ImageUrl = actor.Image;
                 }
 
                 if (!string.IsNullOrWhiteSpace(personInfo.Name))
@@ -432,7 +449,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
         }
 
-        private async Task MapSeriesToResult(MetadataResult<Series> result, SeriesExtendedRecordDto tvdbSeries, string metadataLanguage)
+        private static void MapSeriesToResult(MetadataResult<Series> result, SeriesExtendedRecordDto tvdbSeries, string metadataLanguage)
         {
             Series series = result.Item;
             series.SetProviderId(TvdbPlugin.ProviderId, tvdbSeries.Id.ToString(CultureInfo.InvariantCulture));
@@ -441,10 +458,20 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             result.ResultLanguage = metadataLanguage;
             series.AirDays = TVUtils.GetAirDays(tvdbSeries.AirsDays.ToString());
             series.AirTime = tvdbSeries.AirsTime;
-            series.CommunityRating = (float?)tvdbSeries.SiteRating;
-            series.SetProviderId(MetadataProvider.Imdb, tvdbSeries.ImdbId);
-            series.SetProviderId(MetadataProvider.Zap2It, tvdbSeries.Zap2itId);
-            if (Enum.TryParse(tvdbSeries.Status, true, out SeriesStatus seriesStatus))
+            // series.CommunityRating = (float?)tvdbSeries.SiteRating;
+            var imdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id.ToString();
+            var zap2ItId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "Zap2It")?.Id.ToString();
+            if (!string.IsNullOrEmpty(imdbId))
+            {
+                series.SetProviderId(MetadataProvider.Imdb, imdbId);
+            }
+
+            if (!string.IsNullOrEmpty(zap2ItId))
+            {
+                series.SetProviderId(MetadataProvider.Zap2It, zap2ItId);
+            }
+
+            if (Enum.TryParse(tvdbSeries.Status.Name, true, out SeriesStatus seriesStatus))
             {
                 series.Status = seriesStatus;
             }
@@ -456,44 +483,24 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 series.ProductionYear = date.Year;
             }
 
-            if (!string.IsNullOrEmpty(tvdbSeries.Runtime) && double.TryParse(tvdbSeries.Runtime, out double runtime))
+            series.RunTimeTicks = TimeSpan.FromMinutes(tvdbSeries.AverageRuntime).Ticks;
+
+            foreach (var genre in tvdbSeries.Genres)
             {
-                series.RunTimeTicks = TimeSpan.FromMinutes(runtime).Ticks;
+                series.AddGenre(genre.Name);
             }
 
-            foreach (var genre in tvdbSeries.Genre)
+            if (!string.IsNullOrEmpty(tvdbSeries.OriginalNetwork.Name))
             {
-                series.AddGenre(genre);
-            }
-
-            if (!string.IsNullOrEmpty(tvdbSeries.Network))
-            {
-                series.AddStudio(tvdbSeries.Network);
+                series.AddStudio(tvdbSeries.OriginalNetwork.Name);
             }
 
             if (result.Item.Status.HasValue && result.Item.Status.Value == SeriesStatus.Ended)
             {
-                try
+                if (tvdbSeries.Seasons.Length != 0)
                 {
-                    var episodeSummary = await _tvdbClientManager.GetSeriesEpisodeSummaryAsync(tvdbSeries.Id, metadataLanguage, CancellationToken.None).ConfigureAwait(false);
-
-                    if (episodeSummary.Data.AiredSeasons.Length != 0)
-                    {
-                        var maxSeasonNumber = episodeSummary.Data.AiredSeasons.Max(s => Convert.ToInt32(s, CultureInfo.InvariantCulture));
-                        var episodeQuery = new EpisodeQuery
-                        {
-                            AiredSeason = maxSeasonNumber
-                        };
-                        var episodesPage = await _tvdbClientManager.GetEpisodesPageAsync(tvdbSeries.Id, episodeQuery, metadataLanguage, CancellationToken.None).ConfigureAwait(false);
-
-                        result.Item.EndDate = episodesPage.Data
-                            .Select(e => DateTime.TryParse(e.FirstAired, out var firstAired) ? firstAired : (DateTime?)null)
-                            .Max();
-                    }
-                }
-                catch (TvDbServerException e)
-                {
-                    _logger.LogError(e, "Failed to find series end date for series {TvdbId}:{SeriesName}", tvdbSeries.Id, tvdbSeries?.SeriesName ?? result.Item?.Name);
+                    var maxSeasonNumber = tvdbSeries.Seasons.Max(s => Convert.ToInt32(s.Number, CultureInfo.InvariantCulture));
+                    result.Item.EndDate = DateTime.ParseExact(tvdbSeries.LastAired, "yyyy-mm-dd", CultureInfo.InvariantCulture);
                 }
             }
         }

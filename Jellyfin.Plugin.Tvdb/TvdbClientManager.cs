@@ -164,7 +164,6 @@ namespace Jellyfin.Plugin.Tvdb
             return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.EpisodeExtended(episodeTvdbId, cancellationToken));
         }
 
-        /* TVShaper 4.0.10 does not support this remote id yet
         /// <summary>
         /// Get series by imdb.
         /// </summary>
@@ -172,13 +171,13 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The series search result.</returns>
-        public Task<TvDbApiResponse<SearchResultDto[]>> GetSeriesByImdbIdAsync(
+        public Task<TvDbApiResponse<SearchByRemoteIdResultDto[]>> GetSeriesByImdbIdAsync(
             string imdbId,
             string language,
             CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey("series", imdbId, language);
-            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Search(imdbId, cancellationToken));
+            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.SearchResultsByRemoteId(imdbId, cancellationToken));
         }
 
         /// <summary>
@@ -188,14 +187,14 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The series search result.</returns>
-        public Task<TvDbResponse<SeriesSearchResult[]>> GetSeriesByZap2ItIdAsync(
+        public Task<TvDbApiResponse<SearchByRemoteIdResultDto[]>> GetSeriesByZap2ItIdAsync(
             string zap2ItId,
             string language,
             CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey("series", zap2ItId, language);
-            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Search.SearchSeriesByZap2ItIdAsync(zap2ItId, cancellationToken));
-        }*/
+            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.SearchResultsByRemoteId(zap2ItId, cancellationToken));
+        }
 
         /// <summary>
         /// Get actors by tvdb id.
@@ -214,7 +213,7 @@ namespace Jellyfin.Plugin.Tvdb
         }
 
         /// <summary>
-        /// Get image by series tvdb id.
+        /// Get image by image tvdb id.
         /// </summary>
         /// <param name="imageTvdbId"> Tvdb id.</param>
         /// <param name="language">Metadata language.</param>
@@ -228,7 +227,6 @@ namespace Jellyfin.Plugin.Tvdb
             var cacheKey = GenerateKey("image", imageTvdbId, language);
             return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.ArtworkExtended(imageTvdbId, cancellationToken));
         }
-
 
         /// <summary>
         /// Get image by series tvdb id.

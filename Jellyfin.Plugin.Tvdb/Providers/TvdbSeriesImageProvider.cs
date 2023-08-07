@@ -101,7 +101,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             };
 
             imageInfo.Width = Convert.ToInt32(image.Width, CultureInfo.InvariantCulture);
-            imageInfo.Height = Convert.ToInt32(image.Height, CultureInfo.InvariantCulture)
+            imageInfo.Height = Convert.ToInt32(image.Height, CultureInfo.InvariantCulture);
 
             // imageInfo.Type = TvdbUtils.GetImageTypeFromKeyType(image.KeyType);
             list.Add(imageInfo);
