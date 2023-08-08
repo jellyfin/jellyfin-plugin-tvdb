@@ -76,80 +76,62 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             var seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(Convert.ToInt32(seasonTvdbId, CultureInfo.InvariantCulture), language, cancellationToken).ConfigureAwait(false);
             var seasonImages = seasonInfo.Data.Artwork;
+            var languages = _tvdbClientManager.GetLanguagesAsync(CancellationToken.None).Result.Data;
+            var artworkTypes = _tvdbClientManager.GetArtworkTypeAsync(CancellationToken.None).Result.Data;
 
             foreach (var image in seasonImages)
             {
+                ImageType type;
+                // Checks if valid image type, if not, skip
                 try
                 {
-                    var artworkExtended = await _tvdbClientManager.GetImageAsync(Convert.ToInt32(image.Id, CultureInfo.InvariantCulture), language, cancellationToken).ConfigureAwait(false);
-                    remoteImages.AddRange(GetImages(artworkExtended.Data, seasonNumber.ToString(CultureInfo.InvariantCulture), language));
+                    type = TvdbUtils.GetImageTypeFromKeyType(artworkTypes.FirstOrDefault(x => x.Id == image.Type && x.RecordType == "season")?.Name);
                 }
-                catch (TvDbServerException)
+                catch (Exception)
                 {
-                    // Ignore
+                    continue;
                 }
+
+                var imageInfo = new RemoteImageInfo
+                {
+                    RatingType = RatingType.Score,
+                    Url = image.Image,
+                    Width = Convert.ToInt32(image.Width, CultureInfo.InvariantCulture),
+                    Height = Convert.ToInt32(image.Height, CultureInfo.InvariantCulture),
+                    Type = type,
+                    ProviderName = Name,
+                    ThumbnailUrl = image.Thumbnail
+                };
+
+                // Tvdb uses 3 letter code for language (prob ISO 639-2)
+                var artworkLanguage = languages.FirstOrDefault(lang => lang.Id == image.Language)?.Id;
+                if (!string.IsNullOrEmpty(artworkLanguage))
+                {
+                    imageInfo.Language = new CultureInfo(artworkLanguage).TwoLetterISOLanguageName;
+                }
+
+                remoteImages.Add(imageInfo);
             }
 
-            return remoteImages;
+            return remoteImages.OrderByDescending(i =>
+            {
+                if (string.Equals(language, i.Language, StringComparison.OrdinalIgnoreCase))
+                {
+                    return 2;
+                }
+                else if (!string.IsNullOrEmpty(i.Language))
+                {
+                    return 1;
+                }
+
+                return 0;
+            });
         }
 
         /// <inheritdoc />
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
             return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
-        }
-
-        private IEnumerable<RemoteImageInfo> GetImages(ArtworkExtendedRecordDto image, string seasonNumber, string preferredLanguage)
-        {
-            var list = new List<RemoteImageInfo>();
-            // any languages with null ids are ignored
-            var languages = _tvdbClientManager.GetLanguagesAsync(CancellationToken.None).Result.Data;
-            var artworkTypes = _tvdbClientManager.GetArtworkTypeAsync(CancellationToken.None).Result.Data;
-            var imageInfo = new RemoteImageInfo
-            {
-                RatingType = RatingType.Score,
-                Url = image.Image,
-                ProviderName = Name,
-                Type = TvdbUtils.GetImageTypeFromKeyType(artworkTypes.FirstOrDefault(x => x.Id == image.Type)?.Name),
-                ThumbnailUrl = image.Thumbnail
-            };
-            // Tvdb uses 3 letter code for language (prob ISO 639-2)
-            var language = languages.FirstOrDefault(lang => lang.Id == image.Language)?.Id;
-            if (!string.IsNullOrEmpty(language))
-            {
-                imageInfo.Language = new CultureInfo(language).TwoLetterISOLanguageName;
-            }
-
-            imageInfo.Width = Convert.ToInt32(image.Width, CultureInfo.InvariantCulture);
-            imageInfo.Height = Convert.ToInt32(image.Height, CultureInfo.InvariantCulture);
-
-            list.Add(imageInfo);
-
-            var isLanguageEn = string.Equals(preferredLanguage, "en", StringComparison.OrdinalIgnoreCase);
-            return list.OrderByDescending(i =>
-                {
-                    if (string.Equals(preferredLanguage, i.Language, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return 3;
-                    }
-
-                    if (!isLanguageEn)
-                    {
-                        if (string.Equals("en", i.Language, StringComparison.OrdinalIgnoreCase))
-                        {
-                            return 2;
-                        }
-                    }
-
-                    if (string.IsNullOrEmpty(i.Language))
-                    {
-                        return isLanguageEn ? 3 : 2;
-                    }
-
-                    return 0;
-                })
-                .ThenByDescending(i => i.CommunityRating ?? 0)
-                .ThenByDescending(i => i.VoteCount ?? 0);
         }
     }
 }

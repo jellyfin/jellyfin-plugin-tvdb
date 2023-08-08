@@ -33,8 +33,7 @@ namespace Jellyfin.Plugin.Tvdb
                     case "poster": return ImageType.Primary;
                     case "banner": return ImageType.Banner;
                     case "background": return ImageType.Backdrop;
-                    case "clearlogo":
-                    case "icon": return ImageType.Logo;
+                    case "clearlogo": return ImageType.Logo;
                     default: throw new ArgumentException($"Invalid or unknown keytype: {keyType}", nameof(keyType));
                 }
             }

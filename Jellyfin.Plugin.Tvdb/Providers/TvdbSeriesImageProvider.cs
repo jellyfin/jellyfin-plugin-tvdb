@@ -73,34 +73,35 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var artworkTypes = _tvdbClientManager.GetArtworkTypeAsync(CancellationToken.None).Result.Data;
             foreach (var image in seriesImages)
             {
+                ImageType type;
+                // Checks if valid image type, if not, skip
                 try
                 {
-                    var artworkExtended = await _tvdbClientManager.GetImageAsync(Convert.ToInt32(image.Id, CultureInfo.InvariantCulture), language, cancellationToken).ConfigureAwait(false);
-                    var artworkData = artworkExtended.Data;
-                    var imageInfo = new RemoteImageInfo
-                    {
-                        RatingType = RatingType.Score,
-                        Url = image.Image,
-                        Width = Convert.ToInt32(image.Width, CultureInfo.InvariantCulture),
-                        Height = Convert.ToInt32(image.Height, CultureInfo.InvariantCulture),
-                        ProviderName = Name,
-                        // TVDb uses 3 character language codes
-
-                        Type = TvdbUtils.GetImageTypeFromKeyType(artworkTypes.FirstOrDefault(x => x.Id == image.Type)?.Name),
-                        ThumbnailUrl = image.Thumbnail
-                    };
-                    var imageLanguage = languages.FirstOrDefault(lang => lang.Id == image.Language)?.Id;
-                    if (!string.IsNullOrEmpty(imageLanguage))
-                    {
-                        imageInfo.Language = new CultureInfo(imageLanguage).TwoLetterISOLanguageName;
-                    }
-
-                    remoteImages.Add(imageInfo);
+                    type = TvdbUtils.GetImageTypeFromKeyType(artworkTypes.FirstOrDefault(x => x.Id == image.Type && x.RecordType == "series")?.Name);
                 }
-                catch (TvDbServerException)
+                catch (Exception)
                 {
-                    // Ignore
+                    continue;
                 }
+
+                var imageInfo = new RemoteImageInfo
+                {
+                    RatingType = RatingType.Score,
+                    Url = image.Image,
+                    Width = Convert.ToInt32(image.Width, CultureInfo.InvariantCulture),
+                    Height = Convert.ToInt32(image.Height, CultureInfo.InvariantCulture),
+                    Type = type,
+                    ProviderName = Name,
+                    ThumbnailUrl = image.Thumbnail
+                };
+                // TVDb uses 3 character language
+                var imageLanguage = languages.FirstOrDefault(lang => lang.Id == image.Language)?.Id;
+                if (!string.IsNullOrEmpty(imageLanguage))
+                {
+                    imageInfo.Language = new CultureInfo(imageLanguage).TwoLetterISOLanguageName;
+                }
+
+                remoteImages.Add(imageInfo);
             }
 
             return remoteImages.OrderByDescending(i =>
