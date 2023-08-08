@@ -100,7 +100,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 {
                     try
                     {
-                        imageInfo.Language = new CultureInfo(imageLanguage).TwoLetterISOLanguageName;
+                        // TvVDb mostly follows ISO 639-2, but there is ids such as zhtw
+                        imageInfo.Language = CultureInfo.GetCultureInfo(imageLanguage).TwoLetterISOLanguageName;
                     }
                     catch (Exception)
                     {

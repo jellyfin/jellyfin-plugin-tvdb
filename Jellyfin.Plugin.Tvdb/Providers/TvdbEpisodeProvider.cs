@@ -211,8 +211,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     AirsAfterSeasonNumber = episode.AirsAfterSeason,
                     AirsBeforeSeasonNumber = episode.AirsBeforeSeason,
                     // Tvdb uses 3 letter code for language (prob ISO 639-2)
-                    Name = episode.Translations.NameTranslations.FirstOrDefault(x => x.Language == new CultureInfo(id.MetadataLanguage).ThreeLetterISOLanguageName)?.Name,
-                    Overview = episode.Translations.OverviewTranslations.FirstOrDefault(x => x.Language == new CultureInfo(id.MetadataLanguage).ThreeLetterISOLanguageName)?.Overview,
+                    Name = episode.Translations.NameTranslations.FirstOrDefault(x => x.Language == CultureInfo.GetCultureInfo(id.MetadataLanguage).ThreeLetterISOLanguageName)?.Name,
+                    Overview = episode.Translations.OverviewTranslations.FirstOrDefault(x => x.Language == CultureInfo.GetCultureInfo(id.MetadataLanguage).ThreeLetterISOLanguageName)?.Overview,
                 }
             };
             result.ResetPeople();
