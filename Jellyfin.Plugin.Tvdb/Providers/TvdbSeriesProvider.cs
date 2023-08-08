@@ -256,12 +256,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             {
                 var characterResult = await _tvdbClientManager
                     .GetSeriesByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, cancellationToken).ConfigureAwait(false);
-                List<PeopleBaseRecordDto> people = new List<PeopleBaseRecordDto>();
+                List<CharacterDto> people = new List<CharacterDto>();
                 foreach (CharacterDto character in characterResult.Data.Characters)
                 {
-                    var actor = await _tvdbClientManager
-                        .GetActorAsync(Convert.ToInt32(character.PeopleId, CultureInfo.InvariantCulture), metadataLanguage, cancellationToken).ConfigureAwait(false);
-                    people.Add(actor.Data);
+                    people.Add(character);
                 }
 
                 MapActorsToResult(result, people);
@@ -422,20 +420,20 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             return name.Trim();
         }
 
-        private static void MapActorsToResult(MetadataResult<Series> result, IEnumerable<PeopleBaseRecordDto> actors)
+        private static void MapActorsToResult(MetadataResult<Series> result, IEnumerable<CharacterDto> actors)
         {
-            foreach (PeopleBaseRecordDto actor in actors)
+            foreach (CharacterDto actor in actors)
             {
                 var personInfo = new PersonInfo
                 {
                     Type = PersonType.Actor,
-                    Name = (actor.Name ?? string.Empty).Trim(),
+                    Name = (actor.PersonName ?? string.Empty).Trim(),
                     Role = actor.Name
                 };
 
                 if (!string.IsNullOrEmpty(actor.Image))
                 {
-                    personInfo.ImageUrl = actor.Image;
+                    personInfo.ImageUrl = actor.PersonImgURL;
                 }
 
                 if (!string.IsNullOrWhiteSpace(personInfo.Name))
