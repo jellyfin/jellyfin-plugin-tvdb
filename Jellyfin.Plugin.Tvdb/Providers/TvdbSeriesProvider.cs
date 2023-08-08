@@ -351,16 +351,15 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     SearchProviderName = Name
                 };
 
-                if (!string.IsNullOrEmpty(seriesSearchResult.Poster))
+                if (!string.IsNullOrEmpty(seriesSearchResult.ImageUrl))
                 {
-                    // Results from their Search endpoints already include the /banners/ part in the url, because reasons...
-                    remoteSearchResult.ImageUrl = TvdbUtils.TvdbBaseUrl + seriesSearchResult.Poster.TrimStart('/');
+                    remoteSearchResult.ImageUrl = seriesSearchResult.ImageUrl;
                 }
 
                 try
                 {
                     var seriesResult =
-                        await _tvdbClientManager.GetSeriesByIdAsync(Convert.ToInt32(seriesSearchResult.Id, CultureInfo.InvariantCulture), language, cancellationToken)
+                        await _tvdbClientManager.GetSeriesByIdAsync(Convert.ToInt32(seriesSearchResult.TvdbId, CultureInfo.InvariantCulture), language, cancellationToken)
                             .ConfigureAwait(false);
                     var imdbId = seriesResult.Data.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id.ToString();
                     if (!string.IsNullOrEmpty(imdbId))
@@ -374,13 +373,20 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     {
                         remoteSearchResult.SetProviderId(MetadataProvider.Zap2It, zap2ItId);
                     }
+
+                    var tmdbId = seriesResult.Data.RemoteIds.FirstOrDefault(x => x.SourceName == "TheMovieDB.com")?.Id.ToString();
+
+                    if (!string.IsNullOrEmpty(tmdbId))
+                    {
+                        remoteSearchResult.SetProviderId(MetadataProvider.Tmdb, tmdbId);
+                    }
                 }
                 catch (TvDbServerException e)
                 {
-                    _logger.LogError(e, "Unable to retrieve series with id {TvdbId}:{SeriesName}", seriesSearchResult.Id, seriesSearchResult.Name);
+                    _logger.LogError(e, "Unable to retrieve series with id {TvdbId}:{SeriesName}", seriesSearchResult.TvdbId, seriesSearchResult.Name);
                 }
 
-                remoteSearchResult.SetProviderId(TvdbPlugin.ProviderId, seriesSearchResult.Id.ToString(CultureInfo.InvariantCulture));
+                remoteSearchResult.SetProviderId(TvdbPlugin.ProviderId, seriesSearchResult.TvdbId);
                 list.Add(new Tuple<List<string>, RemoteSearchResult>(tvdbTitles, remoteSearchResult));
             }
 
@@ -470,7 +476,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             // series.CommunityRating = (float?)tvdbSeries.SiteRating;
             var imdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id.ToString();
             var zap2ItId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "Zap2It")?.Id.ToString();
-            var tmdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "TMDB")?.Id.ToString();
+            var tmdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "TheMovieDB.com")?.Id.ToString();
             if (!string.IsNullOrEmpty(imdbId))
             {
                 series.SetProviderId(MetadataProvider.Imdb, imdbId);
@@ -479,6 +485,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             if (!string.IsNullOrEmpty(zap2ItId))
             {
                 series.SetProviderId(MetadataProvider.Zap2It, zap2ItId);
+            }
+
+            if (!string.IsNullOrEmpty(tmdbId))
+            {
+                series.SetProviderId(MetadataProvider.Tmdb, tmdbId);
             }
 
             if (Enum.TryParse(tvdbSeries.Status.Name, true, out SeriesStatus seriesStatus))

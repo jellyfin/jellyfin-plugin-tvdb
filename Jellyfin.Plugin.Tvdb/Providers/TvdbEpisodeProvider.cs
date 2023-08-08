@@ -125,12 +125,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 results.Add(await GetEpisode(tempEpisodeInfo, cancellationToken).ConfigureAwait(false));
             }
 
-            var result = CombineResults(info, results);
+            var result = CombineResults(results);
 
             return result;
         }
 
-        private MetadataResult<Episode> CombineResults(EpisodeInfo id, List<MetadataResult<Episode>> results)
+        private MetadataResult<Episode> CombineResults(List<MetadataResult<Episode>> results)
         {
             // Use first result as baseline
             var result = results[0];
@@ -159,7 +159,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 QueriedById = true
             };
 
-            var seriesTvdbId = searchInfo.GetProviderId(TvdbPlugin.ProviderId);
+            var seriesTvdbId = searchInfo.SeriesProviderIds.FirstOrDefault(x => x.Key == TvdbPlugin.ProviderId).Value;
             string? episodeTvdbId = null;
             try
             {

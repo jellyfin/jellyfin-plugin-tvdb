@@ -110,7 +110,6 @@ namespace Jellyfin.Plugin.Tvdb
             SearchOptionalParams optionalParams = new SearchOptionalParams
             {
                 Query = name,
-                Language = language,
                 Type = "series",
             };
             return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Search(optionalParams, cancellationToken));
@@ -295,15 +294,19 @@ namespace Jellyfin.Plugin.Tvdb
                 episodeQuery.AirDate = searchInfo.PremiereDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             }
 
+            episodeQuery.Page = 0;
+            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
             TvDbApiResponse<GetSeriesEpisodesResponseData> apiResponse = new TvDbApiResponse<GetSeriesEpisodesResponseData>();
+            // Not using TryGetValue since it returns the wrong value.
             switch (searchInfo.SeriesDisplayOrder)
             {
                 case "dvd":
                 case "absolute":
-                    apiResponse = await TryGetValue("EpisodeTvdbId", language, tvDbClient => tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), searchInfo.SeriesDisplayOrder, episodeQuery, cancellationToken)).ConfigureAwait(false);
+                    apiResponse = await tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), searchInfo.SeriesDisplayOrder, episodeQuery, cancellationToken).ConfigureAwait(false);
                     break;
                 default:
-                    apiResponse = await TryGetValue("EpisodeTvdbId", language, tvDbClient => tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), "default", episodeQuery, cancellationToken)).ConfigureAwait(false);
+
+                    apiResponse = await tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), "default", episodeQuery, cancellationToken).ConfigureAwait(false);
                     break;
             }
 
