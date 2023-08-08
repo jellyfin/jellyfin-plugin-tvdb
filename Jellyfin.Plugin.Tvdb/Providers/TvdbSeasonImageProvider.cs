@@ -110,11 +110,15 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 RatingType = RatingType.Score,
                 Url = image.Image,
                 ProviderName = Name,
-                // TVBd uses 3 digit language codes
-                Language = languages.FirstOrDefault(lang => lang.Id == image.Language)?.Id.Substring(0, 2),
                 Type = TvdbUtils.GetImageTypeFromKeyType(artworkTypes.FirstOrDefault(x => x.Id == image.Type)?.Name),
                 ThumbnailUrl = image.Thumbnail
             };
+            // Tvdb uses 3 letter code for language (prob ISO 639-2)
+            var language = languages.FirstOrDefault(lang => lang.Id == image.Language)?.Id;
+            if (!string.IsNullOrEmpty(language))
+            {
+                imageInfo.Language = new CultureInfo(language).TwoLetterISOLanguageName;
+            }
 
             imageInfo.Width = Convert.ToInt32(image.Width, CultureInfo.InvariantCulture);
             imageInfo.Height = Convert.ToInt32(image.Height, CultureInfo.InvariantCulture);
