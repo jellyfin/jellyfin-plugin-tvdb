@@ -306,9 +306,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             try
             {
                 // Fetch all episodes for the series
-                var seriesInfo = await _tvdbClientManager.GetSeriesByIdAsync(tvdbId, acceptedLanguage, CancellationToken.None).ConfigureAwait(false);
+                var seriesInfo = await _tvdbClientManager.GetSeriesByIdAsync(tvdbId, acceptedLanguage, "episodes", CancellationToken.None).ConfigureAwait(false);
                 var allEpisodes = seriesInfo.Data.Episodes;
-                if (!allEpisodes.Any())
+                if (allEpisodes is null || !allEpisodes.Any())
                 {
                     _logger.LogWarning("Unable to get episodes from TVDB: Episode Query returned null for TVDB Id: {TvdbId}", tvdbId);
                     return Array.Empty<EpisodeBaseRecordDto>();

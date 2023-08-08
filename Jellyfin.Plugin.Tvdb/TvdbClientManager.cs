@@ -120,18 +120,36 @@ namespace Jellyfin.Plugin.Tvdb
         /// </summary>
         /// <param name="tvdbId">The series tvdb id.</param>
         /// <param name="language">Metadata language.</param>
+        /// <param name="metaType">Metadata type.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The series response.</returns>
         public Task<TvDbApiResponse<SeriesExtendedRecordDto>> GetSeriesByIdAsync(
             int tvdbId,
             string language,
+            string? metaType,
             CancellationToken cancellationToken)
         {
             var cacheKey = GenerateKey("series", tvdbId, language);
-            SeriesExtendedOptionalParams optionalParams = new SeriesExtendedOptionalParams
+            SeriesExtendedOptionalParams optionalParams;
+            switch (metaType)
             {
-                Meta = "translations",
-            };
+                case "translations":
+                    optionalParams = new SeriesExtendedOptionalParams
+                    {
+                        Meta = "translations",
+                    };
+                    break;
+                case "episodes":
+                    optionalParams = new SeriesExtendedOptionalParams
+                    {
+                        Meta = "episodes",
+                    };
+                    break;
+                default:
+                    optionalParams = new SeriesExtendedOptionalParams { };
+                    break;
+            }
+
             return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.SeriesExtended(tvdbId, optionalParams, cancellationToken));
         }
 
@@ -296,7 +314,7 @@ namespace Jellyfin.Plugin.Tvdb
 
             episodeQuery.Page = 0;
             var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-            TvDbApiResponse<GetSeriesEpisodesResponseData> apiResponse = new TvDbApiResponse<GetSeriesEpisodesResponseData>();
+            TvDbApiResponse<GetSeriesEpisodesResponseData> apiResponse;
             // Not using TryGetValue since it returns the wrong value.
             switch (searchInfo.SeriesDisplayOrder)
             {

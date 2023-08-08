@@ -151,7 +151,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             {
                 var seriesResult =
                     await _tvdbClientManager
-                        .GetSeriesByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), seriesInfo.MetadataLanguage, cancellationToken)
+                        .GetSeriesByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), seriesInfo.MetadataLanguage, "translations", cancellationToken)
                         .ConfigureAwait(false);
                 return new[] { MapSeriesToRemoteSearchResult(seriesResult.Data) };
             }
@@ -238,7 +238,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             {
                 var seriesResult =
                     await _tvdbClientManager
-                        .GetSeriesByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, cancellationToken)
+                        .GetSeriesByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, "translations", cancellationToken)
                         .ConfigureAwait(false);
                 MapSeriesToResult(result, seriesResult.Data, metadataLanguage);
             }
@@ -255,7 +255,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             try
             {
                 var characterResult = await _tvdbClientManager
-                    .GetSeriesByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, cancellationToken).ConfigureAwait(false);
+                    .GetSeriesByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, "translations", cancellationToken).ConfigureAwait(false);
                 List<CharacterDto> people = new List<CharacterDto>();
                 foreach (CharacterDto character in characterResult.Data.Characters)
                 {
@@ -360,7 +360,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 try
                 {
                     var seriesResult =
-                        await _tvdbClientManager.GetSeriesByIdAsync(Convert.ToInt32(seriesSearchResult.TvdbId, CultureInfo.InvariantCulture), language, cancellationToken)
+                        await _tvdbClientManager.GetSeriesByIdAsync(Convert.ToInt32(seriesSearchResult.TvdbId, CultureInfo.InvariantCulture), language, "translations", cancellationToken)
                             .ConfigureAwait(false);
                     var imdbId = seriesResult.Data.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id.ToString();
                     if (!string.IsNullOrEmpty(imdbId))
@@ -431,7 +431,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     Role = actor.Name
                 };
 
-                if (!string.IsNullOrEmpty(actor.Image))
+                if (!string.IsNullOrEmpty(actor.PersonImgURL))
                 {
                     personInfo.ImageUrl = actor.PersonImgURL;
                 }
