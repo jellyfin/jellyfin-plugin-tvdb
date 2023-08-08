@@ -98,7 +98,14 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 var imageLanguage = languages.FirstOrDefault(lang => lang.Id == image.Language)?.Id;
                 if (!string.IsNullOrEmpty(imageLanguage))
                 {
-                    imageInfo.Language = new CultureInfo(imageLanguage).TwoLetterISOLanguageName;
+                    try
+                    {
+                        imageInfo.Language = new CultureInfo(imageLanguage).TwoLetterISOLanguageName;
+                    }
+                    catch (Exception)
+                    {
+                        // Ignore
+                    }
                 }
 
                 remoteImages.Add(imageInfo);

@@ -470,8 +470,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             Series series = result.Item;
             series.SetProviderId(TvdbPlugin.ProviderId, tvdbSeries.Id.ToString(CultureInfo.InvariantCulture));
             // Tvdb uses 3 letter code for language (prob ISO 639-2)
-            series.Name = tvdbSeries.Translations.NameTranslations.FirstOrDefault(x => new CultureInfo(x.Language).TwoLetterISOLanguageName == metadataLanguage)?.Name;
-            series.Overview = tvdbSeries.Translations.OverviewTranslations.FirstOrDefault(x => new CultureInfo(x.Language).TwoLetterISOLanguageName == metadataLanguage)?.Overview;
+            series.Name = tvdbSeries.Translations.NameTranslations.FirstOrDefault(x => x.Language == new CultureInfo(metadataLanguage).ThreeLetterISOLanguageName)?.Name;
+            series.Overview = tvdbSeries.Translations.OverviewTranslations.FirstOrDefault(x => x.Language == new CultureInfo(metadataLanguage).ThreeLetterISOLanguageName)?.Overview;
             series.OriginalTitle = tvdbSeries.Name;
             result.ResultLanguage = metadataLanguage;
             series.AirDays = TVUtils.GetAirDays(tvdbSeries.AirsDays.ToString());
