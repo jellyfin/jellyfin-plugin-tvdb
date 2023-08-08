@@ -336,7 +336,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 {
                     seriesSearchResult.Name
                 };
-                tvdbTitles.AddRange(seriesSearchResult.Aliases);
+                if (seriesSearchResult.Aliases is not null)
+                {
+                    tvdbTitles.AddRange(seriesSearchResult.Aliases);
+                }
 
                 DateTime? firstAired = null;
                 if (DateTime.TryParse(seriesSearchResult.FirstAirTime, out var parsedFirstAired))
@@ -471,6 +474,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             // Tvdb uses 3 letter code for language (prob ISO 639-2)
             series.Name = tvdbSeries.Translations.NameTranslations.FirstOrDefault(x => new CultureInfo(x.Language).TwoLetterISOLanguageName == metadataLanguage)?.Name;
             series.Overview = tvdbSeries.Translations.OverviewTranslations.FirstOrDefault(x => new CultureInfo(x.Language).TwoLetterISOLanguageName == metadataLanguage)?.Overview;
+            series.OriginalTitle = tvdbSeries.Name;
             result.ResultLanguage = metadataLanguage;
             series.AirDays = TVUtils.GetAirDays(tvdbSeries.AirsDays.ToString());
             series.AirTime = tvdbSeries.AirsTime;
@@ -505,7 +509,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 series.ProductionYear = date.Year;
             }
 
-            series.RunTimeTicks = TimeSpan.FromMinutes(tvdbSeries.AverageRuntime).Ticks;
+            if (tvdbSeries.AverageRuntime is not null)
+            {
+                series.RunTimeTicks = TimeSpan.FromMinutes(tvdbSeries.AverageRuntime.Value).Ticks;
+            }
 
             foreach (var genre in tvdbSeries.Genres)
             {
