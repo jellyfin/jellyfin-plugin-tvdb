@@ -165,6 +165,44 @@ namespace Jellyfin.Plugin.Tvdb
         }
 
         /// <summary>
+        /// Get all episodes of series.
+        /// </summary>
+        /// <param name="tvdbId">The series tvdb id.</param>
+        /// <param name="language">Metadata language.</param>
+        /// <param name="seasonType">Season type: default, dvd, absolute etc.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>All episodes of series.</returns>
+        public async Task<TvDbApiResponse<GetSeriesEpisodesResponseData>> GetSeriesEpisodesAsync(
+            int tvdbId,
+            string language,
+            string seasonType,
+            CancellationToken cancellationToken)
+        {
+            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
+            return await tvDbClient.SeriesEpisodes(tvdbId, seasonType, cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Get all episodes of series.
+        /// </summary>
+        /// <param name="tvdbId">The series tvdb id.</param>
+        /// <param name="language">Metadata language.</param>
+        /// <param name="seasonType">Season type: default, dvd, absolute etc.</param>
+        /// <param name="optionalParams">Optional Parameters.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>All episodes of series.</returns>
+        public async Task<TvDbApiResponse<GetSeriesEpisodesResponseData>> GetSeriesEpisodesAsync(
+            int tvdbId,
+            string language,
+            string seasonType,
+            SeriesEpisodesOptionalParams optionalParams,
+            CancellationToken cancellationToken)
+        {
+            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
+            return await tvDbClient.SeriesEpisodes(tvdbId, seasonType, optionalParams, cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>
         /// Get Season record.
         /// </summary>
         /// <param name="seasonTvdbId">The season tvdb id.</param>

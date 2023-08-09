@@ -306,7 +306,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             try
             {
                 // Fetch all episodes for the series
-                var seriesInfo = await _tvdbClientManager.GetSeriesExtendedByIdAsync(tvdbId, acceptedLanguage, new SeriesExtendedOptionalParams { Meta = "episodes", Short = true }, CancellationToken.None).ConfigureAwait(false);
+                var seriesInfo = await _tvdbClientManager.GetSeriesEpisodesAsync(tvdbId, acceptedLanguage, "default", CancellationToken.None).ConfigureAwait(false);
                 var allEpisodes = seriesInfo.Data.Episodes;
                 if (allEpisodes is null || !allEpisodes.Any())
                 {

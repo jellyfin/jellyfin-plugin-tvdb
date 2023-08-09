@@ -241,32 +241,28 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                         .GetSeriesExtendedByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, new SeriesExtendedOptionalParams { Meta = "translations", Short = false }, cancellationToken)
                         .ConfigureAwait(false);
                 MapSeriesToResult(result, seriesResult.Data, metadataLanguage);
+
+                result.ResetPeople();
+
+                List<CharacterDto> people = new List<CharacterDto>();
+                if (seriesResult.Data.Characters is not null)
+                {
+                    foreach (CharacterDto character in seriesResult.Data.Characters)
+                    {
+                        people.Add(character);
+                    }
+
+                    MapActorsToResult(result, people);
+                }
+                else
+                {
+                    _logger.LogError("Failed to retrieve actors for series {TvdbId}:{SeriesName}", tvdbId, info.Name);
+                }
             }
             catch (TvDbServerException e)
             {
                 _logger.LogError(e, "Failed to retrieve series with id {TvdbId}:{SeriesName}", tvdbId, info.Name);
                 return;
-            }
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            result.ResetPeople();
-
-            try
-            {
-                var characterResult = await _tvdbClientManager
-                    .GetSeriesExtendedByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, cancellationToken).ConfigureAwait(false);
-                List<CharacterDto> people = new List<CharacterDto>();
-                foreach (CharacterDto character in characterResult.Data.Characters)
-                {
-                    people.Add(character);
-                }
-
-                MapActorsToResult(result, people);
-            }
-            catch (TvDbServerException e)
-            {
-                _logger.LogError(e, "Failed to retrieve actors for series {TvdbId}:{SeriesName}", tvdbId, info.Name);
             }
         }
 
