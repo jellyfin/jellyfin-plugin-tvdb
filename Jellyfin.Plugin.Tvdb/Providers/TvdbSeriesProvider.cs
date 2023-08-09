@@ -151,7 +151,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             {
                 var seriesResult =
                     await _tvdbClientManager
-                        .GetSeriesByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), seriesInfo.MetadataLanguage, "translations", cancellationToken)
+                        .GetSeriesExtendedByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), seriesInfo.MetadataLanguage, new SeriesExtendedOptionalParams { Short = true }, cancellationToken)
                         .ConfigureAwait(false);
                 return new[] { MapSeriesToRemoteSearchResult(seriesResult.Data) };
             }
@@ -238,7 +238,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             {
                 var seriesResult =
                     await _tvdbClientManager
-                        .GetSeriesByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, "translations", cancellationToken)
+                        .GetSeriesExtendedByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, new SeriesExtendedOptionalParams { Meta = "translations", Short = false }, cancellationToken)
                         .ConfigureAwait(false);
                 MapSeriesToResult(result, seriesResult.Data, metadataLanguage);
             }
@@ -255,7 +255,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             try
             {
                 var characterResult = await _tvdbClientManager
-                    .GetSeriesByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, "translations", cancellationToken).ConfigureAwait(false);
+                    .GetSeriesExtendedByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, cancellationToken).ConfigureAwait(false);
                 List<CharacterDto> people = new List<CharacterDto>();
                 foreach (CharacterDto character in characterResult.Data.Characters)
                 {
@@ -360,7 +360,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 try
                 {
                     var seriesResult =
-                        await _tvdbClientManager.GetSeriesByIdAsync(Convert.ToInt32(seriesSearchResult.TvdbId, CultureInfo.InvariantCulture), language, "translations", cancellationToken)
+                        await _tvdbClientManager.GetSeriesExtendedByIdAsync(Convert.ToInt32(seriesSearchResult.TvdbId, CultureInfo.InvariantCulture), language, new SeriesExtendedOptionalParams { Short = true }, cancellationToken)
                             .ConfigureAwait(false);
                     var imdbId = seriesResult.Data.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id.ToString();
                     if (!string.IsNullOrEmpty(imdbId))
@@ -470,8 +470,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             Series series = result.Item;
             series.SetProviderId(TvdbPlugin.ProviderId, tvdbSeries.Id.ToString(CultureInfo.InvariantCulture));
             // Tvdb uses 3 letter code for language (prob ISO 639-2)
-            series.Name = tvdbSeries.Translations.NameTranslations.FirstOrDefault(x => x.Language == CultureInfo.GetCultureInfo(metadataLanguage).ThreeLetterISOLanguageName)?.Name;
-            series.Overview = tvdbSeries.Translations.OverviewTranslations.FirstOrDefault(x => x.Language == CultureInfo.GetCultureInfo(metadataLanguage).ThreeLetterISOLanguageName)?.Overview;
+            series.Name = tvdbSeries.Translations.NameTranslations.FirstOrDefault(x => x.Language == TvdbUtils.NormalizeLanguageToTvdb(metadataLanguage))?.Name;
+            series.Overview = tvdbSeries.Translations.OverviewTranslations.FirstOrDefault(x => x.Language == TvdbUtils.NormalizeLanguageToTvdb(metadataLanguage))?.Overview;
             series.OriginalTitle = tvdbSeries.Name;
             result.ResultLanguage = metadataLanguage;
             series.AirDays = TVUtils.GetAirDays(tvdbSeries.AirsDays.ToString());

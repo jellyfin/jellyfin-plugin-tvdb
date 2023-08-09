@@ -71,7 +71,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var seasonNumber = season.IndexNumber.Value;
             var language = item.GetPreferredMetadataLanguage();
             var remoteImages = new List<RemoteImageInfo>();
-            var seriesInfo = await _tvdbClientManager.GetSeriesByIdAsync(tvdbId, language, "translations", cancellationToken).ConfigureAwait(false);
+            var seriesInfo = await _tvdbClientManager.GetSeriesExtendedByIdAsync(tvdbId, language, new SeriesExtendedOptionalParams { Short = true }, cancellationToken).ConfigureAwait(false);
             var seasonTvdbId = seriesInfo.Data.Seasons.FirstOrDefault(s => s.Number == seasonNumber)?.Id;
 
             var seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(Convert.ToInt32(seasonTvdbId, CultureInfo.InvariantCulture), language, cancellationToken).ConfigureAwait(false);
@@ -107,15 +107,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 var artworkLanguage = languages.FirstOrDefault(lang => lang.Id == image.Language)?.Id;
                 if (!string.IsNullOrEmpty(artworkLanguage))
                 {
-                    try
-                    {
-                        // TvVDb mostly follows ISO 639-2, but there is ids such as zhtw
-                        imageInfo.Language = CultureInfo.GetCultureInfo(artworkLanguage).TwoLetterISOLanguageName;
-                    }
-                    catch (Exception)
-                    {
-                        // Ignore
-                    }
+                    imageInfo.Language = TvdbUtils.NormalizeLanguageToJellyfin(artworkLanguage);
                 }
 
                 remoteImages.Add(imageInfo);

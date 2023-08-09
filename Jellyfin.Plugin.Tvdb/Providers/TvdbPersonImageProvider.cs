@@ -98,7 +98,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             try
             {
                 var actorsResult = await _tvdbClientManager
-                    .GetSeriesByIdAsync(tvdbId, series.GetPreferredMetadataLanguage(), "translations", cancellationToken)
+                    .GetSeriesExtendedByIdAsync(tvdbId, series.GetPreferredMetadataLanguage(), cancellationToken)
                     .ConfigureAwait(false);
                 var character = actorsResult.Data.Characters.FirstOrDefault(i => i.PersonName.Equals(personName, StringComparison.OrdinalIgnoreCase));
 

@@ -98,15 +98,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 var imageLanguage = languages.FirstOrDefault(lang => lang.Id == image.Language)?.Id;
                 if (!string.IsNullOrEmpty(imageLanguage))
                 {
-                    try
-                    {
-                        // TvVDb mostly follows ISO 639-2, but there is ids such as zhtw
-                        imageInfo.Language = CultureInfo.GetCultureInfo(imageLanguage).TwoLetterISOLanguageName;
-                    }
-                    catch (Exception)
-                    {
-                        // Ignore
-                    }
+                    imageInfo.Language = TvdbUtils.NormalizeLanguageToJellyfin(imageLanguage);
                 }
 
                 remoteImages.Add(imageInfo);

@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using MediaBrowser.Model.Entities;
 
 namespace Jellyfin.Plugin.Tvdb
@@ -46,15 +47,43 @@ namespace Jellyfin.Plugin.Tvdb
         /// </summary>
         /// <param name="language">Language.</param>
         /// <returns>Normalized language.</returns>
-        public static string? NormalizeLanguage(string? language)
+        public static string? NormalizeLanguageToTvdb(string? language)
         {
             if (string.IsNullOrWhiteSpace(language))
             {
                 return null;
             }
 
-            // pt-br is just pt to tvdb
-            return language.Split('-')[0].ToLowerInvariant();
+            // Unique case for zh-TW
+            if (language.Equals("zh-TW", StringComparison.OrdinalIgnoreCase))
+            {
+                return "zhtw";
+            }
+
+            // to (ISO 639-2)
+            return CultureInfo.GetCultureInfo(language.Split('-')[0].ToLowerInvariant()).ThreeLetterISOLanguageName;
+        }
+
+        /// <summary>
+        /// Normalize language to jellyfin format.
+        /// </summary>
+        /// <param name="language">Language.</param>
+        /// <returns>Normalized language.</returns>
+        public static string? NormalizeLanguageToJellyfin(string? language)
+        {
+            if (string.IsNullOrWhiteSpace(language))
+            {
+                return null;
+            }
+
+            // Unique case for zhtw
+            if (language.Equals("zhtw", StringComparison.OrdinalIgnoreCase))
+            {
+                return "zh-TW";
+            }
+
+            // to (ISO 639-1)
+            return CultureInfo.GetCultureInfo(language).TwoLetterISOLanguageName;
         }
     }
 }

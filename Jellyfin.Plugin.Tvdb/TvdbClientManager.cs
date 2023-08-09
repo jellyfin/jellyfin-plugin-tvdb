@@ -45,11 +45,9 @@ namespace Jellyfin.Plugin.Tvdb
 
         private static string? ApiKey => TvdbPlugin.Instance?.Configuration.ApiKey;
 
-        private async Task<TvDbClient> GetTvDbClient(string language)
+        private async Task<TvDbClient> GetTvDbClient(string? language)
         {
-            var normalizedLanguage = TvdbUtils.NormalizeLanguage(language) ?? DefaultLanguage;
-
-            var tvDbClientInfo = _tvDbClients.GetOrAdd(normalizedLanguage, key => new TvDbClientInfo(_httpClientFactory, key));
+            var tvDbClientInfo = _tvDbClients.GetOrAdd(language ?? DefaultLanguage, key => new TvDbClientInfo(_httpClientFactory, key));
 
             var tvDbClient = tvDbClientInfo.Client;
 
@@ -101,18 +99,19 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The series search result.</returns>
-        public Task<TvDbApiResponse<SearchResultDto[]>> GetSeriesByNameAsync(
+        public async Task<TvDbApiResponse<SearchResultDto[]>> GetSeriesByNameAsync(
             string name,
             string language,
             CancellationToken cancellationToken)
         {
-            var cacheKey = GenerateKey("series", name, language);
+            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
             SearchOptionalParams optionalParams = new SearchOptionalParams
             {
                 Query = name,
                 Type = "series",
+                Limit = 5
             };
-            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.Search(optionalParams, cancellationToken));
+            return await tvDbClient.Search(optionalParams, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -120,37 +119,49 @@ namespace Jellyfin.Plugin.Tvdb
         /// </summary>
         /// <param name="tvdbId">The series tvdb id.</param>
         /// <param name="language">Metadata language.</param>
-        /// <param name="metaType">Metadata type.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The series response.</returns>
-        public Task<TvDbApiResponse<SeriesExtendedRecordDto>> GetSeriesByIdAsync(
+        public async Task<TvDbApiResponse<SeriesBaseRecordDto>> GetSeriesByIdAsync(
             int tvdbId,
             string language,
-            string? metaType,
             CancellationToken cancellationToken)
         {
-            var cacheKey = GenerateKey("series", tvdbId, language);
-            SeriesExtendedOptionalParams optionalParams;
-            switch (metaType)
-            {
-                case "translations":
-                    optionalParams = new SeriesExtendedOptionalParams
-                    {
-                        Meta = "translations",
-                    };
-                    break;
-                case "episodes":
-                    optionalParams = new SeriesExtendedOptionalParams
-                    {
-                        Meta = "episodes",
-                    };
-                    break;
-                default:
-                    optionalParams = new SeriesExtendedOptionalParams { };
-                    break;
-            }
+            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
+            return await tvDbClient.Series(tvdbId, cancellationToken).ConfigureAwait(false);
+        }
 
-            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.SeriesExtended(tvdbId, optionalParams, cancellationToken));
+        /// <summary>
+        /// Get series by id.
+        /// </summary>
+        /// <param name="tvdbId">The series tvdb id.</param>
+        /// <param name="language">Metadata language.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The series response.</returns>
+        public async Task<TvDbApiResponse<SeriesExtendedRecordDto>> GetSeriesExtendedByIdAsync(
+            int tvdbId,
+            string language,
+            CancellationToken cancellationToken)
+        {
+            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
+            return await tvDbClient.SeriesExtended(tvdbId, cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Get series by id.
+        /// </summary>
+        /// <param name="tvdbId">The series tvdb id.</param>
+        /// <param name="language">Metadata language.</param>
+        /// <param name="optionalParams">Optional Parameters.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The series response.</returns>
+        public async Task<TvDbApiResponse<SeriesExtendedRecordDto>> GetSeriesExtendedByIdAsync(
+            int tvdbId,
+            string language,
+            SeriesExtendedOptionalParams optionalParams,
+            CancellationToken cancellationToken)
+        {
+            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
+            return await tvDbClient.SeriesExtended(tvdbId, optionalParams, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -160,13 +171,13 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The episode record.</returns>
-        public Task<TvDbApiResponse<SeasonExtendedRecordDto>> GetSeasonByIdAsync(
+        public async Task<TvDbApiResponse<SeasonExtendedRecordDto>> GetSeasonByIdAsync(
             int seasonTvdbId,
             string language,
             CancellationToken cancellationToken)
         {
-            var cacheKey = GenerateKey("season", seasonTvdbId, language);
-            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.SeasonExtended(seasonTvdbId, cancellationToken));
+            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
+            return await tvDbClient.SeasonExtended(seasonTvdbId, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -176,17 +187,17 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The episode record.</returns>
-        public Task<TvDbApiResponse<EpisodeExtendedRecordDto>> GetEpisodesAsync(
+        public async Task<TvDbApiResponse<EpisodeExtendedRecordDto>> GetEpisodesAsync(
             int episodeTvdbId,
             string language,
             CancellationToken cancellationToken)
         {
-            var cacheKey = GenerateKey("episode", episodeTvdbId, language);
+            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
             EpisodeExtendedOptionalParams optionalParams = new EpisodeExtendedOptionalParams
             {
                 Meta = "translations",
             };
-            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.EpisodeExtended(episodeTvdbId, optionalParams, cancellationToken));
+            return await tvDbClient.EpisodeExtended(episodeTvdbId, optionalParams, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -196,13 +207,13 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The series search result.</returns>
-        public Task<TvDbApiResponse<SearchByRemoteIdResultDto[]>> GetSeriesByRemoteIdAsync(
+        public async Task<TvDbApiResponse<SearchByRemoteIdResultDto[]>> GetSeriesByRemoteIdAsync(
             string remoteId,
             string language,
             CancellationToken cancellationToken)
         {
-            var cacheKey = GenerateKey("series", remoteId, language);
-            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.SearchResultsByRemoteId(remoteId, cancellationToken));
+            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
+            return await tvDbClient.SearchResultsByRemoteId(remoteId, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -212,13 +223,13 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The actors attached to the id.</returns>
-        public Task<TvDbApiResponse<PeopleBaseRecordDto>> GetActorAsync(
+        public async Task<TvDbApiResponse<PeopleBaseRecordDto>> GetActorAsync(
             int tvdbId,
             string language,
             CancellationToken cancellationToken)
         {
-            var cacheKey = GenerateKey("actors", tvdbId, language);
-            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.People(tvdbId, cancellationToken));
+            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
+            return await tvDbClient.People(tvdbId, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -228,13 +239,13 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The images attached to the id.</returns>
-        public Task<TvDbApiResponse<ArtworkExtendedRecordDto>> GetImageAsync(
+        public async Task<TvDbApiResponse<ArtworkExtendedRecordDto>> GetImageAsync(
             int imageTvdbId,
             string language,
             CancellationToken cancellationToken)
         {
-            var cacheKey = GenerateKey("image", imageTvdbId, language);
-            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.ArtworkExtended(imageTvdbId, cancellationToken));
+            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
+            return await tvDbClient.ArtworkExtended(imageTvdbId, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -244,13 +255,13 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The images attached to the id.</returns>
-        public Task<TvDbApiResponse<SeriesExtendedRecordDto>> GetSeriesImagesAsync(
+        public async Task<TvDbApiResponse<SeriesExtendedRecordDto>> GetSeriesImagesAsync(
             int tvdbId,
             string language,
             CancellationToken cancellationToken)
         {
-            var cacheKey = GenerateKey("images", tvdbId, language);
-            return TryGetValue(cacheKey, language, tvDbClient => tvDbClient.SeriesArtworks(tvdbId, cancellationToken));
+            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
+            return await tvDbClient.SeriesArtworks(tvdbId, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -258,9 +269,10 @@ namespace Jellyfin.Plugin.Tvdb
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>All tvdb languages.</returns>
-        public Task<TvDbApiResponse<LanguageDto[]>> GetLanguagesAsync(CancellationToken cancellationToken)
+        public async Task<TvDbApiResponse<LanguageDto[]>> GetLanguagesAsync(CancellationToken cancellationToken)
         {
-            return TryGetValue("languages", string.Empty, tvDbClient => tvDbClient.Languages(cancellationToken));
+            var tvDbClient = await GetTvDbClient(DefaultLanguage).ConfigureAwait(false);
+            return await tvDbClient.Languages(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -268,9 +280,10 @@ namespace Jellyfin.Plugin.Tvdb
         /// </summary>
         /// <param name="cancellationToken">Cancellation Token.</param>
         /// <returns>All tvdb artwork types.</returns>
-        public Task<TvDbApiResponse<ArtworkTypeDto[]>> GetArtworkTypeAsync(CancellationToken cancellationToken)
+        public async Task<TvDbApiResponse<ArtworkTypeDto[]>> GetArtworkTypeAsync(CancellationToken cancellationToken)
         {
-            return TryGetValue("artworktypes", string.Empty, tvDbClient => tvDbClient.ArtworkTypes(cancellationToken));
+            var tvDbClient = await GetTvDbClient(DefaultLanguage).ConfigureAwait(false);
+            return await tvDbClient.ArtworkTypes(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -338,49 +351,6 @@ namespace Jellyfin.Plugin.Tvdb
             {
                 return apiData.Episodes[0].Id.ToString(CultureInfo.InvariantCulture);
             }
-        }
-
-        private static string GenerateKey(params object[] objects)
-        {
-            var key = string.Empty;
-
-            foreach (var obj in objects)
-            {
-                var objType = obj.GetType();
-                if (objType.IsPrimitive || objType == typeof(string))
-                {
-                    key += obj + ";";
-                }
-                else
-                {
-                    foreach (PropertyInfo propertyInfo in objType.GetProperties())
-                    {
-                        var currentValue = propertyInfo.GetValue(obj, null);
-                        if (currentValue == null)
-                        {
-                            continue;
-                        }
-
-                        key += propertyInfo.Name + "=" + currentValue + ";";
-                    }
-                }
-            }
-
-            return key;
-        }
-
-        private Task<T> TryGetValue<T>(string key, string language, Func<TvDbClient, Task<T>> resultFactory)
-        {
-            return _cache.GetOrCreateAsync(key, async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
-
-                var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-
-                var result = await resultFactory.Invoke(tvDbClient).ConfigureAwait(false);
-
-                return result;
-            });
         }
 
         private class TvDbClientInfo
