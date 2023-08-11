@@ -95,10 +95,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     ThumbnailUrl = image.Thumbnail
                 };
                 // TVDb uses 3 character language
-                var imageLanguage = languages.FirstOrDefault(lang => lang.Id == image.Language)?.Id;
+                var imageLanguage = languages.FirstOrDefault(lang => string.Equals(lang.Id, image.Language, StringComparison.OrdinalIgnoreCase))?.Id;
                 if (!string.IsNullOrEmpty(imageLanguage))
                 {
-                    imageInfo.Language = TvdbUtils.NormalizeLanguageToJellyfin(imageLanguage);
+                    imageInfo.Language = TvdbUtils.NormalizeLanguageToJellyfin(imageLanguage)?.ToLowerInvariant();
                 }
 
                 remoteImages.Add(imageInfo);

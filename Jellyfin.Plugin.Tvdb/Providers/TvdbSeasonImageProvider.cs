@@ -104,10 +104,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 };
 
                 // Tvdb uses 3 letter code for language (prob ISO 639-2)
-                var artworkLanguage = languages.FirstOrDefault(lang => lang.Id == image.Language)?.Id;
+                var artworkLanguage = languages.FirstOrDefault(lang => string.Equals(lang.Id, image.Language, StringComparison.OrdinalIgnoreCase))?.Id;
                 if (!string.IsNullOrEmpty(artworkLanguage))
                 {
-                    imageInfo.Language = TvdbUtils.NormalizeLanguageToJellyfin(artworkLanguage);
+                    imageInfo.Language = TvdbUtils.NormalizeLanguageToJellyfin(artworkLanguage)?.ToLowerInvariant();
                 }
 
                 remoteImages.Add(imageInfo);

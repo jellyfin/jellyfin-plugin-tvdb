@@ -240,7 +240,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     await _tvdbClientManager
                         .GetSeriesExtendedByIdAsync(Convert.ToInt32(tvdbId, CultureInfo.InvariantCulture), metadataLanguage, new SeriesExtendedOptionalParams { Meta = "translations", Short = false }, cancellationToken)
                         .ConfigureAwait(false);
-                MapSeriesToResult(result, seriesResult.Data, metadataLanguage);
+                MapSeriesToResult(result, seriesResult.Data, info);
 
                 result.ResetPeople();
 
@@ -461,18 +461,20 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
         }
 
-        private static void MapSeriesToResult(MetadataResult<Series> result, SeriesExtendedRecordDto tvdbSeries, string metadataLanguage)
+        private static void MapSeriesToResult(MetadataResult<Series> result, SeriesExtendedRecordDto tvdbSeries, SeriesInfo info)
         {
             Series series = result.Item;
             series.SetProviderId(TvdbPlugin.ProviderId, tvdbSeries.Id.ToString(CultureInfo.InvariantCulture));
             // Tvdb uses 3 letter code for language (prob ISO 639-2)
-            series.Name = tvdbSeries.Translations.NameTranslations.FirstOrDefault(x => x.Language == TvdbUtils.NormalizeLanguageToTvdb(metadataLanguage))?.Name;
-            series.Overview = tvdbSeries.Translations.OverviewTranslations.FirstOrDefault(x => x.Language == TvdbUtils.NormalizeLanguageToTvdb(metadataLanguage))?.Overview;
+            series.Name = tvdbSeries.Translations.NameTranslations.FirstOrDefault(x => string.Equals(x.Language, TvdbUtils.NormalizeLanguageToTvdb(info.MetadataLanguage), StringComparison.OrdinalIgnoreCase))?.Name;
+            series.Overview = tvdbSeries.Translations.OverviewTranslations.FirstOrDefault(x => string.Equals(x.Language, TvdbUtils.NormalizeLanguageToTvdb(info.MetadataLanguage), StringComparison.OrdinalIgnoreCase))?.Overview;
             series.OriginalTitle = tvdbSeries.Name;
-            result.ResultLanguage = metadataLanguage;
+            result.ResultLanguage = info.MetadataLanguage;
             series.AirDays = TVUtils.GetAirDays(tvdbSeries.AirsDays.ToString());
             series.AirTime = tvdbSeries.AirsTime;
             // series.CommunityRating = (float?)tvdbSeries.SiteRating;
+            // Attempts to default to USA if not found
+            series.OfficialRating = tvdbSeries.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, new RegionInfo(info.MetadataCountryCode).ThreeLetterISORegionName, StringComparison.OrdinalIgnoreCase))?.Name ?? tvdbSeries.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, "usa", StringComparison.OrdinalIgnoreCase))?.Name;
             var imdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id.ToString();
             var zap2ItId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "Zap2It")?.Id.ToString();
             var tmdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "TheMovieDB.com")?.Id.ToString();
