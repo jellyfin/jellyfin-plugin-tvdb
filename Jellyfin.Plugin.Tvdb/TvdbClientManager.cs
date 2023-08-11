@@ -348,6 +348,7 @@ namespace Jellyfin.Plugin.Tvdb
                         episodeQuery.Season = searchInfo.ParentIndexNumber.Value;
                         break;
                     case "absolute":
+                        episodeQuery.Season = 1; // absolute order is always season 1
                         episodeQuery.EpisodeNumber = searchInfo.IndexNumber.Value;
                         break;
                     default:
@@ -374,7 +375,6 @@ namespace Jellyfin.Plugin.Tvdb
                     apiResponse = await tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), searchInfo.SeriesDisplayOrder, episodeQuery, cancellationToken).ConfigureAwait(false);
                     break;
                 default:
-
                     apiResponse = await tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), "default", episodeQuery, cancellationToken).ConfigureAwait(false);
                     break;
             }
