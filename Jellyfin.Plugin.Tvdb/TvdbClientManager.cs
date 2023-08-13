@@ -338,6 +338,7 @@ namespace Jellyfin.Plugin.Tvdb
         {
             searchInfo.SeriesProviderIds.TryGetValue(TvdbPlugin.ProviderId, out var seriesTvdbId);
             SeriesEpisodesOptionalParams episodeQuery = new SeriesEpisodesOptionalParams();
+            bool special = false;
             // Prefer SxE over premiere date as it is more robust
             if (searchInfo.IndexNumber.HasValue && searchInfo.ParentIndexNumber.HasValue)
             {
@@ -348,7 +349,16 @@ namespace Jellyfin.Plugin.Tvdb
                         episodeQuery.Season = searchInfo.ParentIndexNumber.Value;
                         break;
                     case "absolute":
-                        episodeQuery.Season = 1; // absolute order is always season 1
+                        if (searchInfo.ParentIndexNumber.Value == 0) // check if special
+                        {
+                            special = true;
+                            episodeQuery.Season = 0;
+                        }
+                        else
+                        {
+                            episodeQuery.Season = 1; // absolute order is always season 1
+                        }
+
                         episodeQuery.EpisodeNumber = searchInfo.IndexNumber.Value;
                         break;
                     default:
@@ -367,16 +377,22 @@ namespace Jellyfin.Plugin.Tvdb
             episodeQuery.Page = 0;
             var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
             TvDbApiResponse<GetSeriesEpisodesResponseData> apiResponse;
-            // Not using TryGetValue since it returns the wrong value.
-            switch (searchInfo.SeriesDisplayOrder)
+            if (!special)
             {
-                case "dvd":
-                case "absolute":
-                    apiResponse = await tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), searchInfo.SeriesDisplayOrder, episodeQuery, cancellationToken).ConfigureAwait(false);
-                    break;
-                default:
-                    apiResponse = await tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), "default", episodeQuery, cancellationToken).ConfigureAwait(false);
-                    break;
+                switch (searchInfo.SeriesDisplayOrder)
+                {
+                    case "dvd":
+                    case "absolute":
+                        apiResponse = await tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), searchInfo.SeriesDisplayOrder, episodeQuery, cancellationToken).ConfigureAwait(false);
+                        break;
+                    default:
+                        apiResponse = await tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), "default", episodeQuery, cancellationToken).ConfigureAwait(false);
+                        break;
+                }
+            }
+            else // when special use default order
+            {
+                apiResponse = await tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), "default", episodeQuery, cancellationToken).ConfigureAwait(false);
             }
 
             GetSeriesEpisodesResponseData apiData = apiResponse.Data;
