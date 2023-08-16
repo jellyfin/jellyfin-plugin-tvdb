@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Reflection;
 using MediaBrowser.Model.Entities;
 
 namespace Jellyfin.Plugin.Tvdb
@@ -55,7 +56,7 @@ namespace Jellyfin.Plugin.Tvdb
             }
 
             // Unique case for zh-TW
-            if (language.Equals("zh-TW", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(language, "zh-TW", StringComparison.OrdinalIgnoreCase))
             {
                 return "zhtw";
             }
@@ -77,7 +78,7 @@ namespace Jellyfin.Plugin.Tvdb
             }
 
             // Unique case for zhtw
-            if (language.Equals("zhtw", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(language, "zhtw", StringComparison.OrdinalIgnoreCase))
             {
                 return "zh-TW";
             }

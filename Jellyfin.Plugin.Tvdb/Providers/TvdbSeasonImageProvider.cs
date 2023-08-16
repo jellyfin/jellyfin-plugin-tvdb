@@ -85,7 +85,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 // Checks if valid image type, if not, skip
                 try
                 {
-                    type = TvdbUtils.GetImageTypeFromKeyType(artworkTypes.FirstOrDefault(x => x.Id == image.Type && x.RecordType == "season")?.Name);
+                    type = TvdbUtils.GetImageTypeFromKeyType(artworkTypes.FirstOrDefault(x => x.Id == image.Type && string.Equals(x.RecordType, "season", StringComparison.OrdinalIgnoreCase))?.Name);
                 }
                 catch (Exception)
                 {

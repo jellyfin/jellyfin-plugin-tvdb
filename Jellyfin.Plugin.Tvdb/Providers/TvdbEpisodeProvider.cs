@@ -211,15 +211,16 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     AirsAfterSeasonNumber = episode.AirsAfterSeason,
                     AirsBeforeSeasonNumber = episode.AirsBeforeSeason,
                     // Tvdb uses 3 letter code for language (prob ISO 639-2)
-                    Name = episode.Translations.NameTranslations.FirstOrDefault(x => string.Equals(x.Language, TvdbUtils.NormalizeLanguageToTvdb(id.MetadataLanguage), StringComparison.OrdinalIgnoreCase))?.Name,
-                    Overview = episode.Translations.OverviewTranslations?.FirstOrDefault(x => string.Equals(x.Language, TvdbUtils.NormalizeLanguageToTvdb(id.MetadataLanguage), StringComparison.OrdinalIgnoreCase))?.Overview
+                    // Reverts to OriginalName if no translation is found
+                    Name = episode.Translations.NameTranslations.FirstOrDefault(x => string.Equals(x.Language, TvdbUtils.NormalizeLanguageToTvdb(id.MetadataLanguage), StringComparison.OrdinalIgnoreCase))?.Name ?? episode.Name,
+                    Overview = episode.Translations.OverviewTranslations?.FirstOrDefault(x => string.Equals(x.Language, TvdbUtils.NormalizeLanguageToTvdb(id.MetadataLanguage), StringComparison.OrdinalIgnoreCase))?.Overview ?? episode.Overview
                 }
             };
             result.ResetPeople();
 
             var item = result.Item;
             item.SetProviderId(TvdbPlugin.ProviderId, episode.Id.ToString(CultureInfo.InvariantCulture));
-            var imdbID = episode.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id;
+            var imdbID = episode.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB",StringComparison.OrdinalIgnoreCase))?.Id;
             if (!string.IsNullOrEmpty(imdbID))
             {
                 item.SetProviderId(MetadataProvider.Imdb, imdbID);
@@ -227,7 +228,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (string.Equals(id.SeriesDisplayOrder, "dvd", StringComparison.OrdinalIgnoreCase))
             {
-                var dvdInfo = episode.Seasons.FirstOrDefault(x => x.Type.Name == "dvd");
+                var dvdInfo = episode.Seasons.FirstOrDefault(x => string.Equals(x.Type.Name, "dvd", StringComparison.OrdinalIgnoreCase));
                 if (dvdInfo is null)
                 {
                     item.IndexNumber = episode.Number;
@@ -241,7 +242,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
             else if (string.Equals(id.SeriesDisplayOrder, "absolute", StringComparison.OrdinalIgnoreCase))
             {
-                var absoluteInfo = episode.Seasons.FirstOrDefault(x => x.Type.Name == "absolute");
+                var absoluteInfo = episode.Seasons.FirstOrDefault(x => string.Equals(x.Type.Name, "absolute", StringComparison.OrdinalIgnoreCase));
                 if (absoluteInfo is not null)
                 {
                     item.IndexNumber = Convert.ToInt32(absoluteInfo.Number, CultureInfo.InvariantCulture);
@@ -265,7 +266,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 for (var i = 0; i < episode.Characters.Length; ++i)
                 {
                     var currentActor = episode.Characters[i];
-                    if (currentActor.PeopleType == "Actor")
+                    if (string.Equals(currentActor.PeopleType, "Actor", StringComparison.OrdinalIgnoreCase))
                     {
                         result.AddPerson(new PersonInfo
                         {
@@ -274,7 +275,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                             Role = currentActor.Name
                         });
                     }
-                    else if (currentActor.PeopleType == "Director")
+                    else if (string.Equals(currentActor.PeopleType, "Director", StringComparison.OrdinalIgnoreCase))
                     {
                         result.AddPerson(new PersonInfo
                         {
@@ -282,7 +283,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                             Name = currentActor.PersonName
                         });
                     }
-                    else if (currentActor.PeopleType == "Writer")
+                    else if (string.Equals(currentActor.PeopleType, "Writer", StringComparison.OrdinalIgnoreCase))
                     {
                         result.AddPerson(new PersonInfo
                         {
@@ -290,7 +291,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                             Name = currentActor.PersonName
                         });
                     }
-                    else if (currentActor.PeopleType == "Guest Star")
+                    else if (string.Equals(currentActor.PeopleType, "Guest Star", StringComparison.OrdinalIgnoreCase))
                     {
                         result.AddPerson(new PersonInfo
                         {
