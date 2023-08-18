@@ -12,7 +12,9 @@
 
   <ItemGroup>
     <None Remove="Configuration\config.html" />
+    <None Remove="iso6392.txt" />
     <EmbeddedResource Include="Configuration\config.html" />
+    <EmbeddedResource Include="iso6392.txt" />
   </ItemGroup>
 
   <ItemGroup>

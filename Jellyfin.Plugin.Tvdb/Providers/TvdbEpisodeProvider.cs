@@ -220,7 +220,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             var item = result.Item;
             item.SetProviderId(TvdbPlugin.ProviderId, episode.Id.ToString(CultureInfo.InvariantCulture));
-            var imdbID = episode.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB",StringComparison.OrdinalIgnoreCase))?.Id;
+            var imdbID = episode.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id;
             if (!string.IsNullOrEmpty(imdbID))
             {
                 item.SetProviderId(MetadataProvider.Imdb, imdbID);

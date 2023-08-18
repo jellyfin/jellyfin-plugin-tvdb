@@ -1,6 +1,5 @@
 using System;
 using System.Globalization;
-using System.Reflection;
 using MediaBrowser.Model.Entities;
 
 namespace Jellyfin.Plugin.Tvdb
@@ -62,7 +61,7 @@ namespace Jellyfin.Plugin.Tvdb
             }
 
             // to (ISO 639-2)
-            return CultureInfo.GetCultureInfo(language.Split('-')[0].ToLowerInvariant()).ThreeLetterISOLanguageName;
+            return TvdbCultureInfo.GetCultureInfo(language.Split('-')[0].ToLowerInvariant())?.ThreeLetterISOLanguageName;
         }
 
         /// <summary>
@@ -84,7 +83,7 @@ namespace Jellyfin.Plugin.Tvdb
             }
 
             // to (ISO 639-1)
-            return CultureInfo.GetCultureInfo(language).TwoLetterISOLanguageName;
+            return TvdbCultureInfo.GetCultureInfo(language)?.TwoLetterISOLanguageName;
         }
     }
 }
