@@ -4,9 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Schema;
 using Jellyfin.Extensions;
+using Jellyfin.Extensions.Json;
 using MediaBrowser.Model.Globalization;
 
 namespace Jellyfin.Plugin.Tvdb
@@ -16,13 +18,16 @@ namespace Jellyfin.Plugin.Tvdb
     /// </summary>
     public static class TvdbCultureInfo
     {
-        private const string _resourceName = "Jellyfin.Plugin.Tvdb.iso6392.txt";
+        private const string _cultureInfo = "Jellyfin.Plugin.Tvdb.iso6392.txt";
+        private const string _countryInfo = "Jellyfin.Plugin.Tvdb.countries.json";
         private static readonly Assembly _assembly = typeof(TvdbCultureInfo).Assembly;
         private static List<CultureDto> _cultures = new List<CultureDto>();
+        private static List<CountryInfo> _countries = new List<CountryInfo>();
 
         static TvdbCultureInfo()
         {
             LoadCultureInfo().Wait();
+            LoadCountryInfo();
         }
 
         /// <summary>
@@ -31,7 +36,7 @@ namespace Jellyfin.Plugin.Tvdb
         private static async Task LoadCultureInfo()
         {
             List<CultureDto> cultureList = new List<CultureDto>();
-            using var stream = _assembly.GetManifestResourceStream(_resourceName) ?? throw new InvalidOperationException($"Invalid resource path: '{_resourceName}'");
+            using var stream = _assembly.GetManifestResourceStream(_cultureInfo) ?? throw new InvalidOperationException($"Invalid resource path: '{_cultureInfo}'");
             using var reader = new StreamReader(stream);
             await foreach (var line in reader.ReadAllLinesAsync().ConfigureAwait(false))
             {
@@ -74,6 +79,16 @@ namespace Jellyfin.Plugin.Tvdb
         }
 
         /// <summary>
+        /// Loads country info from embedded resource.
+        /// </summary>
+        private static void LoadCountryInfo()
+        {
+            using var stream = _assembly.GetManifestResourceStream(_countryInfo) ?? throw new InvalidOperationException($"Invalid resource path: '{_countryInfo}'");
+            using var reader = new StreamReader(stream);
+            _countries = JsonSerializer.Deserialize<List<CountryInfo>>(reader.ReadToEnd(), JsonDefaults.Options) ?? throw new InvalidOperationException($"Resource contains invalid data: '{_countryInfo}'");
+        }
+
+        /// <summary>
         /// Gets the cultureinfo for the given language.
         /// </summary>
         /// <param name="language">Language.</param>
@@ -89,6 +104,27 @@ namespace Jellyfin.Plugin.Tvdb
                     || language.Equals(culture.TwoLetterISOLanguageName, StringComparison.OrdinalIgnoreCase))
                 {
                     return culture;
+                }
+            }
+
+            return default;
+        }
+
+        /// <summary>
+        /// Gets the CountryInfo for the given country.
+        /// </summary>
+        /// <param name="country"> Country.</param>
+        /// <returns>CountryInfo.</returns>
+        public static CountryInfo? GetCountryInfo(string country)
+        {
+            for (var i = 0; i < _countries.Count; i++)
+            {
+                var countryInfo = _countries[i];
+                if (country.Equals(countryInfo.Name, StringComparison.OrdinalIgnoreCase)
+                    || country.Equals(countryInfo.TwoLetterISORegionName, StringComparison.OrdinalIgnoreCase)
+                    || country.Equals(countryInfo.ThreeLetterISORegionName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return countryInfo;
                 }
             }
 

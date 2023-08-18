@@ -475,7 +475,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             series.AirTime = tvdbSeries.AirsTime;
             // series.CommunityRating = (float?)tvdbSeries.SiteRating;
             // Attempts to default to USA if not found
-            series.OfficialRating = tvdbSeries.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, new RegionInfo(info.MetadataCountryCode).ThreeLetterISORegionName, StringComparison.OrdinalIgnoreCase))?.Name ?? tvdbSeries.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, "usa", StringComparison.OrdinalIgnoreCase))?.Name;
+            series.OfficialRating = tvdbSeries.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, TvdbCultureInfo.GetCountryInfo(info.MetadataCountryCode)?.ThreeLetterISORegionName, StringComparison.OrdinalIgnoreCase))?.Name ?? tvdbSeries.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, "usa", StringComparison.OrdinalIgnoreCase))?.Name;
             var imdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id.ToString();
             var zap2ItId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "Zap2It")?.Id.ToString();
             var tmdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "TheMovieDB.com")?.Id.ToString();

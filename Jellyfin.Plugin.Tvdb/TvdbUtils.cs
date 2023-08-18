@@ -60,8 +60,14 @@ namespace Jellyfin.Plugin.Tvdb
                 return "zhtw";
             }
 
+            // Unique case for pt-BR
+            if (string.Equals(language, "pt-br", StringComparison.OrdinalIgnoreCase))
+            {
+                return "pt";
+            }
+
             // to (ISO 639-2)
-            return TvdbCultureInfo.GetCultureInfo(language.Split('-')[0].ToLowerInvariant())?.ThreeLetterISOLanguageName;
+            return TvdbCultureInfo.GetCultureInfo(language)?.ThreeLetterISOLanguageName;
         }
 
         /// <summary>
@@ -80,6 +86,12 @@ namespace Jellyfin.Plugin.Tvdb
             if (string.Equals(language, "zhtw", StringComparison.OrdinalIgnoreCase))
             {
                 return "zh-TW";
+            }
+
+            // Unique case for pt
+            if (string.Equals(language, "pt", StringComparison.OrdinalIgnoreCase))
+            {
+                return "pt-BR";
             }
 
             // to (ISO 639-1)
