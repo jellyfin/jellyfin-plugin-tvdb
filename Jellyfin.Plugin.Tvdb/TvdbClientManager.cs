@@ -287,7 +287,16 @@ namespace Jellyfin.Plugin.Tvdb
                         episodeQuery.DvdSeason = searchInfo.ParentIndexNumber.Value;
                         break;
                     case "absolute":
-                        episodeQuery.AbsoluteNumber = searchInfo.IndexNumber.Value;
+                        if (searchInfo.ParentIndexNumber.Value == 0)
+                        {
+                                episodeQuery.AiredEpisode = searchInfo.IndexNumber.Value;
+                                episodeQuery.AiredSeason = searchInfo.ParentIndexNumber.Value;
+                        }
+                        else
+                        {
+                                episodeQuery.AbsoluteNumber = searchInfo.IndexNumber.Value;
+                        }
+
                         break;
                     default:
                         // aired order
