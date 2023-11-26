@@ -254,7 +254,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 result.AddPerson(new PersonInfo
                 {
                     Name = director,
-                    Type = PersonType.Director
+                    Type = PersonKind.Director
                 });
             }
 
@@ -274,7 +274,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 {
                     result.AddPerson(new PersonInfo
                     {
-                        Type = PersonType.GuestStar,
+                        Type = PersonKind.GuestStar,
                         Name = currentActor,
                         Role = string.Empty
                     });
@@ -303,7 +303,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
                 result.AddPerson(new PersonInfo
                 {
-                    Type = PersonType.GuestStar,
+                    Type = PersonKind.GuestStar,
                     Name = currentActor.Substring(0, roleStartIndex).Trim(),
                     Role = string.Join(", ", roles)
                 });
@@ -314,7 +314,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 result.AddPerson(new PersonInfo
                 {
                     Name = writer,
-                    Type = PersonType.Writer
+                    Type = PersonKind.Writer
                 });
             }
 
