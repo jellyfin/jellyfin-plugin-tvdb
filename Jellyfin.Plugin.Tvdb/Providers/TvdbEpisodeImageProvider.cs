@@ -11,7 +11,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
-using TvDbSharper;
+using Tvdb.Sdk;
 
 namespace Jellyfin.Plugin.Tvdb.Providers
 {
@@ -94,13 +94,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                             .GetEpisodesAsync(Convert.ToInt32(episodeTvdbId, CultureInfo.InvariantCulture), language, cancellationToken)
                             .ConfigureAwait(false);
 
-                    var image = GetImageInfo(episodeResult.Data);
+                    var image = GetImageInfo(episodeResult);
                     if (image != null)
                     {
                         imageResult.Add(image);
                     }
                 }
-                catch (TvDbServerException e)
+                catch (Exception e)
                 {
                     _logger.LogError(e, "Failed to retrieve episode images for series {TvDbId}:{Name}", series.GetProviderId(TvdbPlugin.ProviderId), series.Name);
                 }
@@ -115,7 +115,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
         }
 
-        private RemoteImageInfo? GetImageInfo(EpisodeExtendedRecordDto episode)
+        private RemoteImageInfo? GetImageInfo(EpisodeExtendedRecord episode)
         {
             if (string.IsNullOrEmpty(episode.Image))
             {

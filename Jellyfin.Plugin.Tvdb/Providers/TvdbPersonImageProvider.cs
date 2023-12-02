@@ -15,7 +15,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
-using TvDbSharper;
+using Tvdb.Sdk;
 
 namespace Jellyfin.Plugin.Tvdb.Providers
 {
@@ -100,7 +100,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 var actorsResult = await _tvdbClientManager
                     .GetSeriesExtendedByIdAsync(tvdbId, series.GetPreferredMetadataLanguage(), cancellationToken)
                     .ConfigureAwait(false);
-                var character = actorsResult.Data.Characters.FirstOrDefault(i => string.Equals(i.PersonName, personName, StringComparison.OrdinalIgnoreCase));
+                var character = actorsResult.Characters.FirstOrDefault(i => string.Equals(i.PersonName, personName, StringComparison.OrdinalIgnoreCase));
 
                 if (character == null)
                 {
@@ -112,12 +112,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     .ConfigureAwait(false);
                 return new RemoteImageInfo
                 {
-                    Url = actor.Data.Image,
+                    Url = actor.Image,
                     Type = ImageType.Primary,
                     ProviderName = Name
                 };
             }
-            catch (TvDbServerException e)
+            catch (Exception e)
             {
                 _logger.LogError(e, "Failed to retrieve actor {ActorName} from series {SeriesTvdbId}:{Name}", personName, tvdbId, series.Name);
                 return null;

@@ -14,7 +14,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
-using TvDbSharper;
+using Tvdb.Sdk;
 
 namespace Jellyfin.Plugin.Tvdb.Providers
 {
@@ -182,9 +182,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     searchInfo.MetadataLanguage,
                     cancellationToken).ConfigureAwait(false);
 
-                result = MapEpisodeToResult(searchInfo, episodeResult.Data);
+                result = MapEpisodeToResult(searchInfo, episodeResult);
             }
-            catch (TvDbServerException e)
+            catch (Exception e)
             {
                 _logger.LogError(
                     e,
@@ -197,7 +197,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             return result;
         }
 
-        private static MetadataResult<Episode> MapEpisodeToResult(EpisodeInfo id, EpisodeExtendedRecordDto episode)
+        private static MetadataResult<Episode> MapEpisodeToResult(EpisodeInfo id, EpisodeExtendedRecord episode)
         {
             var result = new MetadataResult<Episode>
             {
@@ -263,7 +263,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (episode.Characters is not null)
             {
-                for (var i = 0; i < episode.Characters.Length; ++i)
+                for (var i = 0; i < episode.Characters.Count; ++i)
                 {
                     var currentActor = episode.Characters[i];
                     if (string.Equals(currentActor.PeopleType, "Actor", StringComparison.OrdinalIgnoreCase))

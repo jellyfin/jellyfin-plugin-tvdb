@@ -11,7 +11,8 @@ using System.Threading.Tasks;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Providers;
 using Microsoft.Extensions.Caching.Memory;
-using TvDbSharper;
+using Microsoft.Extensions.DependencyInjection;
+using Tvdb.Sdk;
 
 namespace Jellyfin.Plugin.Tvdb
 {
@@ -20,15 +21,11 @@ namespace Jellyfin.Plugin.Tvdb
     /// </summary>
     public class TvdbClientManager
     {
-        private const string DefaultLanguage = "en";
-
         private readonly IMemoryCache _cache;
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ServiceProvider _serviceProvider;
 
-        /// <summary>
-        /// TvDbClients per language.
-        /// </summary>
-        private readonly ConcurrentDictionary<string, TvDbClientInfo> _tvDbClients = new ConcurrentDictionary<string, TvDbClientInfo>();
+        private static SemaphoreSlim _tokenUpdateLock = new SemaphoreSlim(1, 1);
+        private DateTime _tokenUpdatedAt;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TvdbClientManager"/> class.
@@ -38,58 +35,65 @@ namespace Jellyfin.Plugin.Tvdb
         public TvdbClientManager(IMemoryCache memoryCache, IHttpClientFactory httpClientFactory)
         {
             _cache = memoryCache;
-            _httpClientFactory = httpClientFactory;
+            _tokenUpdatedAt = DateTime.MinValue;
+            _serviceProvider = ConfigureService();
         }
 
         private static string? ProjectApiKey => TvdbPlugin.Instance?.Configuration.ProjectApiKey;
 
         private static string? ApiKey => TvdbPlugin.Instance?.Configuration.ApiKey;
 
-        private async Task<TvDbClient> GetTvDbClient(string? language)
+        /// <summary>
+        /// Logs in or refresh login to the tvdb api when needed.
+        /// </summary>
+        private async Task LoginAsync()
         {
-            var tvDbClientInfo = _tvDbClients.GetOrAdd(language ?? DefaultLanguage, key => new TvDbClientInfo(_httpClientFactory, key));
-
-            var tvDbClient = tvDbClientInfo.Client;
+            var loginClient = _serviceProvider.GetRequiredService<ILoginClient>();
+            var sdkClientSettings = _serviceProvider.GetRequiredService<SdkClientSettings>();
 
             // First time authenticating if the token was never updated or if it's empty in the client
-            if (tvDbClientInfo.TokenUpdatedAt == DateTime.MinValue || string.IsNullOrEmpty(tvDbClient.AuthToken))
+            if (_tokenUpdatedAt == DateTime.MinValue || string.IsNullOrEmpty(sdkClientSettings.AccessToken))
             {
-                await tvDbClientInfo.TokenUpdateLock.WaitAsync().ConfigureAwait(false);
-
+                await _tokenUpdateLock.WaitAsync().ConfigureAwait(false);
                 try
                 {
-                    if (string.IsNullOrEmpty(tvDbClient.AuthToken))
+                    if (string.IsNullOrEmpty(sdkClientSettings.AccessToken))
                     {
-                        await tvDbClient.Login(ProjectApiKey, ApiKey).ConfigureAwait(false);
-                        tvDbClientInfo.TokenUpdatedAt = DateTime.UtcNow;
+                        await loginClient.LoginAsync(new Body
+                        {
+                            Apikey = ApiKey,
+                            Pin = ProjectApiKey
+                        }).ConfigureAwait(false);
+                        _tokenUpdatedAt = DateTime.UtcNow;
                     }
                 }
                 finally
                 {
-                    tvDbClientInfo.TokenUpdateLock.Release();
+                    _tokenUpdateLock.Release();
                 }
             }
 
             // Refresh if necessary
-            if (tvDbClientInfo.TokenUpdatedAt < DateTime.UtcNow.Subtract(TimeSpan.FromDays(25)))
+            if (_tokenUpdatedAt < DateTime.UtcNow.Subtract(TimeSpan.FromDays(25)))
             {
-                await tvDbClientInfo.TokenUpdateLock.WaitAsync().ConfigureAwait(false);
-
                 try
                 {
-                    if (tvDbClientInfo.TokenUpdatedAt < DateTime.UtcNow.Subtract(TimeSpan.FromDays(25)))
+                    await _tokenUpdateLock.WaitAsync().ConfigureAwait(false);
+                    if (_tokenUpdatedAt < DateTime.UtcNow.Subtract(TimeSpan.FromDays(25)))
                     {
-                        await tvDbClient.Login(ProjectApiKey, ApiKey).ConfigureAwait(false);
-                        tvDbClientInfo.TokenUpdatedAt = DateTime.UtcNow;
+                        await loginClient.LoginAsync(new Body
+                        {
+                            Apikey = ApiKey,
+                            Pin = ProjectApiKey
+                        }).ConfigureAwait(false);
+                        _tokenUpdatedAt = DateTime.UtcNow;
                     }
                 }
                 finally
                 {
-                    tvDbClientInfo.TokenUpdateLock.Release();
+                    _tokenUpdateLock.Release();
                 }
             }
-
-            return tvDbClient;
         }
 
         /// <summary>
@@ -99,19 +103,16 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The series search result.</returns>
-        public async Task<TvDbApiResponse<SearchResultDto[]>> GetSeriesByNameAsync(
+        public async Task<IReadOnlyList<SearchResult>> GetSeriesByNameAsync(
             string name,
             string language,
             CancellationToken cancellationToken)
         {
-            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-            SearchOptionalParams optionalParams = new SearchOptionalParams
-            {
-                Query = name,
-                Type = "series",
-                Limit = 5
-            };
-            return await tvDbClient.Search(optionalParams, cancellationToken).ConfigureAwait(false);
+            var searchClient = _serviceProvider.GetRequiredService<ISearchClient>();
+            await LoginAsync().ConfigureAwait(false);
+            var searchResult = await searchClient.GetSearchResultsAsync(query: name, type: "series", limit: 5, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            return searchResult.Data;
         }
 
         /// <summary>
@@ -121,13 +122,16 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The series response.</returns>
-        public async Task<TvDbApiResponse<SeriesBaseRecordDto>> GetSeriesByIdAsync(
+        public async Task<SeriesBaseRecord> GetSeriesByIdAsync(
             int tvdbId,
             string language,
             CancellationToken cancellationToken)
         {
-            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-            return await tvDbClient.Series(tvdbId, cancellationToken).ConfigureAwait(false);
+            var seriesClient = _serviceProvider.GetRequiredService<ISeriesClient>();
+            await LoginAsync().ConfigureAwait(false);
+            var seriesResult = await seriesClient.GetSeriesBaseAsync(id: tvdbId, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            return seriesResult.Data;
         }
 
         /// <summary>
@@ -136,32 +140,21 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="tvdbId">The series tvdb id.</param>
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
+        /// <param name="meta">episodes or translations.</param>
+        /// <param name="small">Payload size. True for smaller payload.</param>
         /// <returns>The series response.</returns>
-        public async Task<TvDbApiResponse<SeriesExtendedRecordDto>> GetSeriesExtendedByIdAsync(
+        public async Task<SeriesExtendedRecord> GetSeriesExtendedByIdAsync(
             int tvdbId,
             string language,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            Meta4? meta = null,
+            bool? small = null)
         {
-            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-            return await tvDbClient.SeriesExtended(tvdbId, cancellationToken).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Get series by id.
-        /// </summary>
-        /// <param name="tvdbId">The series tvdb id.</param>
-        /// <param name="language">Metadata language.</param>
-        /// <param name="optionalParams">Optional Parameters.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>The series response.</returns>
-        public async Task<TvDbApiResponse<SeriesExtendedRecordDto>> GetSeriesExtendedByIdAsync(
-            int tvdbId,
-            string language,
-            SeriesExtendedOptionalParams optionalParams,
-            CancellationToken cancellationToken)
-        {
-            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-            return await tvDbClient.SeriesExtended(tvdbId, optionalParams, cancellationToken).ConfigureAwait(false);
+            var seriesClient = _serviceProvider.GetRequiredService<ISeriesClient>();
+            await LoginAsync().ConfigureAwait(false);
+            var seriesResult = await seriesClient.GetSeriesExtendedAsync(id: tvdbId, meta: meta, @short: small, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            return seriesResult.Data;
         }
 
         /// <summary>
@@ -172,34 +165,17 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="seasonType">Season type: default, dvd, absolute etc.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>All episodes of series.</returns>
-        public async Task<TvDbApiResponse<GetSeriesEpisodesResponseData>> GetSeriesEpisodesAsync(
+        public async Task<Data2> GetSeriesEpisodesAsync(
             int tvdbId,
             string language,
             string seasonType,
             CancellationToken cancellationToken)
         {
-            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-            return await tvDbClient.SeriesEpisodes(tvdbId, seasonType, cancellationToken).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Get all episodes of series.
-        /// </summary>
-        /// <param name="tvdbId">The series tvdb id.</param>
-        /// <param name="language">Metadata language.</param>
-        /// <param name="seasonType">Season type: default, dvd, absolute etc.</param>
-        /// <param name="optionalParams">Optional Parameters.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>All episodes of series.</returns>
-        public async Task<TvDbApiResponse<GetSeriesEpisodesResponseData>> GetSeriesEpisodesAsync(
-            int tvdbId,
-            string language,
-            string seasonType,
-            SeriesEpisodesOptionalParams optionalParams,
-            CancellationToken cancellationToken)
-        {
-            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-            return await tvDbClient.SeriesEpisodes(tvdbId, seasonType, optionalParams, cancellationToken).ConfigureAwait(false);
+            var seriesClient = _serviceProvider.GetRequiredService<ISeriesClient>();
+            await LoginAsync().ConfigureAwait(false);
+            var seriesResult = await seriesClient.GetSeriesEpisodesAsync(id: tvdbId, season_type: seasonType, cancellationToken: cancellationToken, page: 0)
+                .ConfigureAwait(false);
+            return seriesResult.Data;
         }
 
         /// <summary>
@@ -209,13 +185,16 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The episode record.</returns>
-        public async Task<TvDbApiResponse<SeasonExtendedRecordDto>> GetSeasonByIdAsync(
+        public async Task<SeasonExtendedRecord> GetSeasonByIdAsync(
             int seasonTvdbId,
             string language,
             CancellationToken cancellationToken)
         {
-            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-            return await tvDbClient.SeasonExtended(seasonTvdbId, cancellationToken).ConfigureAwait(false);
+            var seasonClient = _serviceProvider.GetRequiredService<ISeasonsClient>();
+            await LoginAsync().ConfigureAwait(false);
+            var seasonResult = await seasonClient.GetSeasonExtendedAsync(id: seasonTvdbId, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            return seasonResult.Data;
         }
 
         /// <summary>
@@ -225,17 +204,16 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The episode record.</returns>
-        public async Task<TvDbApiResponse<EpisodeExtendedRecordDto>> GetEpisodesAsync(
+        public async Task<EpisodeExtendedRecord> GetEpisodesAsync(
             int episodeTvdbId,
             string language,
             CancellationToken cancellationToken)
         {
-            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-            EpisodeExtendedOptionalParams optionalParams = new EpisodeExtendedOptionalParams
-            {
-                Meta = "translations",
-            };
-            return await tvDbClient.EpisodeExtended(episodeTvdbId, optionalParams, cancellationToken).ConfigureAwait(false);
+            var episodeClient = _serviceProvider.GetRequiredService<IEpisodesClient>();
+            await LoginAsync().ConfigureAwait(false);
+            var episodeResult = await episodeClient.GetEpisodeExtendedAsync(id: episodeTvdbId, meta: Meta.Translations, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            return episodeResult.Data;
         }
 
         /// <summary>
@@ -245,13 +223,16 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The series search result.</returns>
-        public async Task<TvDbApiResponse<SearchByRemoteIdResultDto[]>> GetSeriesByRemoteIdAsync(
+        public async Task<IReadOnlyList<SearchByRemoteIdResult>> GetSeriesByRemoteIdAsync(
             string remoteId,
             string language,
             CancellationToken cancellationToken)
         {
-            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-            return await tvDbClient.SearchResultsByRemoteId(remoteId, cancellationToken).ConfigureAwait(false);
+            var searchClient = _serviceProvider.GetRequiredService<ISearchClient>();
+            await LoginAsync().ConfigureAwait(false);
+            var searchResult = await searchClient.GetSearchResultsByRemoteIdAsync(remoteId: remoteId, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            return searchResult.Data;
         }
 
         /// <summary>
@@ -261,13 +242,16 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The actors attached to the id.</returns>
-        public async Task<TvDbApiResponse<PeopleBaseRecordDto>> GetActorAsync(
+        public async Task<PeopleBaseRecord> GetActorAsync(
             int tvdbId,
             string language,
             CancellationToken cancellationToken)
         {
-            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-            return await tvDbClient.People(tvdbId, cancellationToken).ConfigureAwait(false);
+            var peopleClient = _serviceProvider.GetRequiredService<IPeopleClient>();
+            await LoginAsync().ConfigureAwait(false);
+            var peopleResult = await peopleClient.GetPeopleBaseAsync(id: tvdbId, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            return peopleResult.Data;
         }
 
         /// <summary>
@@ -277,13 +261,16 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The images attached to the id.</returns>
-        public async Task<TvDbApiResponse<ArtworkExtendedRecordDto>> GetImageAsync(
+        public async Task<ArtworkExtendedRecord> GetImageAsync(
             int imageTvdbId,
             string language,
             CancellationToken cancellationToken)
         {
-            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-            return await tvDbClient.ArtworkExtended(imageTvdbId, cancellationToken).ConfigureAwait(false);
+            var artworkClient = _serviceProvider.GetRequiredService<IArtworkClient>();
+            await LoginAsync().ConfigureAwait(false);
+            var artworkResult = await artworkClient.GetArtworkExtendedAsync(id: imageTvdbId, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            return artworkResult.Data;
         }
 
         /// <summary>
@@ -293,13 +280,16 @@ namespace Jellyfin.Plugin.Tvdb
         /// <param name="language">Metadata language.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>The images attached to the id.</returns>
-        public async Task<TvDbApiResponse<SeriesExtendedRecordDto>> GetSeriesImagesAsync(
+        public async Task<SeriesExtendedRecord> GetSeriesImagesAsync(
             int tvdbId,
             string language,
             CancellationToken cancellationToken)
         {
-            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-            return await tvDbClient.SeriesArtworks(tvdbId, cancellationToken).ConfigureAwait(false);
+            var seriesClient = _serviceProvider.GetRequiredService<ISeriesClient>();
+            await LoginAsync().ConfigureAwait(false);
+            var seriesResult = await seriesClient.GetSeriesArtworksAsync(id: tvdbId, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            return seriesResult.Data;
         }
 
         /// <summary>
@@ -307,10 +297,13 @@ namespace Jellyfin.Plugin.Tvdb
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>All tvdb languages.</returns>
-        public async Task<TvDbApiResponse<LanguageDto[]>> GetLanguagesAsync(CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<Language>> GetLanguagesAsync(CancellationToken cancellationToken)
         {
-            var tvDbClient = await GetTvDbClient(DefaultLanguage).ConfigureAwait(false);
-            return await tvDbClient.Languages(cancellationToken).ConfigureAwait(false);
+            var languagesClient = _serviceProvider.GetRequiredService<ILanguagesClient>();
+            await LoginAsync().ConfigureAwait(false);
+            var languagesResult = await languagesClient.GetAllLanguagesAsync(cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            return languagesResult.Data;
         }
 
         /// <summary>
@@ -318,10 +311,13 @@ namespace Jellyfin.Plugin.Tvdb
         /// </summary>
         /// <param name="cancellationToken">Cancellation Token.</param>
         /// <returns>All tvdb artwork types.</returns>
-        public async Task<TvDbApiResponse<ArtworkTypeDto[]>> GetArtworkTypeAsync(CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<ArtworkType>> GetArtworkTypeAsync(CancellationToken cancellationToken)
         {
-            var tvDbClient = await GetTvDbClient(DefaultLanguage).ConfigureAwait(false);
-            return await tvDbClient.ArtworkTypes(cancellationToken).ConfigureAwait(false);
+            var artwork_TypesClient = _serviceProvider.GetRequiredService<IArtwork_TypesClient>();
+            await LoginAsync().ConfigureAwait(false);
+            var artwork_TypesResult = await artwork_TypesClient.GetAllArtworkTypesAsync(cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            return artwork_TypesResult.Data;
         }
 
         /// <summary>
@@ -336,8 +332,12 @@ namespace Jellyfin.Plugin.Tvdb
             string language,
             CancellationToken cancellationToken)
         {
+            var seriesClient = _serviceProvider.GetRequiredService<ISeriesClient>();
+            await LoginAsync().ConfigureAwait(false);
             searchInfo.SeriesProviderIds.TryGetValue(TvdbPlugin.ProviderId, out var seriesTvdbId);
-            SeriesEpisodesOptionalParams episodeQuery = new SeriesEpisodesOptionalParams();
+            int? episodeNumber = null;
+            int? seasonNumber = null;
+            string? airDate = null;
             bool special = false;
             // Prefer SxE over premiere date as it is more robust
             if (searchInfo.IndexNumber.HasValue && searchInfo.ParentIndexNumber.HasValue)
@@ -345,82 +345,105 @@ namespace Jellyfin.Plugin.Tvdb
                 switch (searchInfo.SeriesDisplayOrder)
                 {
                     case "dvd":
-                        episodeQuery.EpisodeNumber = searchInfo.IndexNumber.Value;
-                        episodeQuery.Season = searchInfo.ParentIndexNumber.Value;
+                        episodeNumber = searchInfo.IndexNumber.Value;
+                        seasonNumber = searchInfo.ParentIndexNumber.Value;
                         break;
                     case "absolute":
                         if (searchInfo.ParentIndexNumber.Value == 0) // check if special
                         {
                             special = true;
-                            episodeQuery.Season = 0;
+                            seasonNumber = 0;
                         }
                         else
                         {
-                            episodeQuery.Season = 1; // absolute order is always season 1
+                            seasonNumber = 1; // absolute order is always season 1
                         }
 
-                        episodeQuery.EpisodeNumber = searchInfo.IndexNumber.Value;
+                        episodeNumber = searchInfo.IndexNumber.Value;
                         break;
                     default:
                         // aired order
-                        episodeQuery.EpisodeNumber = searchInfo.IndexNumber.Value;
-                        episodeQuery.Season = searchInfo.ParentIndexNumber.Value;
+                        episodeNumber = searchInfo.IndexNumber.Value;
+                        seasonNumber = searchInfo.ParentIndexNumber.Value;
                         break;
                 }
             }
             else if (searchInfo.PremiereDate.HasValue)
             {
                 // tvdb expects yyyy-mm-dd format
-                episodeQuery.AirDate = searchInfo.PremiereDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                airDate = searchInfo.PremiereDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             }
 
-            episodeQuery.Page = 0;
-            var tvDbClient = await GetTvDbClient(language).ConfigureAwait(false);
-            TvDbApiResponse<GetSeriesEpisodesResponseData> apiResponse;
+            Response56 seriesResponse;
             if (!special)
             {
                 switch (searchInfo.SeriesDisplayOrder)
                 {
                     case "dvd":
                     case "absolute":
-                        apiResponse = await tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), searchInfo.SeriesDisplayOrder, episodeQuery, cancellationToken).ConfigureAwait(false);
+                        seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), season_type: searchInfo.SeriesDisplayOrder, season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
                         break;
                     default:
-                        apiResponse = await tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), "default", episodeQuery, cancellationToken).ConfigureAwait(false);
+                        seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), season_type: "default", season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
                         break;
                 }
             }
             else // when special use default order
             {
-                apiResponse = await tvDbClient.SeriesEpisodes(Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), "default", episodeQuery, cancellationToken).ConfigureAwait(false);
+                seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), season_type: "default", season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
 
-            GetSeriesEpisodesResponseData apiData = apiResponse.Data;
+            Data2 seriesData = seriesResponse.Data;
 
-            if (apiData == null || apiData.Episodes == null || apiData.Episodes.Length == 0)
+            if (seriesData == null || seriesData.Episodes == null || seriesData.Episodes.Count == 0)
             {
                 return null;
             }
             else
             {
-                return apiData.Episodes[0].Id.ToString(CultureInfo.InvariantCulture);
+                return seriesData.Episodes[0].Id.ToString(CultureInfo.InvariantCulture);
             }
         }
 
-        private class TvDbClientInfo
+        private static ServiceProvider ConfigureService()
         {
-            public TvDbClientInfo(IHttpClientFactory httpClientFactory, string language)
-            {
-                Client = new TvDbClient(httpClientFactory.CreateClient(NamedClient.Default));
-                TokenUpdateLock = new SemaphoreSlim(1, 1);
-                TokenUpdatedAt = DateTime.MinValue;
-            }
+            var services = new ServiceCollection();
+            static HttpMessageHandler DefaultHttpClientHandlerDelegate(IServiceProvider service)
+                => new SocketsHttpHandler
+                {
+                    AutomaticDecompression = System.Net.DecompressionMethods.All,
+                    RequestHeaderEncodingSelector = (_, _) => System.Text.Encoding.UTF8
+                };
+            services.AddSingleton<SdkClientSettings>();
 
-            public TvDbClient Client { get; }
+            services.AddHttpClient<ILoginClient, LoginClient>()
+                .ConfigurePrimaryHttpMessageHandler(DefaultHttpClientHandlerDelegate);
 
-            public SemaphoreSlim TokenUpdateLock { get; }
+            services.AddHttpClient<ISearchClient, SearchClient>()
+                .ConfigurePrimaryHttpMessageHandler(DefaultHttpClientHandlerDelegate);
 
-            public DateTime TokenUpdatedAt { get; set; }
+            services.AddHttpClient<ISeriesClient, SeriesClient>()
+                .ConfigurePrimaryHttpMessageHandler(DefaultHttpClientHandlerDelegate);
+
+            services.AddHttpClient<ISeasonsClient, SeasonsClient>()
+                .ConfigurePrimaryHttpMessageHandler(DefaultHttpClientHandlerDelegate);
+
+            services.AddHttpClient<IEpisodesClient, EpisodesClient>()
+                .ConfigurePrimaryHttpMessageHandler(DefaultHttpClientHandlerDelegate);
+
+            services.AddHttpClient<IPeopleClient, PeopleClient>()
+                .ConfigurePrimaryHttpMessageHandler(DefaultHttpClientHandlerDelegate);
+
+            services.AddHttpClient<IArtworkClient, ArtworkClient>()
+                .ConfigurePrimaryHttpMessageHandler(DefaultHttpClientHandlerDelegate);
+
+            services.AddHttpClient<IArtwork_TypesClient, Artwork_TypesClient>()
+                .ConfigurePrimaryHttpMessageHandler(DefaultHttpClientHandlerDelegate);
+
+            services.AddHttpClient<ILanguagesClient, LanguagesClient>()
+                .ConfigurePrimaryHttpMessageHandler(DefaultHttpClientHandlerDelegate);
+
+            return services.BuildServiceProvider();
         }
     }
 }

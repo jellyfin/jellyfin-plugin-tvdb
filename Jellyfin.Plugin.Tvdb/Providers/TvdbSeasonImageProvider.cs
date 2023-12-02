@@ -12,7 +12,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
-using TvDbSharper;
+using Tvdb.Sdk;
 using RatingType = MediaBrowser.Model.Dto.RatingType;
 
 namespace Jellyfin.Plugin.Tvdb.Providers
@@ -71,13 +71,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var seasonNumber = season.IndexNumber.Value;
             var language = item.GetPreferredMetadataLanguage();
             var remoteImages = new List<RemoteImageInfo>();
-            var seriesInfo = await _tvdbClientManager.GetSeriesExtendedByIdAsync(tvdbId, language, new SeriesExtendedOptionalParams { Short = true }, cancellationToken).ConfigureAwait(false);
-            var seasonTvdbId = seriesInfo.Data.Seasons.FirstOrDefault(s => s.Number == seasonNumber)?.Id;
+            var seriesInfo = await _tvdbClientManager.GetSeriesExtendedByIdAsync(tvdbId, language, cancellationToken, small: true).ConfigureAwait(false);
+            var seasonTvdbId = seriesInfo.Seasons.FirstOrDefault(s => s.Number == seasonNumber)?.Id;
 
             var seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(Convert.ToInt32(seasonTvdbId, CultureInfo.InvariantCulture), language, cancellationToken).ConfigureAwait(false);
-            var seasonImages = seasonInfo.Data.Artwork;
-            var languages = _tvdbClientManager.GetLanguagesAsync(CancellationToken.None).Result.Data;
-            var artworkTypes = _tvdbClientManager.GetArtworkTypeAsync(CancellationToken.None).Result.Data;
+            var seasonImages = seasonInfo.Artwork;
+            var languages = _tvdbClientManager.GetLanguagesAsync(CancellationToken.None).Result;
+            var artworkTypes = _tvdbClientManager.GetArtworkTypeAsync(CancellationToken.None).Result;
 
             foreach (var image in seasonImages)
             {
