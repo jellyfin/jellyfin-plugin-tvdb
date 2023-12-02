@@ -59,12 +59,13 @@ namespace Jellyfin.Plugin.Tvdb
                 {
                     if (string.IsNullOrEmpty(sdkClientSettings.AccessToken))
                     {
-                        await loginClient.LoginAsync(new Body
+                        var loginResponse = await loginClient.LoginAsync(new Body
                         {
-                            Apikey = ApiKey,
-                            Pin = ProjectApiKey
+                            Apikey = ProjectApiKey,
+                            Pin = ApiKey
                         }).ConfigureAwait(false);
                         _tokenUpdatedAt = DateTime.UtcNow;
+                        sdkClientSettings.AccessToken = loginResponse.Data.Token;
                     }
                 }
                 finally
@@ -81,12 +82,13 @@ namespace Jellyfin.Plugin.Tvdb
                     await _tokenUpdateLock.WaitAsync().ConfigureAwait(false);
                     if (_tokenUpdatedAt < DateTime.UtcNow.Subtract(TimeSpan.FromDays(25)))
                     {
-                        await loginClient.LoginAsync(new Body
+                        var loginResponse = await loginClient.LoginAsync(new Body
                         {
-                            Apikey = ApiKey,
-                            Pin = ProjectApiKey
+                            Apikey = ProjectApiKey,
+                            Pin = ApiKey
                         }).ConfigureAwait(false);
                         _tokenUpdatedAt = DateTime.UtcNow;
+                        sdkClientSettings.AccessToken = loginResponse.Data.Token;
                     }
                 }
                 finally
