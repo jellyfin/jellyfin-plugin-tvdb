@@ -506,7 +506,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 series.ProductionYear = date.Year;
             }
 
-            series.RunTimeTicks = TimeSpan.FromMinutes(tvdbSeries.AverageRuntime).Ticks;
+            if (tvdbSeries.AverageRuntime is not null)
+            {
+                series.RunTimeTicks = TimeSpan.FromMinutes(tvdbSeries.AverageRuntime.Value).Ticks;
+            }
 
             foreach (var genre in tvdbSeries.Genres)
             {
