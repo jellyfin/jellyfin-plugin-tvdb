@@ -525,7 +525,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             {
                 if (tvdbSeries.Seasons.Count != 0)
                 {
-                    var maxSeasonNumber = tvdbSeries.Seasons.Max(s => Convert.ToInt32(s.Number, CultureInfo.InvariantCulture));
                     result.Item.EndDate = DateTime.ParseExact(tvdbSeries.LastAired, "yyyy-mm-dd", CultureInfo.InvariantCulture);
                 }
             }
