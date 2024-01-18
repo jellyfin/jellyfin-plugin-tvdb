@@ -106,6 +106,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 && episode.ParentIndexNumber == otherEpisodeRecord.SeasonNumber;
         }
 
+        /// <summary>
+        /// Is Metadata fetcher enabled for Series, Season or Episode.
+        /// </summary>
+        /// <param name="item">Series, Season or Episode.</param>
+        /// <returns>true if enabled.</returns>
         private bool IsEnabledForLibrary(BaseItem item)
         {
             Series? series = item switch
@@ -205,20 +210,38 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             var tvdbId = Convert.ToInt32(tvdbIdTxt, CultureInfo.InvariantCulture);
-            var allEpisodes = await GetAllEpisodes(tvdbId, season.GetPreferredMetadataLanguage()).ConfigureAwait(false);
+            var allEpisodes = await GetAllEpisodes(tvdbId, season.GetPreferredMetadataLanguage())
+                .ConfigureAwait(false);
 
             var seasonEpisodes = allEpisodes.Where(e => e.SeasonNumber == season.IndexNumber).ToList();
-            var existingEpisodes = season.Children.OfType<Episode>().ToList();
+            var existingEpisodes = season.GetEpisodes().OfType<Episode>().ToHashSet();
 
             foreach (var episodeRecord in seasonEpisodes)
             {
-                if (EpisodeExists(episodeRecord, existingEpisodes))
+                var foundEpisodes = existingEpisodes.Where(episode => EpisodeEquals(episode, episodeRecord)).ToList();
+                if (foundEpisodes.Any())
                 {
+                    // So we have at least one existing episode for our episodeRecord
+                    var physicalEpisodes = foundEpisodes.Where(e => !e.IsVirtualItem);
+                    if (physicalEpisodes.Any())
+                    {
+                        // if there is a physical episode we can delete existing virtual episode entries
+                        var virtualEpisodes = foundEpisodes.Where(e => e.IsVirtualItem).ToList();
+                        DeleteVirtualItems(virtualEpisodes);
+                        existingEpisodes.ExceptWith(virtualEpisodes);
+                    }
+
                     continue;
                 }
 
                 AddVirtualEpisode(episodeRecord, season);
             }
+
+            var orphanedEpisodes = existingEpisodes
+                .Where(e => e.IsVirtualItem)
+                .Where(e => !seasonEpisodes.Any(episodeRecord => EpisodeEquals(e, episodeRecord)))
+                .ToList();
+            DeleteVirtualItems(orphanedEpisodes);
         }
 
         private void OnLibraryManagerItemUpdated(object? sender, ItemChangeEventArgs itemChangeEventArgs)
@@ -247,19 +270,31 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 parentIndexNumber = itemChangeEventArgs.Item.ParentIndexNumber;
             }
 
+            var existingVirtualItems = GetVirtualItems(itemChangeEventArgs.Item, itemChangeEventArgs.Parent, indexNumber, parentIndexNumber);
+            DeleteVirtualItems(existingVirtualItems);
+        }
+
+        private List<BaseItem> GetVirtualItems(BaseItem item, BaseItem? parent, int? indexNumber, int? parentIndexNumber)
+        {
             var query = new InternalItemsQuery
             {
                 IsVirtualItem = true,
                 IndexNumber = indexNumber,
                 ParentIndexNumber = parentIndexNumber,
-                IncludeItemTypes = new[] { itemChangeEventArgs.Item.GetBaseItemKind() },
-                Parent = itemChangeEventArgs.Parent,
+                IncludeItemTypes = new[] { item.GetBaseItemKind() },
+                Parent = parent,
+                Recursive = true,
                 GroupByPresentationUniqueKey = false,
                 DtoOptions = new DtoOptions(true)
             };
 
             var existingVirtualItems = _libraryManager.GetItemList(query);
+            return existingVirtualItems;
+        }
 
+        private void DeleteVirtualItems<T>(List<T> existingVirtualItems)
+            where T : BaseItem
+        {
             var deleteOptions = new DeleteOptions
             {
                 DeleteFileLocation = true
@@ -268,7 +303,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             // Remove the virtual season/episode that matches the newly updated item
             for (var i = 0; i < existingVirtualItems.Count; i++)
             {
-                _libraryManager.DeleteItem(existingVirtualItems[i], deleteOptions);
+                var currentItem = existingVirtualItems[i];
+                _logger.LogDebug("Delete VirtualItem {Name} - S{Season}E{Episode}", currentItem.Name, currentItem.ParentIndexNumber, currentItem.IndexNumber);
+                _libraryManager.DeleteItem(currentItem, deleteOptions);
             }
         }
 
