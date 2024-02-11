@@ -50,10 +50,6 @@ public class TvdbClientManager
     private async Task LoginAsync()
     {
         var loginClient = _serviceProvider.GetRequiredService<ILoginClient>();
-        if (string.IsNullOrEmpty(UserPin))
-        {
-            throw new InvalidOperationException("Subscriber PIN not set");
-        }
 
         // Ensure we have a recent token.
         if (IsTokenInvalid())
