@@ -303,7 +303,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
             }
 
-            // result.ResultLanguage = episode.Language.EpisodeName;
             return result;
         }
 

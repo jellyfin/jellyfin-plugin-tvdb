@@ -26,19 +26,19 @@ namespace Jellyfin.Plugin.Tvdb
 
         static TvdbCultureInfo()
         {
-            LoadCultureInfo().Wait();
+            LoadCultureInfo();
             LoadCountryInfo();
         }
 
         /// <summary>
         /// Loads culture info from embedded resource.
         /// </summary>
-        private static async Task LoadCultureInfo()
+        private static void LoadCultureInfo()
         {
             List<CultureDto> cultureList = new List<CultureDto>();
             using var stream = _assembly.GetManifestResourceStream(_cultureInfo) ?? throw new InvalidOperationException($"Invalid resource path: '{_cultureInfo}'");
             using var reader = new StreamReader(stream);
-            await foreach (var line in reader.ReadAllLinesAsync().ConfigureAwait(false))
+            foreach (var line in reader.ReadAllLines())
             {
                 if (string.IsNullOrWhiteSpace(line))
                 {

@@ -419,8 +419,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 AirsAfterSeasonNumber = episode.AirsAfterSeason,
                 AirsBeforeSeasonNumber = episode.AirsBeforeSeason,
                 Overview = episode.Overview,
-                // CommunityRating = (float?)episode.SiteRating,
-                // OfficialRating = episode.ContentRating,
                 SeriesName = season.Series.Name,
                 SeriesPresentationUniqueKey = season.SeriesPresentationUniqueKey,
                 SeasonName = season.Name,

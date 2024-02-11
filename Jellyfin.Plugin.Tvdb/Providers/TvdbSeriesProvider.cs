@@ -358,20 +358,20 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     var seriesResult =
                         await _tvdbClientManager.GetSeriesExtendedByIdAsync(Convert.ToInt32(seriesSearchResult.Tvdb_id, CultureInfo.InvariantCulture), language, cancellationToken, small: true)
                             .ConfigureAwait(false);
-                    var imdbId = seriesResult.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id.ToString();
+                    var imdbId = seriesResult.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
                     if (!string.IsNullOrEmpty(imdbId))
                     {
                         remoteSearchResult.SetProviderId(MetadataProvider.Imdb, imdbId);
                     }
 
-                    var zap2ItId = seriesResult.RemoteIds.FirstOrDefault(x => x.SourceName == "Zap2It")?.Id.ToString();
+                    var zap2ItId = seriesResult.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "Zap2It", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
 
                     if (!string.IsNullOrEmpty(zap2ItId))
                     {
                         remoteSearchResult.SetProviderId(MetadataProvider.Zap2It, zap2ItId);
                     }
 
-                    var tmdbId = seriesResult.RemoteIds.FirstOrDefault(x => x.SourceName == "TheMovieDB.com")?.Id.ToString();
+                    var tmdbId = seriesResult.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "TheMovieDB.com", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
 
                     if (!string.IsNullOrEmpty(tmdbId))
                     {
@@ -476,9 +476,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             // series.CommunityRating = (float?)tvdbSeries.SiteRating;
             // Attempts to default to USA if not found
             series.OfficialRating = tvdbSeries.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, TvdbCultureInfo.GetCountryInfo(info.MetadataCountryCode)?.ThreeLetterISORegionName, StringComparison.OrdinalIgnoreCase))?.Name ?? tvdbSeries.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, "usa", StringComparison.OrdinalIgnoreCase))?.Name;
-            var imdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id.ToString();
-            var zap2ItId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "Zap2It")?.Id.ToString();
-            var tmdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => x.SourceName == "TheMovieDB.com")?.Id.ToString();
+            var imdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
+            var zap2ItId = tvdbSeries.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "Zap2It", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
+            var tmdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "TheMovieDB.com", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
             if (!string.IsNullOrEmpty(imdbId))
             {
                 series.SetProviderId(MetadataProvider.Imdb, imdbId);

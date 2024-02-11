@@ -124,8 +124,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             return new RemoteImageInfo
             {
-                // Width = Convert.ToInt32(episode.ThumbWidth, CultureInfo.InvariantCulture),
-                // Height = Convert.ToInt32(episode.ThumbHeight, CultureInfo.InvariantCulture),
                 ProviderName = Name,
                 Url = episode.Image,
                 Type = ImageType.Primary
