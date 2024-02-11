@@ -8,13 +8,16 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
     public class PluginConfiguration : BasePluginConfiguration
     {
         /// <summary>
-        /// Gets or sets the tvdb api key for project.
+        /// Gets the tvdb api key for project.
         /// </summary>
-        public string ProjectApiKey { get; set; } = string.Empty; // Jellyin Project API Key
+        public const string ProjectApiKey = "";
 
         /// <summary>
         /// Gets or sets the tvdb api key for user.
         /// </summary>
-        public string ApiKey { get; set; } = string.Empty; // User API PIN
+        /// <remarks>
+        /// This is the subscriber's pin.
+        /// </remarks>
+        public string ApiKey { get; set; } = string.Empty;
     }
 }

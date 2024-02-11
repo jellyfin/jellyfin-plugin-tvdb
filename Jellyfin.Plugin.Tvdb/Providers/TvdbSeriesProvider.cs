@@ -471,7 +471,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             series.Overview = tvdbSeries.Translations.OverviewTranslations.FirstOrDefault(x => string.Equals(x.Language, TvdbUtils.NormalizeLanguageToTvdb(info.MetadataLanguage), StringComparison.OrdinalIgnoreCase))?.Overview ?? tvdbSeries.Overview;
             series.OriginalTitle = tvdbSeries.Name;
             result.ResultLanguage = info.MetadataLanguage;
-            series.AirDays = TvdbUtils.GetAirDays(tvdbSeries.AirsDays);
+            series.AirDays = TvdbUtils.GetAirDays(tvdbSeries.AirsDays).ToArray();
             series.AirTime = tvdbSeries.AirsTime;
             // series.CommunityRating = (float?)tvdbSeries.SiteRating;
             // Attempts to default to USA if not found

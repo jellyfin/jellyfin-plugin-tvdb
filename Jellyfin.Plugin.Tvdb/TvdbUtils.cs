@@ -1,5 +1,5 @@
-using System;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using MediaBrowser.Model.Entities;
 using Tvdb.Sdk;
 
@@ -14,11 +14,6 @@ namespace Jellyfin.Plugin.Tvdb
         /// Base url for all requests.
         /// </summary>
         public const string TvdbBaseUrl = "https://www.thetvdb.com/";
-
-        /// <summary>
-        /// Base url for banners.
-        /// </summary>
-        public const string BannerUrl = TvdbBaseUrl + "banners/";
 
         /// <summary>
         /// Get image type from key type.
@@ -40,7 +35,7 @@ namespace Jellyfin.Plugin.Tvdb
                 }
             }
 
-            throw new ArgumentException($"Null keytype");
+            throw new ArgumentException("Null keytype");
         }
 
         /// <summary>
@@ -104,21 +99,42 @@ namespace Jellyfin.Plugin.Tvdb
         /// </summary>
         /// <param name="seriesAirsDays">SeriesAirDays.</param>
         /// <returns>List{DayOfWeek}.</returns>
-        public static DayOfWeek[] GetAirDays(SeriesAirsDays seriesAirsDays)
+        public static IEnumerable<DayOfWeek> GetAirDays(SeriesAirsDays seriesAirsDays)
         {
-            // Convert to DayOfWeek? array and remove nulls
-            var airdays = new[]
+            if (seriesAirsDays.Sunday)
             {
-                seriesAirsDays.Monday ? DayOfWeek.Monday : (DayOfWeek?)null,
-                seriesAirsDays.Tuesday ? DayOfWeek.Tuesday : (DayOfWeek?)null,
-                seriesAirsDays.Wednesday ? DayOfWeek.Wednesday : (DayOfWeek?)null,
-                seriesAirsDays.Thursday ? DayOfWeek.Thursday : (DayOfWeek?)null,
-                seriesAirsDays.Friday ? DayOfWeek.Friday : (DayOfWeek?)null,
-                seriesAirsDays.Saturday ? DayOfWeek.Saturday : (DayOfWeek?)null,
-                seriesAirsDays.Sunday ? DayOfWeek.Sunday : (DayOfWeek?)null
-            }.Where(i => i.HasValue).ToArray();
-            // Convert to DayOfWeek array. Nulls are converted to 0 but all should be removed by now.
-            return Array.ConvertAll(airdays, i => i ?? 0);
+                yield return DayOfWeek.Sunday;
+            }
+
+            if (seriesAirsDays.Monday)
+            {
+                yield return DayOfWeek.Monday;
+            }
+
+            if (seriesAirsDays.Tuesday)
+            {
+                yield return DayOfWeek.Tuesday;
+            }
+
+            if (seriesAirsDays.Wednesday)
+            {
+                yield return DayOfWeek.Wednesday;
+            }
+
+            if (seriesAirsDays.Thursday)
+            {
+                yield return DayOfWeek.Thursday;
+            }
+
+            if (seriesAirsDays.Friday)
+            {
+                yield return DayOfWeek.Friday;
+            }
+
+            if (seriesAirsDays.Saturday)
+            {
+                yield return DayOfWeek.Saturday;
+            }
         }
     }
 }
