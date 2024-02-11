@@ -1,4 +1,4 @@
-﻿using MediaBrowser.Model.Plugins;
+using MediaBrowser.Model.Plugins;
 
 namespace Jellyfin.Plugin.Tvdb.Configuration
 {
@@ -8,8 +8,16 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
     public class PluginConfiguration : BasePluginConfiguration
     {
         /// <summary>
-        /// Gets or sets the tvdb api key.
+        /// Gets the tvdb api key for project.
         /// </summary>
-        public string ApiKey { get; set; } = "OG4V3YJ3FAP7FP2K";
+        public const string ProjectApiKey = "";
+
+        /// <summary>
+        /// Gets or sets the tvdb api key for user.
+        /// </summary>
+        /// <remarks>
+        /// This is the subscriber's pin.
+        /// </remarks>
+        public string ApiKey { get; set; } = string.Empty;
     }
 }

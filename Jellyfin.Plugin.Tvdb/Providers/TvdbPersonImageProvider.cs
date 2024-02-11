@@ -15,7 +15,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
-using TvDbSharper;
+using Tvdb.Sdk;
 
 namespace Jellyfin.Plugin.Tvdb.Providers
 {
@@ -98,24 +98,26 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             try
             {
                 var actorsResult = await _tvdbClientManager
-                    .GetActorsAsync(tvdbId, series.GetPreferredMetadataLanguage(), cancellationToken)
+                    .GetSeriesExtendedByIdAsync(tvdbId, series.GetPreferredMetadataLanguage(), cancellationToken)
                     .ConfigureAwait(false);
-                var actor = actorsResult.Data.FirstOrDefault(a =>
-                    string.Equals(a.Name, personName, StringComparison.OrdinalIgnoreCase) &&
-                    !string.IsNullOrEmpty(a.Image));
-                if (actor == null)
+                var character = actorsResult.Characters.FirstOrDefault(i => string.Equals(i.PersonName, personName, StringComparison.OrdinalIgnoreCase));
+
+                if (character == null)
                 {
                     return null;
                 }
 
+                var actor = await _tvdbClientManager
+                    .GetActorAsync(character.PeopleId, series.GetPreferredMetadataCountryCode(), cancellationToken)
+                    .ConfigureAwait(false);
                 return new RemoteImageInfo
                 {
-                    Url = TvdbUtils.BannerUrl + actor.Image,
+                    Url = actor.Image,
                     Type = ImageType.Primary,
                     ProviderName = Name
                 };
             }
-            catch (TvDbServerException e)
+            catch (Exception e)
             {
                 _logger.LogError(e, "Failed to retrieve actor {ActorName} from series {SeriesTvdbId}:{Name}", personName, tvdbId, series.Name);
                 return null;

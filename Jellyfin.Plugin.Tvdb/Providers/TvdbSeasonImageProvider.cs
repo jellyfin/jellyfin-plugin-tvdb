@@ -12,8 +12,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
-using TvDbSharper;
-using TvDbSharper.Dto;
+using Tvdb.Sdk;
 using RatingType = MediaBrowser.Model.Dto.RatingType;
 
 namespace Jellyfin.Plugin.Tvdb.Providers
@@ -72,45 +71,23 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var seasonNumber = season.IndexNumber.Value;
             var language = item.GetPreferredMetadataLanguage();
             var remoteImages = new List<RemoteImageInfo>();
+            var seriesInfo = await _tvdbClientManager.GetSeriesExtendedByIdAsync(tvdbId, language, cancellationToken, small: true).ConfigureAwait(false);
+            var seasonTvdbId = seriesInfo.Seasons.FirstOrDefault(s => s.Number == seasonNumber)?.Id;
 
-            var keyTypes = _tvdbClientManager.GetImageKeyTypesForSeasonAsync(tvdbId, language, cancellationToken).ConfigureAwait(false);
-            await foreach (var keyType in keyTypes)
+            var seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(Convert.ToInt32(seasonTvdbId, CultureInfo.InvariantCulture), language, cancellationToken).ConfigureAwait(false);
+            var seasonImages = seasonInfo.Artwork;
+            var languages = _tvdbClientManager.GetLanguagesAsync(CancellationToken.None).Result;
+            var artworkTypes = _tvdbClientManager.GetArtworkTypeAsync(CancellationToken.None).Result;
+
+            foreach (var image in seasonImages)
             {
-                var imageQuery = new ImagesQuery
-                {
-                    KeyType = keyType,
-                    SubKey = seasonNumber.ToString(CultureInfo.InvariantCulture)
-                };
+                ImageType type;
+                // Checks if valid image type, if not, skip
                 try
                 {
-                    var imageResults = await _tvdbClientManager
-                        .GetImagesAsync(tvdbId, imageQuery, language, cancellationToken).ConfigureAwait(false);
-                    remoteImages.AddRange(GetImages(imageResults.Data, imageQuery.SubKey, language));
+                    type = TvdbUtils.GetImageTypeFromKeyType(artworkTypes.FirstOrDefault(x => x.Id == image.Type && string.Equals(x.RecordType, "season", StringComparison.OrdinalIgnoreCase))?.Name);
                 }
-                catch (TvDbServerException)
-                {
-                    _logger.LogDebug("No images of type {KeyType} found for series {TvdbId}:{Name}", keyType, tvdbId, item.Name);
-                }
-            }
-
-            return remoteImages;
-        }
-
-        /// <inheritdoc />
-        public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
-        {
-            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
-        }
-
-        private IEnumerable<RemoteImageInfo> GetImages(Image[] images, string seasonNumber, string preferredLanguage)
-        {
-            var list = new List<RemoteImageInfo>();
-            // any languages with null ids are ignored
-            var languages = _tvdbClientManager.GetLanguagesAsync(CancellationToken.None).Result.Data.Where(x => x.Id.HasValue).ToArray();
-            foreach (Image image in images)
-            {
-                // The API returns everything that contains the subkey eg. 2 matches 20, 21, 22, 23 etc.
-                if (!string.Equals(image.SubKey, seasonNumber, StringComparison.Ordinal))
+                catch (Exception)
                 {
                     continue;
                 }
@@ -118,50 +95,43 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 var imageInfo = new RemoteImageInfo
                 {
                     RatingType = RatingType.Score,
-                    CommunityRating = (double?)image.RatingsInfo.Average,
-                    VoteCount = image.RatingsInfo.Count,
-                    Url = TvdbUtils.BannerUrl + image.FileName,
+                    Url = image.Image,
+                    Width = Convert.ToInt32(image.Width, CultureInfo.InvariantCulture),
+                    Height = Convert.ToInt32(image.Height, CultureInfo.InvariantCulture),
+                    Type = type,
                     ProviderName = Name,
-                    Language = languages.FirstOrDefault(lang => lang.Id == image.LanguageId)?.Abbreviation,
-                    ThumbnailUrl = TvdbUtils.BannerUrl + image.Thumbnail
+                    ThumbnailUrl = image.Thumbnail
                 };
 
-                var resolution = image.Resolution.Split('x');
-                if (resolution.Length == 2)
+                // Tvdb uses 3 letter code for language (prob ISO 639-2)
+                var artworkLanguage = languages.FirstOrDefault(lang => string.Equals(lang.Id, image.Language, StringComparison.OrdinalIgnoreCase))?.Id;
+                if (!string.IsNullOrEmpty(artworkLanguage))
                 {
-                    imageInfo.Width = Convert.ToInt32(resolution[0], CultureInfo.InvariantCulture);
-                    imageInfo.Height = Convert.ToInt32(resolution[1], CultureInfo.InvariantCulture);
+                    imageInfo.Language = TvdbUtils.NormalizeLanguageToJellyfin(artworkLanguage)?.ToLowerInvariant();
                 }
 
-                imageInfo.Type = TvdbUtils.GetImageTypeFromKeyType(image.KeyType);
-                list.Add(imageInfo);
+                remoteImages.Add(imageInfo);
             }
 
-            var isLanguageEn = string.Equals(preferredLanguage, "en", StringComparison.OrdinalIgnoreCase);
-            return list.OrderByDescending(i =>
+            return remoteImages.OrderByDescending(i =>
+            {
+                if (string.Equals(language, i.Language, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (string.Equals(preferredLanguage, i.Language, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return 3;
-                    }
+                    return 2;
+                }
+                else if (!string.IsNullOrEmpty(i.Language))
+                {
+                    return 1;
+                }
 
-                    if (!isLanguageEn)
-                    {
-                        if (string.Equals("en", i.Language, StringComparison.OrdinalIgnoreCase))
-                        {
-                            return 2;
-                        }
-                    }
+                return 0;
+            });
+        }
 
-                    if (string.IsNullOrEmpty(i.Language))
-                    {
-                        return isLanguageEn ? 3 : 2;
-                    }
-
-                    return 0;
-                })
-                .ThenByDescending(i => i.CommunityRating ?? 0)
-                .ThenByDescending(i => i.VoteCount ?? 0);
+        /// <inheritdoc />
+        public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
+        {
+            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
         }
     }
 }

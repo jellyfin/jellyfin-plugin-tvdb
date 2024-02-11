@@ -12,7 +12,7 @@ description: >
 category: "Metadata"
 artifacts:
   - "Jellyfin.Plugin.Tvdb.dll"
-  - "TvDbSharper.dll"
+  - "Tvdb.Sdk.dll"
 changelog: |-
   - Reduce log noise (#85) @IDisposable
   - Enriched Logging with series name (#84) @JPVenson
