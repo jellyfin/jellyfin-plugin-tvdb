@@ -97,11 +97,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
         }
 
-        private static bool IsValidEpisode(EpisodeBaseRecord? episodeRecord)
-        {
-            return episodeRecord?.SeasonNumber != null && episodeRecord?.Number != null;
-        }
-
         private static bool EpisodeExists(EpisodeBaseRecord episodeRecord, IReadOnlyList<Episode> existingEpisodes)
         {
             return existingEpisodes.Any(ep => ep.ContainsEpisodeNumber(episodeRecord.Number) && ep.ParentIndexNumber == episodeRecord.Number);
@@ -341,11 +336,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             for (var i = 0; i < allEpisodeRecords.Count; i++)
             {
                 var episodeRecord = allEpisodeRecords[i];
-                // tvdb has a lot of bad data?
-                if (!IsValidEpisode(episodeRecord))
-                {
-                    continue;
-                }
 
                 // skip if it exists already
                 if (existingEpisodes.TryGetValue(episodeRecord.SeasonNumber, out var episodes)
@@ -397,8 +387,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private void AddVirtualEpisode(EpisodeBaseRecord? episode, Season? season)
         {
-            // tvdb has a lot of bad data?
-            if (!IsValidEpisode(episode) || season == null)
+            if (season == null)
             {
                 return;
             }
