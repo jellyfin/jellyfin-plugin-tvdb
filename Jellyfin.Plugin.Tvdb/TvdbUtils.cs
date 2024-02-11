@@ -106,7 +106,7 @@ namespace Jellyfin.Plugin.Tvdb
         /// <returns>List{DayOfWeek}.</returns>
         public static DayOfWeek[] GetAirDays(SeriesAirsDays seriesAirsDays)
         {
-            // Convert to array and remove nulls
+            // Convert to DayOfWeek? array and remove nulls
             var airdays = new[]
             {
                 seriesAirsDays.Monday ? DayOfWeek.Monday : (DayOfWeek?)null,
@@ -117,7 +117,7 @@ namespace Jellyfin.Plugin.Tvdb
                 seriesAirsDays.Saturday ? DayOfWeek.Saturday : (DayOfWeek?)null,
                 seriesAirsDays.Sunday ? DayOfWeek.Sunday : (DayOfWeek?)null
             }.Where(i => i.HasValue).ToArray();
-            // Convert to DayOfWeek array. Nulls are converted to 0 but all nulls are removed before this.
+            // Convert to DayOfWeek array. Nulls are converted to 0 but all should be removed by now.
             return Array.ConvertAll(airdays, i => i ?? 0);
         }
     }
