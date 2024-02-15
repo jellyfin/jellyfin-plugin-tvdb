@@ -99,7 +99,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private static bool EpisodeExists(EpisodeBaseRecord episodeRecord, IReadOnlyList<Episode> existingEpisodes)
         {
-            return existingEpisodes.Any(ep => ep.ContainsEpisodeNumber(episodeRecord.Number) && ep.ParentIndexNumber == episodeRecord.Number);
+            return existingEpisodes.Any(episode => EpisodeEquals(episode, episodeRecord));
+        }
+
+        private static bool EpisodeEquals(Episode episode, EpisodeBaseRecord otherEpisodeRecord)
+        {
+            return episode.ContainsEpisodeNumber(otherEpisodeRecord.Number)
+                && episode.ParentIndexNumber == otherEpisodeRecord.SeasonNumber;
         }
 
         private bool IsEnabledForLibrary(BaseItem item)
