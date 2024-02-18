@@ -272,7 +272,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                         .ConfigureAwait(false);
             var resultData = result;
 
-            if (resultData == null || resultData.Count == 0)
+            if (resultData is null || resultData.Count == 0 || resultData[0] is null || resultData[0].Series is null)
             {
                 _logger.LogWarning("TvdbSearch: No series found for id: {0}", id);
                 return null;
