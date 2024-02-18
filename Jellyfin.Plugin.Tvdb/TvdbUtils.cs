@@ -1,5 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+
 using MediaBrowser.Model.Entities;
 using Tvdb.Sdk;
 
@@ -39,31 +41,32 @@ namespace Jellyfin.Plugin.Tvdb
         }
 
         /// <summary>
-        /// Normalize language to tvdb format.
+        /// Try to find a match for input language.
         /// </summary>
-        /// <param name="language">Language.</param>
+        /// <param name="language">input Language.</param>
+        /// <param name="tvdbLanguage">TVDB data language.</param>
         /// <returns>Normalized language.</returns>
-        public static string? NormalizeLanguageToTvdb(string? language)
+        public static bool MatchLanguage(string? language, string tvdbLanguage)
         {
             if (string.IsNullOrWhiteSpace(language))
             {
-                return null;
+                return false;
             }
 
             // Unique case for zh-TW
             if (string.Equals(language, "zh-TW", StringComparison.OrdinalIgnoreCase))
             {
-                return "zhtw";
+                language = "zhtw";
             }
 
             // Unique case for pt-BR
             if (string.Equals(language, "pt-br", StringComparison.OrdinalIgnoreCase))
             {
-                return "pt";
+                language = "pt";
             }
 
-            // to (ISO 639-2)
-            return TvdbCultureInfo.GetCultureInfo(language)?.ThreeLetterISOLanguageName;
+            // try to find a match (ISO 639-2)
+            return TvdbCultureInfo.GetCultureInfo(language)?.ThreeLetterISOLanguageNames?.Contains(tvdbLanguage, StringComparer.OrdinalIgnoreCase) ?? false;
         }
 
         /// <summary>
