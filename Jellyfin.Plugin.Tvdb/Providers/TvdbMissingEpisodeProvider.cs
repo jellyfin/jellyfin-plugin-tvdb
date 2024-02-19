@@ -4,12 +4,10 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Data.Entities.Libraries;
 using Jellyfin.Data.Events;
 using MediaBrowser.Controller.BaseItemManager;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
-using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Plugins;
 using MediaBrowser.Controller.Providers;
@@ -99,7 +97,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private static bool EpisodeExists(EpisodeBaseRecord episodeRecord, IReadOnlyList<Episode> existingEpisodes)
         {
-            return existingEpisodes.Any(ep => ep.ContainsEpisodeNumber(episodeRecord.Number) && ep.ParentIndexNumber == episodeRecord.Number);
+            return existingEpisodes.Any(episode => EpisodeEquals(episode, episodeRecord));
+        }
+
+        private static bool EpisodeEquals(Episode episode, EpisodeBaseRecord otherEpisodeRecord)
+        {
+            return episode.ContainsEpisodeNumber(otherEpisodeRecord.Number)
+                && episode.ParentIndexNumber == otherEpisodeRecord.SeasonNumber;
         }
 
         private bool IsEnabledForLibrary(BaseItem item)
@@ -196,17 +200,17 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var tvdbId = Convert.ToInt32(tvdbIdTxt, CultureInfo.InvariantCulture);
             var allEpisodes = await GetAllEpisodes(tvdbId, season.GetPreferredMetadataLanguage()).ConfigureAwait(false);
 
+            var seasonEpisodes = allEpisodes.Where(e => e.SeasonNumber == season.IndexNumber).ToList();
             var existingEpisodes = season.Children.OfType<Episode>().ToList();
 
-            for (var i = 0; i < allEpisodes.Count; i++)
+            foreach (var episodeRecord in seasonEpisodes)
             {
-                var episode = allEpisodes[i];
-                if (EpisodeExists(episode, existingEpisodes))
+                if (EpisodeExists(episodeRecord, existingEpisodes))
                 {
                     continue;
                 }
 
-                AddVirtualEpisode(episode, season);
+                AddVirtualEpisode(episodeRecord, season);
             }
         }
 
@@ -289,7 +293,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 EpisodeBaseRecord? episodeRecord = null;
                 if (episodeRecords.Count > 0)
                 {
-                    episodeRecord = episodeRecords[0];
+                    episodeRecord = episodeRecords.FirstOrDefault(e => EpisodeEquals(episode, e));
                 }
 
                 AddVirtualEpisode(episodeRecord, episode.Season);
