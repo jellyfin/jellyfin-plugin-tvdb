@@ -291,7 +291,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <returns>Task{System.String}.</returns>
         private async Task<IEnumerable<RemoteSearchResult>> FindSeries(string name, int? year, string language, CancellationToken cancellationToken)
         {
-            _logger.LogDebug("TvdbSearch: Finding id for item: {0} ({1})", name, year);
+            _logger.LogDebug("TvdbSearch: Finding id for item: {Name} ({Year})", name, year);
             var results = await FindSeriesInternal(name, language, cancellationToken).ConfigureAwait(false);
 
             return results.Where(i =>

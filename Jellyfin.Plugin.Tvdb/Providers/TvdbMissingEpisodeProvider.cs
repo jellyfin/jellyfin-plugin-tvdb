@@ -122,7 +122,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (series == null)
             {
-                _logger.LogDebug("Given input is no " + nameof(Series) + ", " + nameof(Season) + " or " + nameof(Episode) + ": {Type}", item.GetType());
+                _logger.LogDebug("Given input is not in {@ValidTypes}: {Type}", new[] { nameof(Series), nameof(Season), nameof(Episode) }, item.GetType());
                 return false;
             }
 
@@ -304,7 +304,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             for (var i = 0; i < existingVirtualItems.Count; i++)
             {
                 var currentItem = existingVirtualItems[i];
-                _logger.LogDebug("Delete VirtualItem {Name} - S{Season}E{Episode}", currentItem.Name, currentItem.ParentIndexNumber, currentItem.IndexNumber);
+                _logger.LogDebug("Delete VirtualItem {Name} - S{Season:00}E{Episode:00}", currentItem.Name, currentItem.ParentIndexNumber, currentItem.IndexNumber);
                 _libraryManager.DeleteItem(currentItem, deleteOptions);
             }
         }
@@ -396,7 +396,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 if (existingEpisodes.TryGetValue(episodeRecord.SeasonNumber, out var episodes)
                     && EpisodeExists(episodeRecord, episodes))
                 {
-                    _logger.LogDebug(nameof(AddMissingEpisodes) + ": Skip, already existing S{Season}E{Episode}", episodeRecord.SeasonNumber, episodeRecord.Number);
+                    _logger.LogDebug(nameof(AddMissingEpisodes) + ": Skip, already existing S{Season:00}E{Episode:00}", episodeRecord.SeasonNumber, episodeRecord.Number);
                     continue;
                 }
 
@@ -478,7 +478,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             newEpisode.SetProviderId(MetadataProvider.Tvdb, episode.Id.ToString(CultureInfo.InvariantCulture));
 
             _logger.LogDebug(
-                "Creating virtual episode {SeriesName} S{Season}E{Episode}",
+                "Creating virtual episode {SeriesName} S{Season:00}E{Episode:00}",
                 season.Series.Name,
                 episode.SeasonNumber,
                 episode.Number);

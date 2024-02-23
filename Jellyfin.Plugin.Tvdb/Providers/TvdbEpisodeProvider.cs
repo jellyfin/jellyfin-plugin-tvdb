@@ -169,7 +169,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 if (string.IsNullOrEmpty(episodeTvdbId))
                 {
                     _logger.LogError(
-                        "Episode {SeasonNumber}x{EpisodeNumber} not found for series {SeriesTvdbId}:{Name}",
+                        "Episode S{Season:00}E{Episode:00} not found for series {SeriesTvdbId}:{Name}",
                         searchInfo.ParentIndexNumber,
                         searchInfo.IndexNumber,
                         seriesTvdbId,
