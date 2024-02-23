@@ -261,26 +261,18 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 return;
             }
 
-            var indexNumber = itemChangeEventArgs.Item.IndexNumber;
-
-            // If the item is an Episode, filter on ParentIndexNumber as well (season number)
-            int? parentIndexNumber = null;
-            if (itemChangeEventArgs.Item is Episode)
-            {
-                parentIndexNumber = itemChangeEventArgs.Item.ParentIndexNumber;
-            }
-
-            var existingVirtualItems = GetVirtualItems(itemChangeEventArgs.Item, itemChangeEventArgs.Parent, indexNumber, parentIndexNumber);
+            var existingVirtualItems = GetVirtualItems(itemChangeEventArgs.Item, itemChangeEventArgs.Parent);
             DeleteVirtualItems(existingVirtualItems);
         }
 
-        private List<BaseItem> GetVirtualItems(BaseItem item, BaseItem? parent, int? indexNumber, int? parentIndexNumber)
+        private List<BaseItem> GetVirtualItems(BaseItem item, BaseItem? parent)
         {
             var query = new InternalItemsQuery
             {
                 IsVirtualItem = true,
-                IndexNumber = indexNumber,
-                ParentIndexNumber = parentIndexNumber,
+                IndexNumber = item.IndexNumber,
+                // If the item is an Episode, filter on ParentIndexNumber as well (season number)
+                ParentIndexNumber = item is Episode ? item.ParentIndexNumber : null,
                 IncludeItemTypes = new[] { item.GetBaseItemKind() },
                 Parent = parent,
                 Recursive = true,
@@ -443,7 +435,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private void AddVirtualEpisode(EpisodeBaseRecord? episode, Season? season)
         {
-            if (season == null)
+            if (episode == null || season == null)
             {
                 return;
             }
@@ -451,7 +443,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             // Put as much metadata into it as possible
             var newEpisode = new Episode
             {
-                Name = episode!.Name,
+                Name = episode.Name,
                 IndexNumber = episode.Number,
                 ParentIndexNumber = episode.SeasonNumber,
                 Id = _libraryManager.GetNewItemId(
