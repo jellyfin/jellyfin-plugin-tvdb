@@ -139,16 +139,16 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 return;
             }
 
-            _logger.LogDebug(nameof(OnProviderManagerRefreshComplete) + ": Try Refreshing for Item {Name} {Type}", genericEventArgs.Argument.Name, genericEventArgs.Argument.GetType());
+            _logger.LogDebug("{MethodName}: Try Refreshing for Item {Name} {Type}", nameof(OnProviderManagerRefreshComplete), genericEventArgs.Argument.Name, genericEventArgs.Argument.GetType());
             if (genericEventArgs.Argument is Series series)
             {
-                _logger.LogDebug(nameof(OnProviderManagerRefreshComplete) + ": Refreshing Series {SeriesName}", series.Name);
+                _logger.LogDebug("{MethodName}: Refreshing Series {SeriesName}", nameof(OnProviderManagerRefreshComplete), series.Name);
                 HandleSeries(series).GetAwaiter().GetResult();
             }
 
             if (genericEventArgs.Argument is Season season)
             {
-                _logger.LogDebug(nameof(OnProviderManagerRefreshComplete) + ": Refreshing {SeriesName} {SeasonName}", season.Series?.Name, season.Name);
+                _logger.LogDebug("{MethodName}: Refreshing {SeriesName} {SeasonName}", nameof(OnProviderManagerRefreshComplete), season.Series?.Name, season.Name);
                 HandleSeason(season).GetAwaiter().GetResult();
             }
         }
@@ -246,7 +246,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private void OnLibraryManagerItemUpdated(object? sender, ItemChangeEventArgs itemChangeEventArgs)
         {
-            _logger.LogDebug(nameof(OnLibraryManagerItemUpdated) + ": Refreshing Item {ItemName} [{Reason}]", itemChangeEventArgs.Item.Name, itemChangeEventArgs.UpdateReason);
+            _logger.LogDebug("{MethodName}: Refreshing Item {ItemName} [{Reason}]", nameof(OnLibraryManagerItemUpdated), itemChangeEventArgs.Item.Name, itemChangeEventArgs.UpdateReason);
             // Only interested in real Season and Episode items
             if (itemChangeEventArgs.Item.IsVirtualItem
                 || !(itemChangeEventArgs.Item is Season || itemChangeEventArgs.Item is Episode))
@@ -304,7 +304,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         // TODO use async events
         private void OnLibraryManagerItemRemoved(object? sender, ItemChangeEventArgs itemChangeEventArgs)
         {
-            _logger.LogDebug(nameof(OnLibraryManagerItemRemoved) + ": Refreshing {ItemName} [{Reason}]", itemChangeEventArgs.Item.Name, itemChangeEventArgs.UpdateReason);
+            _logger.LogDebug("{MethodName}: Refreshing {ItemName} [{Reason}]", nameof(OnLibraryManagerItemRemoved), itemChangeEventArgs.Item.Name, itemChangeEventArgs.UpdateReason);
             // No action needed if the item is virtual
             if (itemChangeEventArgs.Item.IsVirtualItem || !IsEnabledForLibrary(itemChangeEventArgs.Item))
             {
@@ -355,7 +355,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     return Array.Empty<EpisodeBaseRecord>();
                 }
 
-                _logger.LogDebug(nameof(GetAllEpisodes) + " for TVDB Id '{TvdbId}' found #{Count} [{Episodes}]", tvdbId, allEpisodes.Count, string.Join(", ", allEpisodes.Select(e => $"S{e.SeasonNumber}E{e.Number}")));
+                _logger.LogDebug("{MethodName}: For TVDB Id '{TvdbId}' found #{Count} [{Episodes}]", nameof(GetAllEpisodes), tvdbId, allEpisodes.Count, string.Join(", ", allEpisodes.Select(e => $"S{e.SeasonNumber}E{e.Number}")));
                 return allEpisodes;
             }
             catch (Exception ex)
@@ -388,7 +388,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 if (existingEpisodes.TryGetValue(episodeRecord.SeasonNumber, out var episodes)
                     && EpisodeExists(episodeRecord, episodes))
                 {
-                    _logger.LogDebug(nameof(AddMissingEpisodes) + ": Skip, already existing S{Season:00}E{Episode:00}", episodeRecord.SeasonNumber, episodeRecord.Number);
+                    _logger.LogDebug("{MethodName}: Skip, already existing S{Season:00}E{Episode:00}", nameof(AddMissingEpisodes), episodeRecord.SeasonNumber, episodeRecord.Number);
                     continue;
                 }
 
