@@ -4,18 +4,19 @@ using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
 using Tvdb.Sdk;
-using Series = MediaBrowser.Controller.Entities.TV.Series;
 
 namespace Jellyfin.Plugin.Tvdb.Providers
 {
@@ -266,15 +267,23 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
         }
 
-        private async Task<string?> GetSeriesByRemoteId(string id, string language, string seriesName, CancellationToken cancellationToken)
+        private async Task<string?> GetSeriesByRemoteId(string remoteId, string language, string seriesName, CancellationToken cancellationToken)
         {
-            var result = await _tvdbClientManager.GetSeriesByRemoteIdAsync(id, language, cancellationToken)
-                        .ConfigureAwait(false);
-            var resultData = result;
+            IReadOnlyList<SearchByRemoteIdResult> resultData;
+            try
+            {
+                resultData = await _tvdbClientManager.GetSeriesByRemoteIdAsync(remoteId, language, cancellationToken)
+                            .ConfigureAwait(false);
+            }
+            catch (SearchException ex) when (ex.InnerException is JsonException)
+            {
+                _logger.LogError(ex, "Failed to retrieve series with {RemoteId}", remoteId);
+                return null;
+            }
 
             if (resultData is null || resultData.Count == 0 || resultData[0] is null || resultData[0].Series is null)
             {
-                _logger.LogWarning("TvdbSearch: No series found for id: {0}", id);
+                _logger.LogWarning("TvdbSearch: No series found for remote id: {RemoteId}", remoteId);
                 return null;
             }
 
