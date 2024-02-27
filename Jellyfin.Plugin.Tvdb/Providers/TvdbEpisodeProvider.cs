@@ -6,14 +6,19 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Jellyfin.Data.Enums;
 using Jellyfin.Extensions;
+
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+
 using Microsoft.Extensions.Logging;
+
 using Tvdb.Sdk;
 
 namespace Jellyfin.Plugin.Tvdb.Providers
@@ -261,7 +266,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     {
                         result.AddPerson(new PersonInfo
                         {
-                            Type = PersonType.Actor,
+                            Type = PersonKind.Actor,
                             Name = currentActor.PersonName,
                             Role = currentActor.Name
                         });
@@ -270,7 +275,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     {
                         result.AddPerson(new PersonInfo
                         {
-                            Type = PersonType.Director,
+                            Type = PersonKind.Director,
                             Name = currentActor.PersonName
                         });
                     }
@@ -278,7 +283,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     {
                         result.AddPerson(new PersonInfo
                         {
-                            Type = PersonType.Writer,
+                            Type = PersonKind.Writer,
                             Name = currentActor.PersonName
                         });
                     }
@@ -286,7 +291,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     {
                         result.AddPerson(new PersonInfo
                         {
-                            Type = PersonType.GuestStar,
+                            Type = PersonKind.GuestStar,
                             Name = currentActor.PersonName,
                             Role = currentActor.Name
                         });
