@@ -169,7 +169,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 if (string.IsNullOrEmpty(episodeTvdbId))
                 {
                     _logger.LogError(
-                        "Episode {SeasonNumber}x{EpisodeNumber} not found for series {SeriesTvdbId}:{Name}",
+                        "Episode S{Season:00}E{Episode:00} not found for series {SeriesTvdbId}:{Name}",
                         searchInfo.ParentIndexNumber,
                         searchInfo.IndexNumber,
                         seriesTvdbId,
@@ -213,7 +213,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     // Tvdb uses 3 letter code for language (prob ISO 639-2)
                     // Reverts to OriginalName if no translation is found
                     Name = episode.Translations.GetTranslatedNamedOrDefault(id.MetadataLanguage) ?? episode.Name,
-                    Overview = episode.Translations.GetTranslatedOverviewOrDefault(id.MetadataLanguage) ?? episode.Overview
+                    Overview = episode.Translations.GetTranslatedOverviewOrDefault(id.MetadataLanguage) ?? episode.Overview,
+                    OriginalTitle = episode.Name,
                 }
             };
             result.ResetPeople();

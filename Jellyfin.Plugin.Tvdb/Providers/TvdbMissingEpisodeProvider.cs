@@ -106,6 +106,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 && episode.ParentIndexNumber == otherEpisodeRecord.SeasonNumber;
         }
 
+        /// <summary>
+        /// Is Metadata fetcher enabled for Series, Season or Episode.
+        /// </summary>
+        /// <param name="item">Series, Season or Episode.</param>
+        /// <returns>true if enabled.</returns>
         private bool IsEnabledForLibrary(BaseItem item)
         {
             Series? series = item switch
@@ -117,6 +122,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (series == null)
             {
+                _logger.LogDebug("Given input is not in {@ValidTypes}: {Type}", new[] { nameof(Series), nameof(Season), nameof(Episode) }, item.GetType());
                 return false;
             }
 
@@ -129,16 +135,20 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         {
             if (!IsEnabledForLibrary(genericEventArgs.Argument))
             {
+                _logger.LogDebug("{ProviderName} not enabled for {InputName}", ProviderName, genericEventArgs.Argument.Name);
                 return;
             }
 
+            _logger.LogDebug("{MethodName}: Try Refreshing for Item {Name} {Type}", nameof(OnProviderManagerRefreshComplete), genericEventArgs.Argument.Name, genericEventArgs.Argument.GetType());
             if (genericEventArgs.Argument is Series series)
             {
+                _logger.LogDebug("{MethodName}: Refreshing Series {SeriesName}", nameof(OnProviderManagerRefreshComplete), series.Name);
                 HandleSeries(series).GetAwaiter().GetResult();
             }
 
             if (genericEventArgs.Argument is Season season)
             {
+                _logger.LogDebug("{MethodName}: Refreshing {SeriesName} {SeasonName}", nameof(OnProviderManagerRefreshComplete), season.Series?.Name, season.Name);
                 HandleSeason(season).GetAwaiter().GetResult();
             }
         }
@@ -147,6 +157,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         {
             if (!series.TryGetProviderId(MetadataProvider.Tvdb.ToString(), out var tvdbIdTxt))
             {
+                _logger.LogDebug("No TVDB Id available.");
                 return;
             }
 
@@ -194,62 +205,88 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             if (season.Series == null
                 || !season.Series.TryGetProviderId(MetadataProvider.Tvdb.ToString(), out var tvdbIdTxt))
             {
+                _logger.LogDebug("No TVDB Id available.");
                 return;
             }
 
             var tvdbId = Convert.ToInt32(tvdbIdTxt, CultureInfo.InvariantCulture);
-            var allEpisodes = await GetAllEpisodes(tvdbId, season.GetPreferredMetadataLanguage()).ConfigureAwait(false);
+            var allEpisodes = await GetAllEpisodes(tvdbId, season.GetPreferredMetadataLanguage())
+                .ConfigureAwait(false);
 
             var seasonEpisodes = allEpisodes.Where(e => e.SeasonNumber == season.IndexNumber).ToList();
-            var existingEpisodes = season.Children.OfType<Episode>().ToList();
+            var existingEpisodes = season.GetEpisodes().OfType<Episode>().ToHashSet();
 
             foreach (var episodeRecord in seasonEpisodes)
             {
-                if (EpisodeExists(episodeRecord, existingEpisodes))
+                var foundEpisodes = existingEpisodes.Where(episode => EpisodeEquals(episode, episodeRecord)).ToList();
+                if (foundEpisodes.Any())
                 {
+                    // So we have at least one existing episode for our episodeRecord
+                    var physicalEpisodes = foundEpisodes.Where(e => !e.IsVirtualItem);
+                    if (physicalEpisodes.Any())
+                    {
+                        // if there is a physical episode we can delete existing virtual episode entries
+                        var virtualEpisodes = foundEpisodes.Where(e => e.IsVirtualItem).ToList();
+                        DeleteVirtualItems(virtualEpisodes);
+                        existingEpisodes.ExceptWith(virtualEpisodes);
+                    }
+
                     continue;
                 }
 
                 AddVirtualEpisode(episodeRecord, season);
             }
+
+            var orphanedEpisodes = existingEpisodes
+                .Where(e => e.IsVirtualItem)
+                .Where(e => !seasonEpisodes.Any(episodeRecord => EpisodeEquals(e, episodeRecord)))
+                .ToList();
+            DeleteVirtualItems(orphanedEpisodes);
         }
 
         private void OnLibraryManagerItemUpdated(object? sender, ItemChangeEventArgs itemChangeEventArgs)
         {
+            _logger.LogDebug("{MethodName}: Refreshing Item {ItemName} [{Reason}]", nameof(OnLibraryManagerItemUpdated), itemChangeEventArgs.Item.Name, itemChangeEventArgs.UpdateReason);
             // Only interested in real Season and Episode items
             if (itemChangeEventArgs.Item.IsVirtualItem
                 || !(itemChangeEventArgs.Item is Season || itemChangeEventArgs.Item is Episode))
             {
+                _logger.LogDebug("Skip: Updated item is {ItemType}.", itemChangeEventArgs.Item.IsVirtualItem ? "Virtual" : "no Season or Episode");
                 return;
             }
 
             if (!IsEnabledForLibrary(itemChangeEventArgs.Item))
             {
+                _logger.LogDebug("{ProviderName} not enabled for {InputName}", ProviderName, itemChangeEventArgs.Item.Name);
                 return;
             }
 
-            var indexNumber = itemChangeEventArgs.Item.IndexNumber;
+            var existingVirtualItems = GetVirtualItems(itemChangeEventArgs.Item, itemChangeEventArgs.Parent);
+            DeleteVirtualItems(existingVirtualItems);
+        }
 
-            // If the item is an Episode, filter on ParentIndexNumber as well (season number)
-            int? parentIndexNumber = null;
-            if (itemChangeEventArgs.Item is Episode)
-            {
-                parentIndexNumber = itemChangeEventArgs.Item.ParentIndexNumber;
-            }
-
+        private List<BaseItem> GetVirtualItems(BaseItem item, BaseItem? parent)
+        {
             var query = new InternalItemsQuery
             {
                 IsVirtualItem = true,
-                IndexNumber = indexNumber,
-                ParentIndexNumber = parentIndexNumber,
-                IncludeItemTypes = new[] { itemChangeEventArgs.Item.GetBaseItemKind() },
-                Parent = itemChangeEventArgs.Parent,
+                IndexNumber = item.IndexNumber,
+                // If the item is an Episode, filter on ParentIndexNumber as well (season number)
+                ParentIndexNumber = item is Episode ? item.ParentIndexNumber : null,
+                IncludeItemTypes = new[] { item.GetBaseItemKind() },
+                Parent = parent,
+                Recursive = true,
                 GroupByPresentationUniqueKey = false,
                 DtoOptions = new DtoOptions(true)
             };
 
             var existingVirtualItems = _libraryManager.GetItemList(query);
+            return existingVirtualItems;
+        }
 
+        private void DeleteVirtualItems<T>(List<T> existingVirtualItems)
+            where T : BaseItem
+        {
             var deleteOptions = new DeleteOptions
             {
                 DeleteFileLocation = true
@@ -258,16 +295,20 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             // Remove the virtual season/episode that matches the newly updated item
             for (var i = 0; i < existingVirtualItems.Count; i++)
             {
-                _libraryManager.DeleteItem(existingVirtualItems[i], deleteOptions);
+                var currentItem = existingVirtualItems[i];
+                _logger.LogDebug("Delete VirtualItem {Name} - S{Season:00}E{Episode:00}", currentItem.Name, currentItem.ParentIndexNumber, currentItem.IndexNumber);
+                _libraryManager.DeleteItem(currentItem, deleteOptions);
             }
         }
 
         // TODO use async events
         private void OnLibraryManagerItemRemoved(object? sender, ItemChangeEventArgs itemChangeEventArgs)
         {
+            _logger.LogDebug("{MethodName}: Refreshing {ItemName} [{Reason}]", nameof(OnLibraryManagerItemRemoved), itemChangeEventArgs.Item.Name, itemChangeEventArgs.UpdateReason);
             // No action needed if the item is virtual
             if (itemChangeEventArgs.Item.IsVirtualItem || !IsEnabledForLibrary(itemChangeEventArgs.Item))
             {
+                _logger.LogDebug("Skip: {Message}.", itemChangeEventArgs.Item.IsVirtualItem ? "Updated item is Virtual" : "Update not enabled");
                 return;
             }
 
@@ -283,6 +324,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 if (episode.Series == null
                     || !episode.Series.TryGetProviderId(MetadataProvider.Tvdb.ToString(), out var tvdbIdTxt))
                 {
+                    _logger.LogDebug("No TVDB Id available.");
                     return;
                 }
 
@@ -313,11 +355,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     return Array.Empty<EpisodeBaseRecord>();
                 }
 
+                _logger.LogDebug("{MethodName}: For TVDB Id '{TvdbId}' found #{Count} [{Episodes}]", nameof(GetAllEpisodes), tvdbId, allEpisodes.Count, string.Join(", ", allEpisodes.Select(e => $"S{e.SeasonNumber}E{e.Number}")));
                 return allEpisodes;
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Unable to get episodes from TVDB");
+                _logger.LogWarning(ex, "Unable to get episodes from TVDB for Id '{TvdbId}'", tvdbId);
                 return Array.Empty<EpisodeBaseRecord>();
             }
         }
@@ -345,6 +388,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 if (existingEpisodes.TryGetValue(episodeRecord.SeasonNumber, out var episodes)
                     && EpisodeExists(episodeRecord, episodes))
                 {
+                    _logger.LogDebug("{MethodName}: Skip, already existing S{Season:00}E{Episode:00}", nameof(AddMissingEpisodes), episodeRecord.SeasonNumber, episodeRecord.Number);
                     continue;
                 }
 
@@ -391,7 +435,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private void AddVirtualEpisode(EpisodeBaseRecord? episode, Season? season)
         {
-            if (season == null)
+            if (episode == null || season == null)
             {
                 return;
             }
@@ -399,7 +443,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             // Put as much metadata into it as possible
             var newEpisode = new Episode
             {
-                Name = episode!.Name,
+                Name = episode.Name,
                 IndexNumber = episode.Number,
                 ParentIndexNumber = episode.SeasonNumber,
                 Id = _libraryManager.GetNewItemId(
@@ -426,7 +470,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             newEpisode.SetProviderId(MetadataProvider.Tvdb, episode.Id.ToString(CultureInfo.InvariantCulture));
 
             _logger.LogDebug(
-                "Creating virtual episode {0} {1}x{2}",
+                "Creating virtual episode {SeriesName} S{Season:00}E{Episode:00}",
                 season.Series.Name,
                 episode.SeasonNumber,
                 episode.Number);

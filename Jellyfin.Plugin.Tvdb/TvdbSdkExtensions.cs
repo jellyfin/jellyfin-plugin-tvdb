@@ -20,8 +20,9 @@ public static class TvdbSdkExtensions
     public static string? GetTranslatedNamedOrDefault(this TranslationExtended? translations, string? language)
     {
         return translations?
-            .NameTranslations
-            .FirstOrDefault(translation => TvdbUtils.MatchLanguage(language, translation.Language))?.Name;
+            .NameTranslations?
+            .FirstOrDefault(translation => TvdbUtils.MatchLanguage(language, translation.Language))?
+            .Name;
     }
 
     /// <summary>
@@ -33,7 +34,8 @@ public static class TvdbSdkExtensions
     public static string? GetTranslatedOverviewOrDefault(this TranslationExtended? translations, string? language)
     {
         return translations?
-            .OverviewTranslations
-            .FirstOrDefault(translation => TvdbUtils.MatchLanguage(language, translation.Language))?.Overview;
+            .OverviewTranslations?
+            .FirstOrDefault(translation => TvdbUtils.MatchLanguage(language, translation.Language))?
+            .Overview;
     }
 }
