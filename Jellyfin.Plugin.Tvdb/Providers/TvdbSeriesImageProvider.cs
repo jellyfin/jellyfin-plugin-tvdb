@@ -3,126 +3,121 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
+using MediaBrowser.Model.Extensions;
 using MediaBrowser.Model.Providers;
+
 using Microsoft.Extensions.Logging;
+
 using Tvdb.Sdk;
-using RatingType = MediaBrowser.Model.Dto.RatingType;
-using Series = MediaBrowser.Controller.Entities.TV.Series;
 
-namespace Jellyfin.Plugin.Tvdb.Providers
+namespace Jellyfin.Plugin.Tvdb.Providers;
+
+/// <summary>
+/// Tvdb series image provider.
+/// </summary>
+public class TvdbSeriesImageProvider : IRemoteImageProvider
 {
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<TvdbSeriesImageProvider> _logger;
+    private readonly TvdbClientManager _tvdbClientManager;
+
     /// <summary>
-    /// Tvdb series image provider.
+    /// Initializes a new instance of the <see cref="TvdbSeriesImageProvider"/> class.
     /// </summary>
-    public class TvdbSeriesImageProvider : IRemoteImageProvider
+    /// <param name="httpClientFactory">Instance of the <see cref="IHttpClientFactory"/> interface.</param>
+    /// <param name="logger">Instance of the <see cref="ILogger{TvdbSeriesImageProvider}"/> interface.</param>
+    /// <param name="tvdbClientManager">Instance of <see cref="TvdbClientManager"/>.</param>
+    public TvdbSeriesImageProvider(
+        IHttpClientFactory httpClientFactory,
+        ILogger<TvdbSeriesImageProvider> logger,
+        TvdbClientManager tvdbClientManager)
     {
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly ILogger<TvdbSeriesImageProvider> _logger;
-        private readonly TvdbClientManager _tvdbClientManager;
+        _httpClientFactory = httpClientFactory;
+        _logger = logger;
+        _tvdbClientManager = tvdbClientManager;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="TvdbSeriesImageProvider"/> class.
-        /// </summary>
-        /// <param name="httpClientFactory">Instance of the <see cref="IHttpClientFactory"/> interface.</param>
-        /// <param name="logger">Instance of the <see cref="ILogger{TvdbSeriesImageProvider}"/> interface.</param>
-        /// <param name="tvdbClientManager">Instance of <see cref="TvdbClientManager"/>.</param>
-        public TvdbSeriesImageProvider(IHttpClientFactory httpClientFactory, ILogger<TvdbSeriesImageProvider> logger, TvdbClientManager tvdbClientManager)
+    /// <inheritdoc />
+    public string Name => TvdbPlugin.ProviderName;
+
+    /// <inheritdoc />
+    public bool Supports(BaseItem item)
+    {
+        return item is Series;
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
+    {
+        yield return ImageType.Primary;
+        yield return ImageType.Banner;
+        yield return ImageType.Backdrop;
+    }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
+    {
+        if (!TvdbSeriesProvider.IsValidSeries(item.ProviderIds))
         {
-            _httpClientFactory = httpClientFactory;
-            _logger = logger;
-            _tvdbClientManager = tvdbClientManager;
+            return Enumerable.Empty<RemoteImageInfo>();
         }
 
-        /// <inheritdoc />
-        public string Name => TvdbPlugin.ProviderName;
+        var languages = await _tvdbClientManager.GetLanguagesAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var languageLookup = languages
+            .ToDictionary(l => l.Id, StringComparer.OrdinalIgnoreCase);
 
-        /// <inheritdoc />
-        public bool Supports(BaseItem item)
+        var artworkTypes = await _tvdbClientManager.GetArtworkTypeAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var seriesArtworkTypeLookup = artworkTypes
+            .Where(t => string.Equals(t.RecordType, "series", StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(t => t.Id);
+
+        var seriesTvdbId = Convert.ToInt32(item.GetProviderId(TvdbPlugin.ProviderId), CultureInfo.InvariantCulture);
+        var seriesArtworks = await GetSeriesArtworks(seriesTvdbId, cancellationToken)
+            .ConfigureAwait(false);
+
+        var remoteImages = new List<RemoteImageInfo>();
+        foreach (var artwork in seriesArtworks)
         {
-            return item is Series;
+            var artworkType = seriesArtworkTypeLookup.GetValueOrDefault(artwork.Type);
+            var imageType = artworkType.GetImageType();
+            var artworkLanguage = artwork.Language is null ? null : languageLookup.GetValueOrDefault(artwork.Language);
+
+            // only add if valid RemoteImageInfo
+            remoteImages.AddIfNotNull(artwork.CreateImageInfo(Name, imageType, artworkLanguage));
         }
 
-        /// <inheritdoc />
-        public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
+        return remoteImages.OrderByLanguageDescending(item.GetPreferredMetadataLanguage());
+    }
+
+    private async Task<IReadOnlyList<ArtworkExtendedRecord>> GetSeriesArtworks(int seriesTvdbId, CancellationToken cancellationToken)
+    {
+        try
         {
-            yield return ImageType.Primary;
-            yield return ImageType.Banner;
-            yield return ImageType.Backdrop;
+            var seriesInfo = await _tvdbClientManager.GetSeriesImagesAsync(seriesTvdbId, string.Empty, cancellationToken)
+                .ConfigureAwait(false);
+            return seriesInfo.Artworks;
         }
-
-        /// <inheritdoc />
-        public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
+        catch (SeriesException ex) when (ex.InnerException is JsonException)
         {
-            if (!TvdbSeriesProvider.IsValidSeries(item.ProviderIds))
-            {
-                return Enumerable.Empty<RemoteImageInfo>();
-            }
-
-            var language = item.GetPreferredMetadataLanguage();
-            var remoteImages = new List<RemoteImageInfo>();
-            var tvdbId = Convert.ToInt32(item.GetProviderId(TvdbPlugin.ProviderId), CultureInfo.InvariantCulture);
-            var seriesInfo = await _tvdbClientManager.GetSeriesImagesAsync(tvdbId, language, cancellationToken).ConfigureAwait(false);
-            var seriesImages = seriesInfo.Artworks;
-            var languages = _tvdbClientManager.GetLanguagesAsync(CancellationToken.None).Result;
-            var artworkTypes = _tvdbClientManager.GetArtworkTypeAsync(CancellationToken.None).Result;
-            foreach (var image in seriesImages)
-            {
-                ImageType type;
-                // Checks if valid image type, if not, skip
-                try
-                {
-                    type = TvdbUtils.GetImageTypeFromKeyType(artworkTypes.FirstOrDefault(x => x.Id == image.Type && string.Equals(x.RecordType, "series", StringComparison.OrdinalIgnoreCase))?.Name);
-                }
-                catch (Exception)
-                {
-                    continue;
-                }
-
-                var imageInfo = new RemoteImageInfo
-                {
-                    RatingType = RatingType.Score,
-                    Url = image.Image,
-                    Width = Convert.ToInt32(image.Width, CultureInfo.InvariantCulture),
-                    Height = Convert.ToInt32(image.Height, CultureInfo.InvariantCulture),
-                    Type = type,
-                    ProviderName = Name,
-                    ThumbnailUrl = image.Thumbnail
-                };
-                // TVDb uses 3 character language
-                var imageLanguage = languages.FirstOrDefault(lang => string.Equals(lang.Id, image.Language, StringComparison.OrdinalIgnoreCase))?.Id;
-                if (!string.IsNullOrEmpty(imageLanguage))
-                {
-                    imageInfo.Language = TvdbUtils.NormalizeLanguageToJellyfin(imageLanguage)?.ToLowerInvariant();
-                }
-
-                remoteImages.Add(imageInfo);
-            }
-
-            return remoteImages.OrderByDescending(i =>
-            {
-                if (string.Equals(language, i.Language, StringComparison.OrdinalIgnoreCase))
-                {
-                    return 2;
-                }
-                else if (!string.IsNullOrEmpty(i.Language))
-                {
-                    return 1;
-                }
-
-                return 0;
-            });
+            _logger.LogError(ex, "Failed to retrieve series images for {TvDbId}", seriesTvdbId);
+            return Array.Empty<ArtworkExtendedRecord>();
         }
+    }
 
-        /// <inheritdoc />
-        public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
-        {
-            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
-        }
+    /// <inheritdoc />
+    public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
+    {
+        return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
     }
 }
