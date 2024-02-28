@@ -185,7 +185,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 remoteResult.SetProviderId(MetadataProvider.Imdb, imdbID);
             }
 
-            remoteResult.SetProviderId(MetadataProvider.Tvdb, series.Id.ToString(CultureInfo.InvariantCulture));
+            remoteResult.SetProviderId(MetadataProvider.Tvdb, series.Id.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
 
             return remoteResult;
         }
@@ -272,13 +272,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                         .ConfigureAwait(false);
             var resultData = result;
 
-            if (resultData is null || resultData.Count == 0 || resultData[0] is null || resultData[0].Series is null)
+            if (resultData is null || resultData.Count == 0 || resultData[0] is null || resultData[0].Series is null || resultData[0].Series.Id.HasValue == false)
             {
                 _logger.LogWarning("TvdbSearch: No series found for id: {0}", id);
                 return null;
             }
 
-            return resultData[0].Series.Id.ToString(CultureInfo.InvariantCulture);
+            return resultData[0].Series.Id.GetValueOrDefault().ToString(CultureInfo.InvariantCulture);
         }
 
         /// <summary>
@@ -464,7 +464,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         private static void MapSeriesToResult(MetadataResult<Series> result, SeriesExtendedRecord tvdbSeries, SeriesInfo info)
         {
             Series series = result.Item;
-            series.SetProviderId(TvdbPlugin.ProviderId, tvdbSeries.Id.ToString(CultureInfo.InvariantCulture));
+            series.SetProviderId(TvdbPlugin.ProviderId, tvdbSeries.Id.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
             // Tvdb uses 3 letter code for language (prob ISO 639-2)
             // Reverts to OriginalName if no translation is found
             series.Name = tvdbSeries.Translations.GetTranslatedNamedOrDefault(info.MetadataLanguage) ?? tvdbSeries.Name;
