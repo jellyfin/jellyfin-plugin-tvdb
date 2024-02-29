@@ -72,7 +72,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     EnableImages = false
                 }
             }).Cast<Series>()
-                .Where(i => TvdbSeriesProvider.IsValidSeries(i.ProviderIds))
+                .Where(i => i.IsSupported())
                 .ToList();
 
             var infos = (await Task.WhenAll(seriesWithPerson.Select(async i =>
@@ -93,7 +93,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private async Task<RemoteImageInfo?> GetImageFromSeriesData(Series series, string personName, CancellationToken cancellationToken)
         {
-            var tvdbId = Convert.ToInt32(series.GetProviderId(TvdbPlugin.ProviderId), CultureInfo.InvariantCulture);
+            var tvdbId = series.GetTvdbId();
 
             try
             {

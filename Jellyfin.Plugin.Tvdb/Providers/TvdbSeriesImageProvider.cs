@@ -66,7 +66,7 @@ public class TvdbSeriesImageProvider : IRemoteImageProvider
     /// <inheritdoc />
     public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
     {
-        if (!TvdbSeriesProvider.IsValidSeries(item.ProviderIds))
+        if (!item.IsSupported())
         {
             return Enumerable.Empty<RemoteImageInfo>();
         }
@@ -82,11 +82,12 @@ public class TvdbSeriesImageProvider : IRemoteImageProvider
             .Where(t => string.Equals(t.RecordType, "series", StringComparison.OrdinalIgnoreCase))
             .ToDictionary(t => t.Id);
 
-        var seriesTvdbId = Convert.ToInt32(item.GetProviderId(TvdbPlugin.ProviderId), CultureInfo.InvariantCulture);
+        var seriesTvdbId = item.GetTvdbId();
         var seriesArtworks = await GetSeriesArtworks(seriesTvdbId, cancellationToken)
             .ConfigureAwait(false);
 
         var remoteImages = new List<RemoteImageInfo>();
+        var tvdbId = item.GetTvdbId();
         foreach (var artwork in seriesArtworks)
         {
             var artworkType = seriesArtworkTypeLookup.GetValueOrDefault(artwork.Type);

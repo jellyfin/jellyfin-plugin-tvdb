@@ -69,7 +69,7 @@ public class TvdbSeasonImageProvider : IRemoteImageProvider
         var season = (Season)item;
         var series = season.Series;
 
-        if (series == null || !season.IndexNumber.HasValue || !TvdbSeriesProvider.IsValidSeries(series.ProviderIds))
+        if (!series.IsSupported() || season.IndexNumber is null)
         {
             return Enumerable.Empty<RemoteImageInfo>();
         }
@@ -85,7 +85,7 @@ public class TvdbSeasonImageProvider : IRemoteImageProvider
             .Where(t => string.Equals(t.RecordType, "season", StringComparison.OrdinalIgnoreCase))
             .ToDictionary(t => t.Id);
 
-        var seriesTvdbId = Convert.ToInt32(series.GetProviderId(TvdbPlugin.ProviderId), CultureInfo.InvariantCulture);
+        var seriesTvdbId = series.GetTvdbId();
         var seasonNumber = season.IndexNumber.Value;
 
         var seasonArtworks = await GetSeasonArtworks(seriesTvdbId, seasonNumber, cancellationToken)
