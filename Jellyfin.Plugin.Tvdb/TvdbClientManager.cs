@@ -382,13 +382,13 @@ public class TvdbClientManager
 
         Data2 seriesData = seriesResponse.Data;
 
-        if (seriesData == null || seriesData.Episodes == null || seriesData.Episodes.Count == 0 || seriesData.Episodes[0].Id.HasValue == false)
+        if (seriesData?.Episodes == null || seriesData.Episodes.Count == 0)
         {
             return null;
         }
         else
         {
-            return seriesData.Episodes[0].Id.GetValueOrDefault().ToString(CultureInfo.InvariantCulture);
+            return seriesData.Episodes[0].Id?.ToString(CultureInfo.InvariantCulture);
         }
     }
 

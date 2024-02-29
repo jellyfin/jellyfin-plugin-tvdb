@@ -281,13 +281,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 return null;
             }
 
-            if (resultData is null || resultData.Count == 0 || resultData[0] is null || resultData[0].Series is null || resultData[0].Series.Id.HasValue == false)
+            if (resultData is null || resultData.Count == 0 || resultData[0]?.Series?.Id is null)
             {
                 _logger.LogWarning("TvdbSearch: No series found for remote id: {RemoteId}", remoteId);
                 return null;
             }
 
-            return resultData[0].Series.Id.GetValueOrDefault().ToString(CultureInfo.InvariantCulture);
+            return resultData[0].Series.Id?.ToString(CultureInfo.InvariantCulture);
         }
 
         /// <summary>

@@ -102,7 +102,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private static bool EpisodeEquals(Episode episode, EpisodeBaseRecord otherEpisodeRecord)
         {
-            return episode.ContainsEpisodeNumber(otherEpisodeRecord.Number.GetValueOrDefault())
+            return otherEpisodeRecord.Number.HasValue
+                && episode.ContainsEpisodeNumber(otherEpisodeRecord.Number.Value)
                 && episode.ParentIndexNumber == otherEpisodeRecord.SeasonNumber;
         }
 
@@ -191,7 +192,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             var allEpisodes = await GetAllEpisodes(tvdbId, series.GetPreferredMetadataLanguage()).ConfigureAwait(false);
             var allSeasons = allEpisodes
-                .Select(ep => ep.SeasonNumber.GetValueOrDefault())
+                .Where(ep => ep.SeasonNumber.HasValue)
+                .Select(ep => ep.SeasonNumber!.Value)
                 .Distinct()
                 .ToList();
 
@@ -385,7 +387,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 var episodeRecord = allEpisodeRecords[i];
 
                 // skip if it exists already
-                if (existingEpisodes.TryGetValue(episodeRecord.SeasonNumber.GetValueOrDefault(), out var episodes)
+                if (episodeRecord.SeasonNumber.HasValue
+                    && existingEpisodes.TryGetValue(episodeRecord.SeasonNumber.Value, out var episodes)
                     && EpisodeExists(episodeRecord, episodes))
                 {
                     _logger.LogDebug("{MethodName}: Skip, already existing S{Season:00}E{Episode:00}", nameof(AddMissingEpisodes), episodeRecord.SeasonNumber, episodeRecord.Number);
@@ -435,7 +438,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private void AddVirtualEpisode(EpisodeBaseRecord? episode, Season? season)
         {
-            if (episode == null || season == null)
+            if (episode?.SeasonNumber == null || season == null)
             {
                 return;
             }
@@ -447,7 +450,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 IndexNumber = episode.Number,
                 ParentIndexNumber = episode.SeasonNumber,
                 Id = _libraryManager.GetNewItemId(
-                    season.Series.Id + episode.SeasonNumber.GetValueOrDefault().ToString(CultureInfo.InvariantCulture) + "Episode " + episode.Number,
+                    $"{season.Series.Id}{episode.SeasonNumber}Episode {episode.Number}",
                     typeof(Episode)),
                 IsVirtualItem = true,
                 SeasonId = season.Id,
