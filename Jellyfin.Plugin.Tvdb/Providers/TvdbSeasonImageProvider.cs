@@ -83,7 +83,8 @@ public class TvdbSeasonImageProvider : IRemoteImageProvider
             .ConfigureAwait(false);
         var seasonArtworkTypeLookup = artworkTypes
             .Where(t => string.Equals(t.RecordType, "season", StringComparison.OrdinalIgnoreCase))
-            .ToDictionary(t => t.Id);
+            .Where(t => t.Id.HasValue)
+            .ToDictionary(t => t.Id!.Value);
 
         var seriesTvdbId = series.GetTvdbId();
         var seasonNumber = season.IndexNumber.Value;
@@ -94,7 +95,7 @@ public class TvdbSeasonImageProvider : IRemoteImageProvider
         var remoteImages = new List<RemoteImageInfo>();
         foreach (var artwork in seasonArtworks)
         {
-            var artworkType = seasonArtworkTypeLookup.GetValueOrDefault(artwork.Type);
+            var artworkType = artwork.Type is null ? null : seasonArtworkTypeLookup.GetValueOrDefault(artwork.Type!.Value);
             var imageType = artworkType.GetImageType();
             var artworkLanguage = artwork.Language is null ? null : languageLookup.GetValueOrDefault(artwork.Language);
 

@@ -159,7 +159,7 @@ public static class TvdbSdkExtensions
             language);
     }
 
-    private static RemoteImageInfo? CreateRemoteImageInfo(string imageUrl, string thumbnailUrl, (long Width, long Height) imageDimension, string providerName, ImageType? type, Language? language)
+    private static RemoteImageInfo? CreateRemoteImageInfo(string imageUrl, string thumbnailUrl, (long? Width, long? Height) imageDimension, string providerName, ImageType? type, Language? language)
     {
         if (type is null)
         {

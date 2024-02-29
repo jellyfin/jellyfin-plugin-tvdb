@@ -80,17 +80,17 @@ public class TvdbSeriesImageProvider : IRemoteImageProvider
             .ConfigureAwait(false);
         var seriesArtworkTypeLookup = artworkTypes
             .Where(t => string.Equals(t.RecordType, "series", StringComparison.OrdinalIgnoreCase))
-            .ToDictionary(t => t.Id);
+            .Where(t => t.Id.HasValue)
+            .ToDictionary(t => t.Id!.Value);
 
         var seriesTvdbId = item.GetTvdbId();
         var seriesArtworks = await GetSeriesArtworks(seriesTvdbId, cancellationToken)
             .ConfigureAwait(false);
 
         var remoteImages = new List<RemoteImageInfo>();
-        var tvdbId = item.GetTvdbId();
         foreach (var artwork in seriesArtworks)
         {
-            var artworkType = seriesArtworkTypeLookup.GetValueOrDefault(artwork.Type);
+            var artworkType = artwork.Type is null ? null : seriesArtworkTypeLookup.GetValueOrDefault(artwork.Type!.Value);
             var imageType = artworkType.GetImageType();
             var artworkLanguage = artwork.Language is null ? null : languageLookup.GetValueOrDefault(artwork.Language);
 
