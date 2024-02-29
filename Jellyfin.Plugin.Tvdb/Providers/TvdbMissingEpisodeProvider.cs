@@ -102,7 +102,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private static bool EpisodeEquals(Episode episode, EpisodeBaseRecord otherEpisodeRecord)
         {
-            return episode.ContainsEpisodeNumber(otherEpisodeRecord.Number.GetValueOrDefault())
+            return otherEpisodeRecord.Number.HasValue
+                && episode.ContainsEpisodeNumber(otherEpisodeRecord.Number.Value)
                 && episode.ParentIndexNumber == otherEpisodeRecord.SeasonNumber;
         }
 
@@ -155,13 +156,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private async Task HandleSeries(Series series)
         {
-            if (!series.TryGetProviderId(MetadataProvider.Tvdb.ToString(), out var tvdbIdTxt))
+            if (!series.HasTvdbId())
             {
                 _logger.LogDebug("No TVDB Id available.");
                 return;
             }
 
-            var tvdbId = Convert.ToInt32(tvdbIdTxt, CultureInfo.InvariantCulture);
+            var tvdbId = series.GetTvdbId();
 
             var children = series.GetRecursiveChildren();
             var existingSeasons = new List<Season>();
@@ -191,7 +192,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             var allEpisodes = await GetAllEpisodes(tvdbId, series.GetPreferredMetadataLanguage()).ConfigureAwait(false);
             var allSeasons = allEpisodes
-                .Select(ep => ep.SeasonNumber.GetValueOrDefault())
+                .Where(ep => ep.SeasonNumber.HasValue)
+                .Select(ep => ep.SeasonNumber!.Value)
                 .Distinct()
                 .ToList();
 
@@ -202,14 +204,14 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private async Task HandleSeason(Season season)
         {
-            if (season.Series == null
-                || !season.Series.TryGetProviderId(MetadataProvider.Tvdb.ToString(), out var tvdbIdTxt))
+            var series = season.Series;
+            if (series.HasTvdbId())
             {
                 _logger.LogDebug("No TVDB Id available.");
                 return;
             }
 
-            var tvdbId = Convert.ToInt32(tvdbIdTxt, CultureInfo.InvariantCulture);
+            var tvdbId = series.GetTvdbId();
             var allEpisodes = await GetAllEpisodes(tvdbId, season.GetPreferredMetadataLanguage())
                 .ConfigureAwait(false);
 
@@ -321,14 +323,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
             else if (itemChangeEventArgs.Item is Episode episode)
             {
-                if (episode.Series == null
-                    || !episode.Series.TryGetProviderId(MetadataProvider.Tvdb.ToString(), out var tvdbIdTxt))
+                if (!episode.Series.HasTvdbId())
                 {
                     _logger.LogDebug("No TVDB Id available.");
                     return;
                 }
 
-                var tvdbId = Convert.ToInt32(tvdbIdTxt, CultureInfo.InvariantCulture);
+                var tvdbId = episode.Series.GetTvdbId();
 
                 var episodeRecords = GetAllEpisodes(tvdbId, episode.GetPreferredMetadataLanguage()).GetAwaiter().GetResult();
 
@@ -385,7 +386,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 var episodeRecord = allEpisodeRecords[i];
 
                 // skip if it exists already
-                if (existingEpisodes.TryGetValue(episodeRecord.SeasonNumber.GetValueOrDefault(), out var episodes)
+                if (episodeRecord.SeasonNumber.HasValue
+                    && existingEpisodes.TryGetValue(episodeRecord.SeasonNumber.Value, out var episodes)
                     && EpisodeExists(episodeRecord, episodes))
                 {
                     _logger.LogDebug("{MethodName}: Skip, already existing S{Season:00}E{Episode:00}", nameof(AddMissingEpisodes), episodeRecord.SeasonNumber, episodeRecord.Number);
@@ -435,7 +437,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private void AddVirtualEpisode(EpisodeBaseRecord? episode, Season? season)
         {
-            if (episode == null || season == null)
+            if (episode?.SeasonNumber == null || season == null)
             {
                 return;
             }
@@ -447,7 +449,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 IndexNumber = episode.Number,
                 ParentIndexNumber = episode.SeasonNumber,
                 Id = _libraryManager.GetNewItemId(
-                    season.Series.Id + episode.SeasonNumber.GetValueOrDefault().ToString(CultureInfo.InvariantCulture) + "Episode " + episode.Number,
+                    $"{season.Series.Id}{episode.SeasonNumber}Episode {episode.Number}",
                     typeof(Episode)),
                 IsVirtualItem = true,
                 SeasonId = season.Id,
@@ -467,7 +469,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             newEpisode.PresentationUniqueKey = newEpisode.GetPresentationUniqueKey();
-            newEpisode.SetProviderId(MetadataProvider.Tvdb, episode.Id.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
+            newEpisode.SetTvdbId(episode.Id);
 
             _logger.LogDebug(
                 "Creating virtual episode {SeriesName} S{Season:00}E{Episode:00}",

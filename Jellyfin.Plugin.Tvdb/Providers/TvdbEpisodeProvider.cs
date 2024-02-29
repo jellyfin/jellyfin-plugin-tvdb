@@ -50,7 +50,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             // Either an episode number or date must be provided; and the dictionary of provider ids must be valid
             if ((searchInfo.IndexNumber == null && searchInfo.PremiereDate == null)
-                || !TvdbSeriesProvider.IsValidSeries(searchInfo.SeriesProviderIds))
+                || !searchInfo.IsSupported())
             {
                 return list;
             }
@@ -82,32 +82,26 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <inheritdoc />
         public async Task<MetadataResult<Episode>> GetMetadata(EpisodeInfo info, CancellationToken cancellationToken)
         {
-            var result = new MetadataResult<Episode>
+            if ((info.IndexNumber == null && info.PremiereDate == null)
+                || !info.IsSupported())
             {
-                QueriedById = true
-            };
+                _logger.LogDebug("No series identity found for {EpisodeName}", info.Name);
+                return new MetadataResult<Episode>
+                {
+                    QueriedById = true
+                };
+            }
 
-            if (TvdbSeriesProvider.IsValidSeries(info.SeriesProviderIds) &&
-                (info.IndexNumber.HasValue || info.PremiereDate.HasValue))
+            // Check for multiple episodes per file, if not run one query.
+            if (info.IndexNumberEnd.HasValue)
             {
-                // Check for multiple episodes per file, if not run one query.
-                if (info.IndexNumberEnd.HasValue)
-                {
-                    _logger.LogDebug("Multiple episodes found in {Path}", info.Path);
-
-                    result = await GetCombinedEpisode(info, cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    result = await GetEpisode(info, cancellationToken).ConfigureAwait(false);
-                }
+                _logger.LogDebug("Multiple episodes found in {Path}", info.Path);
+                return await GetCombinedEpisode(info, cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                _logger.LogDebug("No series identity found for {EpisodeName}", info.Name);
+                return await GetEpisode(info, cancellationToken).ConfigureAwait(false);
             }
-
-            return result;
         }
 
         private async Task<MetadataResult<Episode>> GetCombinedEpisode(EpisodeInfo info, CancellationToken cancellationToken)
@@ -159,7 +153,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 QueriedById = true
             };
 
-            var seriesTvdbId = searchInfo.SeriesProviderIds.FirstOrDefault(x => x.Key == TvdbPlugin.ProviderId).Value;
             string? episodeTvdbId = null;
             try
             {
@@ -172,7 +165,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                         "Episode S{Season:00}E{Episode:00} not found for series {SeriesTvdbId}:{Name}",
                         searchInfo.ParentIndexNumber,
                         searchInfo.IndexNumber,
-                        seriesTvdbId,
+                        searchInfo.GetTvdbId(),
                         searchInfo.Name);
                     return result;
                 }
@@ -190,7 +183,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     e,
                     "Failed to retrieve episode with id {EpisodeTvDbId}, series id {SeriesTvdbId}:{Name}",
                     episodeTvdbId,
-                    seriesTvdbId,
+                    searchInfo.GetTvdbId(),
                     searchInfo.Name);
             }
 
@@ -220,12 +213,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             result.ResetPeople();
 
             var item = result.Item;
-            item.SetProviderId(TvdbPlugin.ProviderId, episode.Id.GetValueOrDefault().ToString(CultureInfo.InvariantCulture));
+            item.SetTvdbId(episode.Id);
             var imdbID = episode.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id;
-            if (!string.IsNullOrEmpty(imdbID))
-            {
-                item.SetProviderId(MetadataProvider.Imdb, imdbID);
-            }
+            item.SetProviderIdIfHasValue(MetadataProvider.Imdb, imdbID);
 
             if (string.Equals(id.SeriesDisplayOrder, "dvd", StringComparison.OrdinalIgnoreCase))
             {

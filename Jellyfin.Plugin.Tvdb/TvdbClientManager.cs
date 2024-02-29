@@ -321,7 +321,6 @@ public class TvdbClientManager
     {
         var seriesClient = _serviceProvider.GetRequiredService<ISeriesClient>();
         await LoginAsync().ConfigureAwait(false);
-        searchInfo.SeriesProviderIds.TryGetValue(TvdbPlugin.ProviderId, out var seriesTvdbId);
         int? episodeNumber = null;
         int? seasonNumber = null;
         string? airDate = null;
@@ -368,27 +367,27 @@ public class TvdbClientManager
             {
                 case "dvd":
                 case "absolute":
-                    seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), season_type: searchInfo.SeriesDisplayOrder, season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: searchInfo.GetTvdbId(), season_type: searchInfo.SeriesDisplayOrder, season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
                     break;
                 default:
-                    seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), season_type: "default", season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: searchInfo.GetTvdbId(), season_type: "default", season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
                     break;
             }
         }
         else // when special use default order
         {
-            seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: Convert.ToInt32(seriesTvdbId, CultureInfo.InvariantCulture), season_type: "default", season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
+            seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: searchInfo.GetTvdbId(), season_type: "default", season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
         Data2 seriesData = seriesResponse.Data;
 
-        if (seriesData == null || seriesData.Episodes == null || seriesData.Episodes.Count == 0 || seriesData.Episodes[0].Id.HasValue == false)
+        if (seriesData?.Episodes == null || seriesData.Episodes.Count == 0)
         {
             return null;
         }
         else
         {
-            return seriesData.Episodes[0].Id.GetValueOrDefault().ToString(CultureInfo.InvariantCulture);
+            return seriesData.Episodes[0].Id?.ToString(CultureInfo.InvariantCulture);
         }
     }
 

@@ -58,7 +58,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var series = episode.Series;
             var imageResult = new List<RemoteImageInfo>();
             var language = item.GetPreferredMetadataLanguage();
-            if (series != null && TvdbSeriesProvider.IsValidSeries(series.ProviderIds))
+            if (series.IsSupported())
             {
                 // Process images
                 try
@@ -85,7 +85,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                             "Episode {SeasonNumber}x{EpisodeNumber} not found for series {SeriesTvdbId}:{Name}",
                             episode.ParentIndexNumber,
                             episode.IndexNumber,
-                            series.GetProviderId(TvdbPlugin.ProviderId),
+                            series.GetTvdbId(),
                             series.Name);
                         return imageResult;
                     }
@@ -99,7 +99,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(e, "Failed to retrieve episode images for series {TvDbId}:{Name}", series.GetProviderId(TvdbPlugin.ProviderId), series.Name);
+                    _logger.LogError(e, "Failed to retrieve episode images for series {TvDbId}:{Name}", series.GetTvdbId(), series.Name);
                 }
             }
 
