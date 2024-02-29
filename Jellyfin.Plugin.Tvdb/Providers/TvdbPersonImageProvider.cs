@@ -108,7 +108,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
 
                 var actor = await _tvdbClientManager
-                    .GetActorAsync(character.PeopleId, series.GetPreferredMetadataCountryCode(), cancellationToken)
+                    .GetActorAsync(character.PeopleId.GetValueOrDefault(), series.GetPreferredMetadataCountryCode(), cancellationToken)
                     .ConfigureAwait(false);
                 return new RemoteImageInfo
                 {

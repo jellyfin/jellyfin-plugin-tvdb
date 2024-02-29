@@ -104,37 +104,37 @@ namespace Jellyfin.Plugin.Tvdb
         /// <returns>List{DayOfWeek}.</returns>
         public static IEnumerable<DayOfWeek> GetAirDays(SeriesAirsDays seriesAirsDays)
         {
-            if (seriesAirsDays.Sunday)
+            if (seriesAirsDays.Sunday.GetValueOrDefault())
             {
                 yield return DayOfWeek.Sunday;
             }
 
-            if (seriesAirsDays.Monday)
+            if (seriesAirsDays.Monday.GetValueOrDefault())
             {
                 yield return DayOfWeek.Monday;
             }
 
-            if (seriesAirsDays.Tuesday)
+            if (seriesAirsDays.Tuesday.GetValueOrDefault())
             {
                 yield return DayOfWeek.Tuesday;
             }
 
-            if (seriesAirsDays.Wednesday)
+            if (seriesAirsDays.Wednesday.GetValueOrDefault())
             {
                 yield return DayOfWeek.Wednesday;
             }
 
-            if (seriesAirsDays.Thursday)
+            if (seriesAirsDays.Thursday.GetValueOrDefault())
             {
                 yield return DayOfWeek.Thursday;
             }
 
-            if (seriesAirsDays.Friday)
+            if (seriesAirsDays.Friday.GetValueOrDefault())
             {
                 yield return DayOfWeek.Friday;
             }
 
-            if (seriesAirsDays.Saturday)
+            if (seriesAirsDays.Saturday.GetValueOrDefault())
             {
                 yield return DayOfWeek.Saturday;
             }
