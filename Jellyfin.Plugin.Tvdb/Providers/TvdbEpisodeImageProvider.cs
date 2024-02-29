@@ -4,14 +4,15 @@ using System.Globalization;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
+
 using Microsoft.Extensions.Logging;
-using Tvdb.Sdk;
 
 namespace Jellyfin.Plugin.Tvdb.Providers
 {
@@ -94,11 +95,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                             .GetEpisodesAsync(Convert.ToInt32(episodeTvdbId, CultureInfo.InvariantCulture), language, cancellationToken)
                             .ConfigureAwait(false);
 
-                    var image = GetImageInfo(episodeResult);
-                    if (image != null)
-                    {
-                        imageResult.Add(image);
-                    }
+                    imageResult.AddIfNotNull(episodeResult.CreateImageInfo(Name));
                 }
                 catch (Exception e)
                 {
@@ -113,21 +110,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
             return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
-        }
-
-        private RemoteImageInfo? GetImageInfo(EpisodeExtendedRecord episode)
-        {
-            if (string.IsNullOrEmpty(episode.Image))
-            {
-                return null;
-            }
-
-            return new RemoteImageInfo
-            {
-                ProviderName = Name,
-                Url = episode.Image,
-                Type = ImageType.Primary
-            };
         }
     }
 }
