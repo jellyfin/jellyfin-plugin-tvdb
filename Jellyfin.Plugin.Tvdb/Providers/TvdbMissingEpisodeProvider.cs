@@ -118,7 +118,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             var libraryOptions = _libraryManager.GetLibraryOptions(series);
-            return _baseItemManager.IsMetadataFetcherEnabled(series, libraryOptions.GetTypeOptions(item.GetType().Name), ProviderName);
+            return _baseItemManager.IsMetadataFetcherEnabled(series, libraryOptions.GetTypeOptions(series.GetType().Name), ProviderName);
         }
 
         // TODO use the new async events when provider manager is updated
