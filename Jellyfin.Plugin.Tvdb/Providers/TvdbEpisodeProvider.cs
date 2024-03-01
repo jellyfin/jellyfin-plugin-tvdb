@@ -50,7 +50,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             // Either an episode number or date must be provided; and the dictionary of provider ids must be valid
             if ((searchInfo.IndexNumber == null && searchInfo.PremiereDate == null)
-                || !searchInfo.IsSupported())
+                || !searchInfo.SeriesProviderIds.TryGetValue(TvdbPlugin.ProviderId, out _))
             {
                 return list;
             }
