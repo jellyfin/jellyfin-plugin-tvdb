@@ -321,6 +321,12 @@ public class TvdbClientManager
     {
         var seriesClient = _serviceProvider.GetRequiredService<ISeriesClient>();
         await LoginAsync().ConfigureAwait(false);
+        if (!searchInfo.SeriesProviderIds.TryGetValue(TvdbPlugin.ProviderId, out var seriesTvdbIdString))
+        {
+            return null;
+        }
+
+        int seriesTvdbId = int.Parse(seriesTvdbIdString, CultureInfo.InvariantCulture);
         int? episodeNumber = null;
         int? seasonNumber = null;
         string? airDate = null;
@@ -367,16 +373,16 @@ public class TvdbClientManager
             {
                 case "dvd":
                 case "absolute":
-                    seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: searchInfo.GetTvdbId(), season_type: searchInfo.SeriesDisplayOrder, season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: seriesTvdbId, season_type: searchInfo.SeriesDisplayOrder, season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
                     break;
                 default:
-                    seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: searchInfo.GetTvdbId(), season_type: "default", season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: seriesTvdbId, season_type: "default", season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
                     break;
             }
         }
         else // when special use default order
         {
-            seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: searchInfo.GetTvdbId(), season_type: "default", season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
+            seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: seriesTvdbId, season_type: "default", season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
         Data2 seriesData = seriesResponse.Data;

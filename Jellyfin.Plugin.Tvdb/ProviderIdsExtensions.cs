@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 
 using MediaBrowser.Model.Entities;
@@ -17,6 +18,13 @@ internal static class ProviderIdsExtensions
         return HasProviderId(item, MetadataProvider.Tvdb)
                || HasProviderId(item, MetadataProvider.Imdb)
                || HasProviderId(item, MetadataProvider.Zap2It);
+    }
+
+    internal static bool IsSupported(this Dictionary<string, string> item)
+    {
+        return (item.TryGetValue(MetadataProvider.Tvdb.ToString(), out var tvdbId) && !string.IsNullOrEmpty(tvdbId))
+               || (item.TryGetValue(MetadataProvider.Imdb.ToString(), out var imdbId) && !string.IsNullOrEmpty(imdbId))
+               || (item.TryGetValue(MetadataProvider.Zap2It.ToString(), out var zap2ItId) && !string.IsNullOrEmpty(zap2ItId));
     }
 
     /// <summary>
