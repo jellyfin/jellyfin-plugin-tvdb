@@ -50,7 +50,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             // Either an episode number or date must be provided; and the dictionary of provider ids must be valid
             if ((searchInfo.IndexNumber == null && searchInfo.PremiereDate == null)
-                || !searchInfo.SeriesProviderIds.TryGetValue(TvdbPlugin.ProviderId, out _))
+                || !searchInfo.SeriesProviderIds.IsSupported())
             {
                 return list;
             }
@@ -83,7 +83,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         public async Task<MetadataResult<Episode>> GetMetadata(EpisodeInfo info, CancellationToken cancellationToken)
         {
             if ((info.IndexNumber == null && info.PremiereDate == null)
-                || !info.IsSupported())
+                || !info.SeriesProviderIds.IsSupported())
             {
                 _logger.LogDebug("No series identity found for {EpisodeName}", info.Name);
                 return new MetadataResult<Episode>
