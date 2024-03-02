@@ -420,6 +420,7 @@ public class TvdbClientManager
         int? seasonNumber = null;
         string? airDate = null;
         bool special = false;
+        string? key = null;
         // Prefer SxE over premiere date as it is more robust
         if (searchInfo.IndexNumber.HasValue && searchInfo.ParentIndexNumber.HasValue)
         {
@@ -448,11 +449,19 @@ public class TvdbClientManager
                     seasonNumber = searchInfo.ParentIndexNumber.Value;
                     break;
             }
+
+            key = $"FindTvdbEpisode_{seriesTvdbIdString}_{seasonNumber.Value.ToString(CultureInfo.InvariantCulture)}_{episodeNumber.Value.ToString(CultureInfo.InvariantCulture)}";
         }
         else if (searchInfo.PremiereDate.HasValue)
         {
             // tvdb expects yyyy-mm-dd format
             airDate = searchInfo.PremiereDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            key = $"FindTvdbEpisode_{seriesTvdbIdString}_{airDate}";
+        }
+
+        if (key != null && _memoryCache.TryGetValue(key, out string? episodeTvdbId))
+        {
+            return episodeTvdbId;
         }
 
         Response56 seriesResponse;
@@ -482,7 +491,9 @@ public class TvdbClientManager
         }
         else
         {
-            return seriesData.Episodes[0].Id?.ToString(CultureInfo.InvariantCulture);
+            var tvdbId = seriesData.Episodes[0].Id?.ToString(CultureInfo.InvariantCulture);
+            _memoryCache.Set(key, tvdbId, TimeSpan.FromHours(CacheDurationInHours));
+            return tvdbId;
         }
     }
 
