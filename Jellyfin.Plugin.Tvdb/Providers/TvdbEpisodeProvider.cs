@@ -130,17 +130,21 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var result = results[0];
 
             var name = new StringBuilder(result.Item.Name);
+            var originalTitle = new StringBuilder(result.Item.OriginalTitle);
             var overview = new StringBuilder(result.Item.Overview);
 
             for (int res = 1; res < results.Count; res++)
             {
                 name.Append(" / ");
                 name.Append(results[res].Item.Name);
+                originalTitle.Append(" / ");
+                originalTitle.Append(results[res].Item.OriginalTitle);
                 overview.Append(" / ");
                 overview.Append(results[res].Item.Overview);
             }
 
             result.Item.Name = name.ToString();
+            result.Item.OriginalTitle = originalTitle.ToString();
             result.Item.Overview = overview.ToString();
 
             return result;
