@@ -492,7 +492,11 @@ public class TvdbClientManager
         else
         {
             var tvdbId = seriesData.Episodes[0].Id?.ToString(CultureInfo.InvariantCulture);
-            _memoryCache.Set(key, tvdbId, TimeSpan.FromHours(CacheDurationInHours));
+            if (key != null)
+            {
+                _memoryCache.Set(key, tvdbId, TimeSpan.FromHours(CacheDurationInHours));
+            }
+
             return tvdbId;
         }
     }
