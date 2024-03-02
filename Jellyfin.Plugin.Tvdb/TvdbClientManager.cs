@@ -450,13 +450,13 @@ public class TvdbClientManager
                     break;
             }
 
-            key = $"FindTvdbEpisode_{seriesTvdbIdString}_{seasonNumber.Value.ToString(CultureInfo.InvariantCulture)}_{episodeNumber.Value.ToString(CultureInfo.InvariantCulture)}";
+            key = $"FindTvdbEpisodeId_{seriesTvdbIdString}_{seasonNumber.Value.ToString(CultureInfo.InvariantCulture)}_{episodeNumber.Value.ToString(CultureInfo.InvariantCulture)}";
         }
         else if (searchInfo.PremiereDate.HasValue)
         {
             // tvdb expects yyyy-mm-dd format
             airDate = searchInfo.PremiereDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-            key = $"FindTvdbEpisode_{seriesTvdbIdString}_{airDate}";
+            key = $"FindTvdbEpisodeId_{seriesTvdbIdString}_{airDate}";
         }
 
         if (key != null && _memoryCache.TryGetValue(key, out string? episodeTvdbId))
