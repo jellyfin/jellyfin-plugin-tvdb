@@ -16,12 +16,26 @@
                     </div>
                     <div class="inputContainer">
                         <label for="txtTvdbApiKey">TheTvdb API Key:</label>
-                        <input type="text" id="txtTvdbApiKey" required="required" is="emby-input"/>
+                        <input type="text" id="txtTvdbApiKey" required="required" is="emby-input" />
                         <div class="fieldDescription">
                             TheTVDB Api Key from Subscriptions.
                         </div>
                     </div>
-                    <br/>
+                    <div class="inputContainer">
+                        <label for="txtTvdbApiKey">Cache time in hours:</label>
+                        <input type="number" id="cacheTimeInHours" required="required" is="emby-input" />
+                        <div class="fieldDescription">
+                            The cache time in hours for metadata.
+                        </div>
+                    </div>
+                    <div class="inputContainer">
+                        <label for="txtTvdbApiKey">Cache time in days:</label>
+                        <input type="number" id="cacheTimeInDays" required="required" is="emby-input" />
+                        <div class="fieldDescription">
+                            The cache time in days for Languages and Activity Type metadata.
+                        </div>
+                    </div>
+                    <br />
                     <div>
                         <button is="emby-button" type="submit" data-theme="b" class="raised button-submit block">
                             <span>Save</span>
@@ -40,6 +54,8 @@
 
                 ApiClient.getPluginConfiguration(TvdbPluginConfiguration.uniquePluginId).then(function (config) {
                     document.getElementById('txtTvdbApiKey').value = config.ApiKey || '';
+                    document.getElementById('cacheTimeInHours').value = config.CacheDurationInHours;
+                    document.getElementById('cacheTimeInDays').value = config.CacheDurationInDays;
                     Dashboard.hideLoadingMsg();
                 });
             },
@@ -49,7 +65,8 @@
 
                 ApiClient.getPluginConfiguration(TvdbPluginConfiguration.uniquePluginId).then(function (config) {
                     config.ApiKey = document.getElementById('txtTvdbApiKey').value;
-
+                    config.CacheDurationInHours = document.getElementById('cacheTimeInHours').value;
+                    config.CacheDurationInDays = document.getElementById('cacheTimeInDays').value;
                     ApiClient.updatePluginConfiguration(TvdbPluginConfiguration.uniquePluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
                     });
