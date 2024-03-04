@@ -502,6 +502,23 @@ public class TvdbClientManager
     }
 
     /// <summary>
+    /// Purge the cache.
+    /// </summary>
+    /// <returns>True if success else false.</returns>
+    public bool PurgeCache()
+    {
+        if (_memoryCache is MemoryCache memoryCache)
+        {
+            memoryCache.Compact(1);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Create an independent ServiceProvider because registering HttpClients directly into Jellyfin
     /// causes issues upstream.
     /// </summary>
