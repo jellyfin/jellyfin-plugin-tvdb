@@ -19,7 +19,7 @@ namespace Jellyfin.Plugin.Tvdb;
 /// <summary>
 /// Tvdb client manager.
 /// </summary>
-public class TvdbClientManager
+public class TvdbClientManager : IDisposable
 {
     private const string TvdbHttpClient = "TvdbHttpClient";
     private static readonly SemaphoreSlim _tokenUpdateLock = new SemaphoreSlim(1, 1);
@@ -35,13 +35,12 @@ public class TvdbClientManager
     /// Initializes a new instance of the <see cref="TvdbClientManager"/> class.
     /// </summary>
     /// <param name="applicationHost">Instance of the <see cref="IApplicationHost"/> interface.</param>
-    /// <param name="memoryCache">Instance of the <see cref="IMemoryCache"/> interface.</param>
-    public TvdbClientManager(IApplicationHost applicationHost, IMemoryCache memoryCache)
+    public TvdbClientManager(IApplicationHost applicationHost)
     {
         _serviceProvider = ConfigureService(applicationHost);
         _httpClientFactory = _serviceProvider.GetRequiredService<IHttpClientFactory>();
         _sdkClientSettings = _serviceProvider.GetRequiredService<SdkClientSettings>();
-        _memoryCache = memoryCache;
+        _memoryCache = new MemoryCache(new MemoryCacheOptions());
 
         _tokenUpdatedAt = DateTime.MinValue;
     }
@@ -505,6 +504,23 @@ public class TvdbClientManager
     }
 
     /// <summary>
+    /// Purge the cache.
+    /// </summary>
+    /// <returns>True if success else false.</returns>
+    public bool PurgeCache()
+    {
+        if (_memoryCache is MemoryCache memoryCache)
+        {
+            memoryCache.Compact(1);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Create an independent ServiceProvider because registering HttpClients directly into Jellyfin
     /// causes issues upstream.
     /// </summary>
@@ -547,5 +563,24 @@ public class TvdbClientManager
         services.AddTransient<ILanguagesClient>(_ => new LanguagesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
 
         return services.BuildServiceProvider();
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+       Dispose(true);
+       GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Releases unmanaged and - optionally - managed resources.
+    /// </summary>
+    /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _memoryCache?.Dispose();
+        }
     }
 }
