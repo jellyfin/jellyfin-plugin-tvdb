@@ -321,6 +321,11 @@ public class TvdbClientManager
     {
         var seriesClient = _serviceProvider.GetRequiredService<ISeriesClient>();
         await LoginAsync().ConfigureAwait(false);
+        if (!searchInfo.IsSupported())
+        {
+            return null;
+        }
+
         int? episodeNumber = null;
         int? seasonNumber = null;
         string? airDate = null;
