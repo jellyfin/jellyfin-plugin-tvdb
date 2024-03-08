@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Jellyfin.Plugin.Tvdb.Configuration;
 using MediaBrowser.Common;
 using MediaBrowser.Controller.Providers;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Tvdb.Sdk;
 
@@ -18,13 +19,15 @@ namespace Jellyfin.Plugin.Tvdb;
 /// <summary>
 /// Tvdb client manager.
 /// </summary>
-public class TvdbClientManager
+public class TvdbClientManager : IDisposable
 {
     private const string TvdbHttpClient = "TvdbHttpClient";
+    private const int CacheDurationInHours = 1;
     private static readonly SemaphoreSlim _tokenUpdateLock = new SemaphoreSlim(1, 1);
 
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IMemoryCache _memoryCache;
     private readonly SdkClientSettings _sdkClientSettings;
 
     private DateTime _tokenUpdatedAt;
@@ -38,6 +41,7 @@ public class TvdbClientManager
         _serviceProvider = ConfigureService(applicationHost);
         _httpClientFactory = _serviceProvider.GetRequiredService<IHttpClientFactory>();
         _sdkClientSettings = _serviceProvider.GetRequiredService<SdkClientSettings>();
+        _memoryCache = new MemoryCache(new MemoryCacheOptions());
 
         _tokenUpdatedAt = DateTime.MinValue;
     }
@@ -95,10 +99,17 @@ public class TvdbClientManager
         string language,
         CancellationToken cancellationToken)
     {
+        var key = $"TvdbSeriesSearch_{name}";
+        if (_memoryCache.TryGetValue(key, out IReadOnlyList<SearchResult> series))
+        {
+            return series;
+        }
+
         var searchClient = _serviceProvider.GetRequiredService<ISearchClient>();
         await LoginAsync().ConfigureAwait(false);
         var searchResult = await searchClient.GetSearchResultsAsync(query: name, type: "series", limit: 5, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+        _memoryCache.Set(key, searchResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return searchResult.Data;
     }
 
@@ -114,10 +125,17 @@ public class TvdbClientManager
         string language,
         CancellationToken cancellationToken)
     {
+        var key = $"TvdbSeries_{tvdbId.ToString(CultureInfo.InvariantCulture)}";
+        if (_memoryCache.TryGetValue(key, out SeriesBaseRecord series))
+        {
+            return series;
+        }
+
         var seriesClient = _serviceProvider.GetRequiredService<ISeriesClient>();
         await LoginAsync().ConfigureAwait(false);
         var seriesResult = await seriesClient.GetSeriesBaseAsync(id: tvdbId, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+        _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return seriesResult.Data;
     }
 
@@ -137,10 +155,17 @@ public class TvdbClientManager
         Meta4? meta = null,
         bool? small = null)
     {
+        var key = $"TvdbSeriesExtended_{tvdbId.ToString(CultureInfo.InvariantCulture)}";
+        if (_memoryCache.TryGetValue(key, out SeriesExtendedRecord series))
+        {
+            return series;
+        }
+
         var seriesClient = _serviceProvider.GetRequiredService<ISeriesClient>();
         await LoginAsync().ConfigureAwait(false);
         var seriesResult = await seriesClient.GetSeriesExtendedAsync(id: tvdbId, meta: meta, @short: small, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+        _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return seriesResult.Data;
     }
 
@@ -158,10 +183,17 @@ public class TvdbClientManager
         string seasonType,
         CancellationToken cancellationToken)
     {
+        var key = $"TvdbSeriesEpisodes_{tvdbId.ToString(CultureInfo.InvariantCulture)}";
+        if (_memoryCache.TryGetValue(key, out Data2 series))
+        {
+            return series;
+        }
+
         var seriesClient = _serviceProvider.GetRequiredService<ISeriesClient>();
         await LoginAsync().ConfigureAwait(false);
         var seriesResult = await seriesClient.GetSeriesEpisodesAsync(id: tvdbId, season_type: seasonType, cancellationToken: cancellationToken, page: 0)
             .ConfigureAwait(false);
+        _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return seriesResult.Data;
     }
 
@@ -177,10 +209,17 @@ public class TvdbClientManager
         string language,
         CancellationToken cancellationToken)
     {
+        var key = $"TvdbSeason_{seasonTvdbId.ToString(CultureInfo.InvariantCulture)}";
+        if (_memoryCache.TryGetValue(key, out SeasonExtendedRecord season))
+        {
+            return season;
+        }
+
         var seasonClient = _serviceProvider.GetRequiredService<ISeasonsClient>();
         await LoginAsync().ConfigureAwait(false);
         var seasonResult = await seasonClient.GetSeasonExtendedAsync(id: seasonTvdbId, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+        _memoryCache.Set(key, seasonResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return seasonResult.Data;
     }
 
@@ -196,10 +235,17 @@ public class TvdbClientManager
         string language,
         CancellationToken cancellationToken)
     {
+        var key = $"TvdbEpisode_{episodeTvdbId.ToString(CultureInfo.InvariantCulture)}";
+        if (_memoryCache.TryGetValue(key, out EpisodeExtendedRecord episode))
+        {
+            return episode;
+        }
+
         var episodeClient = _serviceProvider.GetRequiredService<IEpisodesClient>();
         await LoginAsync().ConfigureAwait(false);
         var episodeResult = await episodeClient.GetEpisodeExtendedAsync(id: episodeTvdbId, meta: Meta.Translations, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+        _memoryCache.Set(key, episodeResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return episodeResult.Data;
     }
 
@@ -215,10 +261,17 @@ public class TvdbClientManager
         string language,
         CancellationToken cancellationToken)
     {
+        var key = $"TvdbSeriesRemoteId_{remoteId}";
+        if (_memoryCache.TryGetValue(key, out IReadOnlyList<SearchByRemoteIdResult> series))
+        {
+            return series;
+        }
+
         var searchClient = _serviceProvider.GetRequiredService<ISearchClient>();
         await LoginAsync().ConfigureAwait(false);
         var searchResult = await searchClient.GetSearchResultsByRemoteIdAsync(remoteId: remoteId, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+        _memoryCache.Set(key, searchResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return searchResult.Data;
     }
 
@@ -234,10 +287,17 @@ public class TvdbClientManager
         string language,
         CancellationToken cancellationToken)
     {
+        var key = $"TvdbPeople_{tvdbId.ToString(CultureInfo.InvariantCulture)}";
+        if (_memoryCache.TryGetValue(key, out PeopleBaseRecord people))
+        {
+            return people;
+        }
+
         var peopleClient = _serviceProvider.GetRequiredService<IPeopleClient>();
         await LoginAsync().ConfigureAwait(false);
         var peopleResult = await peopleClient.GetPeopleBaseAsync(id: tvdbId, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+        _memoryCache.Set(key, peopleResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return peopleResult.Data;
     }
 
@@ -253,10 +313,17 @@ public class TvdbClientManager
         string language,
         CancellationToken cancellationToken)
     {
+        var key = $"TvdbArtwork_{imageTvdbId.ToString(CultureInfo.InvariantCulture)}";
+        if (_memoryCache.TryGetValue(key, out ArtworkExtendedRecord artwork))
+        {
+            return artwork;
+        }
+
         var artworkClient = _serviceProvider.GetRequiredService<IArtworkClient>();
         await LoginAsync().ConfigureAwait(false);
         var artworkResult = await artworkClient.GetArtworkExtendedAsync(id: imageTvdbId, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+        _memoryCache.Set(key, artworkResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return artworkResult.Data;
     }
 
@@ -272,10 +339,17 @@ public class TvdbClientManager
         string language,
         CancellationToken cancellationToken)
     {
+        var key = $"TvdbSeriesArtwork_{tvdbId.ToString(CultureInfo.InvariantCulture)}";
+        if (_memoryCache.TryGetValue(key, out SeriesExtendedRecord series))
+        {
+            return series;
+        }
+
         var seriesClient = _serviceProvider.GetRequiredService<ISeriesClient>();
         await LoginAsync().ConfigureAwait(false);
         var seriesResult = await seriesClient.GetSeriesArtworksAsync(id: tvdbId, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+        _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return seriesResult.Data;
     }
 
@@ -286,10 +360,17 @@ public class TvdbClientManager
     /// <returns>All tvdb languages.</returns>
     public async Task<IReadOnlyList<Language>> GetLanguagesAsync(CancellationToken cancellationToken)
     {
+        var key = "TvdbLanguages";
+        if (_memoryCache.TryGetValue(key, out IReadOnlyList<Language> languages))
+        {
+            return languages;
+        }
+
         var languagesClient = _serviceProvider.GetRequiredService<ILanguagesClient>();
         await LoginAsync().ConfigureAwait(false);
         var languagesResult = await languagesClient.GetAllLanguagesAsync(cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+        _memoryCache.Set(key, languagesResult.Data, TimeSpan.FromDays(1));
         return languagesResult.Data;
     }
 
@@ -300,10 +381,17 @@ public class TvdbClientManager
     /// <returns>All tvdb artwork types.</returns>
     public async Task<IReadOnlyList<ArtworkType>> GetArtworkTypeAsync(CancellationToken cancellationToken)
     {
+        var key = "TvdbArtworkTypes";
+        if (_memoryCache.TryGetValue(key, out IReadOnlyList<ArtworkType> artworkTypes))
+        {
+            return artworkTypes;
+        }
+
         var artworkTypesClient = _serviceProvider.GetRequiredService<IArtwork_TypesClient>();
         await LoginAsync().ConfigureAwait(false);
         var artworkTypesResult = await artworkTypesClient.GetAllArtworkTypesAsync(cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+        _memoryCache.Set(key, artworkTypesResult.Data, TimeSpan.FromDays(1));
         return artworkTypesResult.Data;
     }
 
@@ -331,6 +419,7 @@ public class TvdbClientManager
         int? seasonNumber = null;
         string? airDate = null;
         bool special = false;
+        string? key = null;
         // Prefer SxE over premiere date as it is more robust
         if (searchInfo.IndexNumber.HasValue && searchInfo.ParentIndexNumber.HasValue)
         {
@@ -359,11 +448,19 @@ public class TvdbClientManager
                     seasonNumber = searchInfo.ParentIndexNumber.Value;
                     break;
             }
+
+            key = $"FindTvdbEpisodeId_{seriesTvdbIdString}_{seasonNumber.Value.ToString(CultureInfo.InvariantCulture)}_{episodeNumber.Value.ToString(CultureInfo.InvariantCulture)}";
         }
         else if (searchInfo.PremiereDate.HasValue)
         {
             // tvdb expects yyyy-mm-dd format
             airDate = searchInfo.PremiereDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            key = $"FindTvdbEpisodeId_{seriesTvdbIdString}_{airDate}";
+        }
+
+        if (key != null && _memoryCache.TryGetValue(key, out string? episodeTvdbId))
+        {
+            return episodeTvdbId;
         }
 
         Response56 seriesResponse;
@@ -393,7 +490,30 @@ public class TvdbClientManager
         }
         else
         {
-            return seriesData.Episodes[0].Id?.ToString(CultureInfo.InvariantCulture);
+            var tvdbId = seriesData.Episodes[0].Id?.ToString(CultureInfo.InvariantCulture);
+            if (key != null)
+            {
+                _memoryCache.Set(key, tvdbId, TimeSpan.FromHours(CacheDurationInHours));
+            }
+
+            return tvdbId;
+        }
+    }
+
+    /// <summary>
+    /// Purge the cache.
+    /// </summary>
+    /// <returns>True if success else false.</returns>
+    public bool PurgeCache()
+    {
+        if (_memoryCache is MemoryCache memoryCache)
+        {
+            memoryCache.Compact(1);
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 
@@ -440,5 +560,24 @@ public class TvdbClientManager
         services.AddTransient<ILanguagesClient>(_ => new LanguagesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
 
         return services.BuildServiceProvider();
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+       Dispose(true);
+       GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Releases unmanaged and - optionally - managed resources.
+    /// </summary>
+    /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _memoryCache?.Dispose();
+        }
     }
 }
