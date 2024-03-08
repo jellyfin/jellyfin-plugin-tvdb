@@ -65,8 +65,8 @@
 
                 ApiClient.getPluginConfiguration(TvdbPluginConfiguration.uniquePluginId).then(function (config) {
                     config.ApiKey = document.getElementById('txtTvdbApiKey').value;
-                    config.CacheDurationInHours = document.getElementById('cacheTimeInHours').value;
-                    config.CacheDurationInDays = document.getElementById('cacheTimeInDays').value;
+                    config.CacheDurationInHours = document.getElementById('cacheDurationInDays').value;
+                    config.CacheDurationInDays = document.getElementById('cacheDurationInDays').value;
                     ApiClient.updatePluginConfiguration(TvdbPluginConfiguration.uniquePluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
                     });
