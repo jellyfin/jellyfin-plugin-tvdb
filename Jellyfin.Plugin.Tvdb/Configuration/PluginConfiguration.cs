@@ -11,8 +11,8 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         /// Gets the tvdb api key for project.
         /// </summary>
         public const string ProjectApiKey = "7f7eed88-2530-4f84-8ee7-f154471b8f87";
-        private int _cacheDurationInHours;
-        private int _cacheDurationInDays;
+        private int _cacheDurationInHours = 1;
+        private int _cacheDurationInDays = 7;
 
         /// <summary>
         /// Gets or sets the tvdb api key for user.
