@@ -9,14 +9,12 @@ using MediaBrowser.Controller.BaseItemManager;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
-using MediaBrowser.Controller.Plugins;
 using MediaBrowser.Controller.Providers;
-using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Globalization;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Tvdb.Sdk;
 using Episode = MediaBrowser.Controller.Entities.TV.Episode;
-using MetadataProvider = MediaBrowser.Model.Entities.MetadataProvider;
 using Season = MediaBrowser.Controller.Entities.TV.Season;
 using Series = MediaBrowser.Controller.Entities.TV.Series;
 
@@ -25,7 +23,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
     /// <summary>
     /// Tvdb Missing Episode provider.
     /// </summary>
-    public class TvdbMissingEpisodeProvider : IServerEntryPoint
+    public class TvdbMissingEpisodeProvider : IHostedService
     {
         /// <summary>
         /// The provider name.
@@ -64,37 +62,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             _logger = logger;
         }
 
-        /// <inheritdoc />
-        public Task RunAsync()
-        {
-            _providerManager.RefreshCompleted += OnProviderManagerRefreshComplete;
-            _libraryManager.ItemUpdated += OnLibraryManagerItemUpdated;
-            _libraryManager.ItemRemoved += OnLibraryManagerItemRemoved;
-
-            return Task.CompletedTask;
-        }
-
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// Disposes managed resources.
-        /// </summary>
-        /// <param name="disposing">A value indicating whether managed resources should be disposed.</param>
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _providerManager.RefreshCompleted -= OnProviderManagerRefreshComplete;
-                _libraryManager.ItemUpdated -= OnLibraryManagerItemUpdated;
-                _libraryManager.ItemRemoved -= OnLibraryManagerItemRemoved;
-            }
-        }
-
         private static bool EpisodeExists(EpisodeBaseRecord episodeRecord, IReadOnlyList<Episode> existingEpisodes)
         {
             return existingEpisodes.Any(episode => EpisodeEquals(episode, episodeRecord));
@@ -128,7 +95,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             var libraryOptions = _libraryManager.GetLibraryOptions(series);
-            return _baseItemManager.IsMetadataFetcherEnabled(series, libraryOptions, ProviderName);
+            var typeOptions = libraryOptions.GetTypeOptions(item.GetType().Name);
+            return _baseItemManager.IsMetadataFetcherEnabled(series, typeOptions, ProviderName);
         }
 
         // TODO use the new async events when provider manager is updated
@@ -180,12 +148,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                         break;
                     case Episode episode:
                         var seasonNumber = episode.ParentIndexNumber ?? 1;
-                        if (!existingEpisodes.ContainsKey(seasonNumber))
+                        if (!existingEpisodes.TryGetValue(seasonNumber, out var value))
                         {
-                            existingEpisodes[seasonNumber] = new List<Episode>();
+                            value = new List<Episode>();
+                            existingEpisodes[seasonNumber] = value;
                         }
 
-                        existingEpisodes[seasonNumber].Add(episode);
+                        value.Add(episode);
                         break;
                 }
             }
@@ -221,7 +190,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             foreach (var episodeRecord in seasonEpisodes)
             {
                 var foundEpisodes = existingEpisodes.Where(episode => EpisodeEquals(episode, episodeRecord)).ToList();
-                if (foundEpisodes.Any())
+                if (foundEpisodes.Count != 0)
                 {
                     // So we have at least one existing episode for our episodeRecord
                     var physicalEpisodes = foundEpisodes.Where(e => !e.IsVirtualItem);
@@ -478,6 +447,24 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 episode.Number);
 
             season.AddChild(newEpisode);
+        }
+
+        /// <inheritdoc />
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            _providerManager.RefreshCompleted += OnProviderManagerRefreshComplete;
+            _libraryManager.ItemUpdated += OnLibraryManagerItemUpdated;
+            _libraryManager.ItemRemoved += OnLibraryManagerItemRemoved;
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            _providerManager.RefreshCompleted -= OnProviderManagerRefreshComplete;
+            _libraryManager.ItemUpdated -= OnLibraryManagerItemUpdated;
+            _libraryManager.ItemRemoved -= OnLibraryManagerItemRemoved;
+            return Task.CompletedTask;
         }
     }
 }

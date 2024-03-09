@@ -2,8 +2,8 @@ name: "TheTVDB"
 guid: "a677c0da-fac5-4cde-941a-7134223f14c8"
 imageUrl: "https://repo.jellyfin.org/releases/plugin/images/jellyfin-plugin-tvdb.png"
 version: 10
-targetAbi: "10.8.10.0"
-framework: "net6.0"
+targetAbi: "10.9.0.0"
+framework: "net8.0"
 owner: "jellyfin"
 overview: "Get TV metadata from TheTvdb"
 description: >
@@ -14,8 +14,3 @@ artifacts:
   - "Jellyfin.Plugin.Tvdb.dll"
   - "Tvdb.Sdk.dll"
 changelog: |-
-  - Reduce log noise (#85) @IDisposable
-  - Enriched Logging with series name (#84) @JPVenson
-
-  ### New features and improvements ###
-  - Combine Title and Overview of combined episodes. (#86) @haydenstith
