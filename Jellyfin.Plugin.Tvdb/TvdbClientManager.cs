@@ -47,9 +47,9 @@ public class TvdbClientManager : IDisposable
 
     private static string? UserPin => TvdbPlugin.Instance?.Configuration.ApiKey;
 
-    private static int? CacheDurationInHours => TvdbPlugin.Instance?.Configuration.CacheDurationInHours;
+    private static int CacheDurationInHours => TvdbPlugin.Instance?.Configuration.CacheDurationInHours ?? 1;
 
-    private static int? CacheDurationInDays => TvdbPlugin.Instance?.Configuration.CacheDurationInDays;
+    private static int CacheDurationInDays => TvdbPlugin.Instance?.Configuration.CacheDurationInDays ?? 7;
 
     /// <summary>
     /// Logs in or refresh login to the tvdb api when needed.
@@ -112,7 +112,7 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var searchResult = await searchClient.GetSearchResultsAsync(query: name, type: "series", limit: 5, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, searchResult.Data, TimeSpan.FromHours(CacheDurationInHours.GetValueOrDefault(1)));
+        _memoryCache.Set(key, searchResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return searchResult.Data;
     }
 
@@ -138,7 +138,7 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var seriesResult = await seriesClient.GetSeriesBaseAsync(id: tvdbId, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours.GetValueOrDefault(1)));
+        _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return seriesResult.Data;
     }
 
@@ -168,7 +168,7 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var seriesResult = await seriesClient.GetSeriesExtendedAsync(id: tvdbId, meta: meta, @short: small, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours.GetValueOrDefault(1)));
+        _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return seriesResult.Data;
     }
 
@@ -196,7 +196,7 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var seriesResult = await seriesClient.GetSeriesEpisodesAsync(id: tvdbId, season_type: seasonType, cancellationToken: cancellationToken, page: 0)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours.GetValueOrDefault(1)));
+        _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return seriesResult.Data;
     }
 
@@ -222,7 +222,7 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var seasonResult = await seasonClient.GetSeasonExtendedAsync(id: seasonTvdbId, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, seasonResult.Data, TimeSpan.FromHours(CacheDurationInHours.GetValueOrDefault(1)));
+        _memoryCache.Set(key, seasonResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return seasonResult.Data;
     }
 
@@ -248,7 +248,7 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var episodeResult = await episodeClient.GetEpisodeExtendedAsync(id: episodeTvdbId, meta: Meta.Translations, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, episodeResult.Data, TimeSpan.FromHours(CacheDurationInHours.GetValueOrDefault(1)));
+        _memoryCache.Set(key, episodeResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return episodeResult.Data;
     }
 
@@ -274,7 +274,7 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var searchResult = await searchClient.GetSearchResultsByRemoteIdAsync(remoteId: remoteId, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, searchResult.Data, TimeSpan.FromHours(CacheDurationInHours.GetValueOrDefault(1)));
+        _memoryCache.Set(key, searchResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return searchResult.Data;
     }
 
@@ -300,7 +300,7 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var peopleResult = await peopleClient.GetPeopleBaseAsync(id: tvdbId, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, peopleResult.Data, TimeSpan.FromHours(CacheDurationInHours.GetValueOrDefault(1)));
+        _memoryCache.Set(key, peopleResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return peopleResult.Data;
     }
 
@@ -326,7 +326,7 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var artworkResult = await artworkClient.GetArtworkExtendedAsync(id: imageTvdbId, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, artworkResult.Data, TimeSpan.FromHours(CacheDurationInHours.GetValueOrDefault(1)));
+        _memoryCache.Set(key, artworkResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return artworkResult.Data;
     }
 
@@ -352,7 +352,7 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var seriesResult = await seriesClient.GetSeriesArtworksAsync(id: tvdbId, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours.GetValueOrDefault(1)));
+        _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return seriesResult.Data;
     }
 
@@ -373,7 +373,7 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var languagesResult = await languagesClient.GetAllLanguagesAsync(cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, languagesResult.Data, TimeSpan.FromDays(CacheDurationInDays.GetValueOrDefault(1)));
+        _memoryCache.Set(key, languagesResult.Data, TimeSpan.FromDays(CacheDurationInDays));
         return languagesResult.Data;
     }
 
@@ -394,7 +394,7 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var artworkTypesResult = await artworkTypesClient.GetAllArtworkTypesAsync(cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, artworkTypesResult.Data, TimeSpan.FromDays(CacheDurationInDays.GetValueOrDefault(1)));
+        _memoryCache.Set(key, artworkTypesResult.Data, TimeSpan.FromDays(CacheDurationInDays));
         return artworkTypesResult.Data;
     }
 
@@ -496,7 +496,7 @@ public class TvdbClientManager : IDisposable
             var tvdbId = seriesData.Episodes[0].Id?.ToString(CultureInfo.InvariantCulture);
             if (key != null)
             {
-                _memoryCache.Set(key, tvdbId, TimeSpan.FromHours(CacheDurationInHours.GetValueOrDefault(1)));
+                _memoryCache.Set(key, tvdbId, TimeSpan.FromHours(CacheDurationInHours));
             }
 
             return tvdbId;
