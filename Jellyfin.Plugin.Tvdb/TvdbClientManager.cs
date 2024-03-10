@@ -22,7 +22,6 @@ namespace Jellyfin.Plugin.Tvdb;
 public class TvdbClientManager : IDisposable
 {
     private const string TvdbHttpClient = "TvdbHttpClient";
-    private const int CacheDurationInHours = 1;
     private static readonly SemaphoreSlim _tokenUpdateLock = new SemaphoreSlim(1, 1);
 
     private readonly IHttpClientFactory _httpClientFactory;
@@ -47,6 +46,10 @@ public class TvdbClientManager : IDisposable
     }
 
     private static string? UserPin => TvdbPlugin.Instance?.Configuration.ApiKey;
+
+    private static int CacheDurationInHours => TvdbPlugin.Instance?.Configuration.CacheDurationInHours ?? 1;
+
+    private static int CacheDurationInDays => TvdbPlugin.Instance?.Configuration.CacheDurationInDays ?? 7;
 
     /// <summary>
     /// Logs in or refresh login to the tvdb api when needed.
@@ -370,7 +373,7 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var languagesResult = await languagesClient.GetAllLanguagesAsync(cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, languagesResult.Data, TimeSpan.FromDays(1));
+        _memoryCache.Set(key, languagesResult.Data, TimeSpan.FromDays(CacheDurationInDays));
         return languagesResult.Data;
     }
 
@@ -391,7 +394,7 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var artworkTypesResult = await artworkTypesClient.GetAllArtworkTypesAsync(cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, artworkTypesResult.Data, TimeSpan.FromDays(1));
+        _memoryCache.Set(key, artworkTypesResult.Data, TimeSpan.FromDays(CacheDurationInDays));
         return artworkTypesResult.Data;
     }
 
