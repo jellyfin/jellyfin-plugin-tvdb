@@ -15,21 +15,21 @@
                            href="https://github.com/jellyfin/jellyfin-plugin-tvdb">${Help}</a>
                     </div>
                     <div class="inputContainer">
-                        <label for="txtTvdbApiKey">TheTvdb API Key:</label>
-                        <input type="text" id="txtTvdbApiKey" is="emby-input" />
+                        <label for="txtTvdbSubscriberPIN">TheTvdb Subscriber PIN:</label>
+                        <input type="text" id="txtTvdbSubscriberPIN" is="emby-input" />
                         <div class="fieldDescription">
-                            Optional. TheTVDB Api Key from Subscriptions.
+                            Optional. TheTVDB Subscriber PIN from Subscriptions.
                         </div>
                     </div>
                     <div class="inputContainer">
-                        <label for="txtTvdbApiKey">Cache time in hours:</label>
+                        <label for="cacheDurationInHours">Cache time in hours:</label>
                         <input type="number" id="cacheDurationInHours" required="required" is="emby-input" />
                         <div class="fieldDescription">
                             The cache time in hours for metadata.
                         </div>
                     </div>
                     <div class="inputContainer">
-                        <label for="txtTvdbApiKey">Cache time in days:</label>
+                        <label for="cacheDurationInDays">Cache time in days:</label>
                         <input type="number" id="cacheDurationInDays" required="required" is="emby-input" />
                         <div class="fieldDescription">
                             The cache time in days for Languages and Activity Type metadata.
@@ -53,7 +53,7 @@
                 Dashboard.showLoadingMsg();
 
                 ApiClient.getPluginConfiguration(TvdbPluginConfiguration.uniquePluginId).then(function (config) {
-                    document.getElementById('txtTvdbApiKey').value = config.ApiKey || '';
+                    document.getElementById('txtTvdbSubscriberPIN').value = config.SubscriberPIN || '';
                     document.getElementById('cacheDurationInHours').value = config.CacheDurationInHours;
                     document.getElementById('cacheDurationInDays').value = config.CacheDurationInDays;
                     Dashboard.hideLoadingMsg();
@@ -64,7 +64,7 @@
                 Dashboard.showLoadingMsg();
 
                 ApiClient.getPluginConfiguration(TvdbPluginConfiguration.uniquePluginId).then(function (config) {
-                    config.ApiKey = document.getElementById('txtTvdbApiKey').value;
+                    config.ApiKey = document.getElementById('txtTvdbSubscriberPIN').value;
                     config.CacheDurationInHours = document.getElementById('cacheDurationInHours').value;
                     config.CacheDurationInDays = document.getElementById('cacheDurationInDays').value;
                     ApiClient.updatePluginConfiguration(TvdbPluginConfiguration.uniquePluginId, config).then(function (result) {
