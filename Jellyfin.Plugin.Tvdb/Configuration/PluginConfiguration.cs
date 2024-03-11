@@ -20,7 +20,7 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         /// <remarks>
         /// This is the subscriber's pin.
         /// </remarks>
-        public string ApiKey { get; set; } = string.Empty;
+        public string SubscriberPIN { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the cache in hours.

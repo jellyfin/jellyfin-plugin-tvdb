@@ -45,7 +45,7 @@ public class TvdbClientManager : IDisposable
         _tokenUpdatedAt = DateTime.MinValue;
     }
 
-    private static string? UserPin => TvdbPlugin.Instance?.Configuration.ApiKey;
+    private static string? UserPin => TvdbPlugin.Instance?.Configuration.SubscriberPIN;
 
     private static int CacheDurationInHours => TvdbPlugin.Instance?.Configuration.CacheDurationInHours ?? 1;
 
