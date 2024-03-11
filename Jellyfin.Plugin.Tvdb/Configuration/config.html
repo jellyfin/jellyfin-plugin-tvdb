@@ -64,7 +64,7 @@
                 Dashboard.showLoadingMsg();
 
                 ApiClient.getPluginConfiguration(TvdbPluginConfiguration.uniquePluginId).then(function (config) {
-                    config.ApiKey = document.getElementById('txtTvdbSubscriberPIN').value;
+                    config.SubscriberPIN = document.getElementById('txtTvdbSubscriberPIN').value;
                     config.CacheDurationInHours = document.getElementById('cacheDurationInHours').value;
                     config.CacheDurationInDays = document.getElementById('cacheDurationInDays').value;
                     ApiClient.updatePluginConfiguration(TvdbPluginConfiguration.uniquePluginId, config).then(function (result) {
