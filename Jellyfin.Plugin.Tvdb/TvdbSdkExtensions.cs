@@ -27,8 +27,21 @@ public static class TvdbSdkExtensions
     {
         return translations?
             .NameTranslations?
-            .FirstOrDefault(translation => IsMatch(translation, language))?
+            .FirstOrDefault(translation => IsMatch(translation.Language, language))?
             .Name;
+    }
+
+    /// <summary>
+    /// Get the translated Name, or <see langword="null"/>.
+    /// </summary>
+    /// <param name="translations">Available translations.</param>
+    /// <param name="language">Requested language.</param>
+    /// <returns>Translated Name, or <see langword="null"/>.</returns>
+    public static string? GetTranslatedNamedOrDefault(this TranslationSimple? translations, string? language)
+    {
+        return translations?
+            .FirstOrDefault(translation => IsMatch(translation.Key, language))
+            .Value;
     }
 
     /// <summary>
@@ -41,11 +54,11 @@ public static class TvdbSdkExtensions
     {
         return translations?
             .OverviewTranslations?
-            .FirstOrDefault(translation => IsMatch(translation, language))?
+            .FirstOrDefault(translation => IsMatch(translation.Language, language))?
             .Overview;
     }
 
-    private static bool IsMatch(this Translation translation, string? language)
+    private static bool IsMatch(this string translation, string? language)
     {
         if (string.IsNullOrWhiteSpace(language))
         {
@@ -62,7 +75,7 @@ public static class TvdbSdkExtensions
         // try to find a match (ISO 639-2)
         return TvdbCultureInfo.GetCultureInfo(language!)?
             .ThreeLetterISOLanguageNames?
-            .Contains(translation.Language, StringComparer.OrdinalIgnoreCase)
+            .Contains(translation, StringComparer.OrdinalIgnoreCase)
             ?? false;
     }
 

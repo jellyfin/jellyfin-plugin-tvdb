@@ -158,7 +158,7 @@ public class TvdbClientManager : IDisposable
         Meta4? meta = null,
         bool? small = null)
     {
-        var key = $"TvdbSeriesExtended_{tvdbId.ToString(CultureInfo.InvariantCulture)}";
+        var key = $"TvdbSeriesExtended_{tvdbId.ToString(CultureInfo.InvariantCulture)}_{meta}_{small}";
         if (_memoryCache.TryGetValue(key, out SeriesExtendedRecord series))
         {
             return series;
@@ -186,7 +186,7 @@ public class TvdbClientManager : IDisposable
         string seasonType,
         CancellationToken cancellationToken)
     {
-        var key = $"TvdbSeriesEpisodes_{tvdbId.ToString(CultureInfo.InvariantCulture)}";
+        var key = $"TvdbSeriesEpisodes_{tvdbId.ToString(CultureInfo.InvariantCulture)}_{seasonType}";
         if (_memoryCache.TryGetValue(key, out Data2 series))
         {
             return series;
