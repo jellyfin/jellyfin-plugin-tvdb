@@ -135,9 +135,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             {
                 var seriesResult =
                     await _tvdbClientManager
-                        .GetSeriesExtendedByIdAsync(tvdbId.Value, seriesInfo.MetadataLanguage, cancellationToken, small: true)
+                        .GetSeriesExtendedByIdAsync(tvdbId.Value, seriesInfo.MetadataLanguage, cancellationToken, meta: Meta4.Translations, small: true)
                         .ConfigureAwait(false);
-                return new[] { MapSeriesToRemoteSearchResult(seriesResult) };
+                return new[] { MapSeriesToRemoteSearchResult(seriesResult, seriesInfo.MetadataLanguage) };
             }
             catch (Exception e)
             {
@@ -146,12 +146,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
         }
 
-        private RemoteSearchResult MapSeriesToRemoteSearchResult(SeriesExtendedRecord series)
+        private RemoteSearchResult MapSeriesToRemoteSearchResult(SeriesExtendedRecord series, string language)
         {
             var remoteResult = new RemoteSearchResult
             {
-                Name = series.Name,
-                Overview = series.Overview?.Trim() ?? string.Empty,
+                Name = series.Translations.GetTranslatedNamedOrDefault(language) ?? series.Name,
+                Overview = series.Translations.GetTranslatedOverviewOrDefault(language)?.Trim() ?? series.Overview?.Trim(),
                 SearchProviderName = Name,
                 ImageUrl = series.Image
             };
@@ -317,7 +317,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             {
                 var tvdbTitles = new List<string>
                 {
-                    seriesSearchResult.Name
+                    seriesSearchResult.Translations.GetTranslatedNamedOrDefault(language) ?? seriesSearchResult.Name
                 };
                 if (seriesSearchResult.Aliases is not null)
                 {

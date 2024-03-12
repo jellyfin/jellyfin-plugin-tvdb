@@ -32,6 +32,19 @@ public static class TvdbSdkExtensions
     }
 
     /// <summary>
+    /// Get the translated Name, or <see langword="null"/>.
+    /// </summary>
+    /// <param name="translations">Available translations.</param>
+    /// <param name="language">Requested language.</param>
+    /// <returns>Translated Name, or <see langword="null"/>.</returns>
+    public static string? GetTranslatedNamedOrDefault(this TranslationSimple? translations, string? language)
+    {
+        return translations?
+            .FirstOrDefault(translation => IsMatch(translation.Key, language))
+            .Value;
+    }
+
+    /// <summary>
     /// Get the translated Overview, or <see langword="null"/>.
     /// </summary>
     /// <param name="translations">Available translations.</param>
@@ -52,6 +65,11 @@ public static class TvdbSdkExtensions
             return false;
         }
 
+        return IsMatch(translation.Language, language);
+    }
+
+    private static bool IsMatch(this string translation, string? language)
+    {
         language = language?.ToLowerInvariant() switch
         {
             "zh-tw" => "zh", // Unique case for zh-TW
@@ -62,7 +80,7 @@ public static class TvdbSdkExtensions
         // try to find a match (ISO 639-2)
         return TvdbCultureInfo.GetCultureInfo(language!)?
             .ThreeLetterISOLanguageNames?
-            .Contains(translation.Language, StringComparer.OrdinalIgnoreCase)
+            .Contains(translation, StringComparer.OrdinalIgnoreCase)
             ?? false;
     }
 
