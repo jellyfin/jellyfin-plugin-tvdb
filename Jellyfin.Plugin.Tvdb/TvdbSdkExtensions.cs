@@ -27,7 +27,7 @@ public static class TvdbSdkExtensions
     {
         return translations?
             .NameTranslations?
-            .FirstOrDefault(translation => IsMatch(translation, language))?
+            .FirstOrDefault(translation => IsMatch(translation.Language, language))?
             .Name;
     }
 
@@ -54,22 +54,17 @@ public static class TvdbSdkExtensions
     {
         return translations?
             .OverviewTranslations?
-            .FirstOrDefault(translation => IsMatch(translation, language))?
+            .FirstOrDefault(translation => IsMatch(translation.Language, language))?
             .Overview;
     }
 
-    private static bool IsMatch(this Translation translation, string? language)
+    private static bool IsMatch(this string translation, string? language)
     {
         if (string.IsNullOrWhiteSpace(language))
         {
             return false;
         }
 
-        return IsMatch(translation.Language, language);
-    }
-
-    private static bool IsMatch(this string translation, string? language)
-    {
         language = language?.ToLowerInvariant() switch
         {
             "zh-tw" => "zh", // Unique case for zh-TW
