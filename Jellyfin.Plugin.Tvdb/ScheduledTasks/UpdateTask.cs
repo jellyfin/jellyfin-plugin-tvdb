@@ -72,12 +72,12 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
             double currentProgress = 10;
             foreach (BaseItem item in toUpdateItems)
             {
-                currentProgress += increment;
-                progress.Report(currentProgress);
                 await _providerManager.RefreshSingleItem(
                     item,
                     refreshOptions,
                     cancellationToken).ConfigureAwait(false);
+                currentProgress += increment;
+                progress.Report(currentProgress);
             }
 
             progress.Report(100);
@@ -107,10 +107,10 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
             IReadOnlyList<EntityUpdate> seriesUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Series, Action.Update).ConfigureAwait(false);
 
             string providerId = MetadataProvider.Tvdb.ToString();
-            List<BaseItem> toUpdateItems = itemList.Where(x =>
+            List<BaseItem> toUpdateItems = await itemList.ToAsyncEnumerable().Where(x =>
                 episodeUpdates.Any(y => string.Equals(y.RecordId?.ToString(CultureInfo.InvariantCulture), x.ProviderIds[providerId], StringComparison.OrdinalIgnoreCase)) ||
                 seriesUpdates.Any(y => string.Equals(y.RecordId?.ToString(CultureInfo.InvariantCulture), x.ProviderIds[providerId], StringComparison.OrdinalIgnoreCase)))
-                .ToList();
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
 
             return toUpdateItems;
         }
