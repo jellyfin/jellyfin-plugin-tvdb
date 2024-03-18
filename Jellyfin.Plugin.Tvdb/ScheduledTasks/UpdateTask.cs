@@ -92,7 +92,6 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
         /// Gets all items that have been updated.
         /// </summary>
         /// <returns>List of items that have been updated.</returns>
-        /// <exception cref="NotImplementedException">Temp.</exception>
         private async Task<List<BaseItem>> GetItemsUpdated(CancellationToken cancellationToken)
         {
             InternalItemsQuery query = new InternalItemsQuery
