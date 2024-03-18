@@ -62,14 +62,15 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
         public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         {
             var toUpdateItems = await GetItemsUpdated(cancellationToken).ConfigureAwait(false);
+            MetadataRefreshOptions refreshOptions = new MetadataRefreshOptions(new DirectoryService(_fileSystem))
+            {
+                MetadataRefreshMode = MetadataRefreshMode.FullRefresh
+            };
             foreach (BaseItem item in toUpdateItems)
             {
                 await _providerManager.RefreshSingleItem(
                     item,
-                    new MetadataRefreshOptions(new DirectoryService(_fileSystem))
-                    {
-                        MetadataRefreshMode = MetadataRefreshMode.FullRefresh
-                    },
+                    refreshOptions,
                     cancellationToken).ConfigureAwait(false);
             }
         }
