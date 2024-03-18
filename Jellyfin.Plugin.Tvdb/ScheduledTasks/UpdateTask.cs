@@ -108,8 +108,8 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
 
             string providerId = MetadataProvider.Tvdb.ToString();
             List<BaseItem> toUpdateItems = itemList.Where(x =>
-                episodeUpdates.Any(y => string.Equals(y.RecordId?.ToString(CultureInfo.InvariantCulture), x.ProviderIds[MetadataProvider.Tvdb.ToString()], StringComparison.OrdinalIgnoreCase)) ||
-                seriesUpdates.Any(y => string.Equals(y.RecordId?.ToString(CultureInfo.InvariantCulture), x.ProviderIds[MetadataProvider.Tvdb.ToString()], StringComparison.OrdinalIgnoreCase)))
+                episodeUpdates.Any(y => string.Equals(y.RecordId?.ToString(CultureInfo.InvariantCulture), x.ProviderIds[providerId], StringComparison.OrdinalIgnoreCase)) ||
+                seriesUpdates.Any(y => string.Equals(y.RecordId?.ToString(CultureInfo.InvariantCulture), x.ProviderIds[providerId], StringComparison.OrdinalIgnoreCase)))
                 .ToList();
 
             return toUpdateItems;
