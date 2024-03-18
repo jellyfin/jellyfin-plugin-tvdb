@@ -14,6 +14,9 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Tvdb.Sdk;
 
+using Action = Tvdb.Sdk.Action;
+using Type = Tvdb.Sdk.Type;
+
 namespace Jellyfin.Plugin.Tvdb;
 
 /// <summary>
@@ -504,6 +507,26 @@ public class TvdbClientManager : IDisposable
     }
 
     /// <summary>
+    /// Gets updates from tvdb since a given time. No caching.
+    /// </summary>
+    /// <param name="fromTime">From time in unix timestamp.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <param name="type"> Type of data.</param>
+    /// <param name="action">Delete, update or null.</param>
+    /// <returns>A list of updates.</returns>
+    public async Task<IReadOnlyList<EntityUpdate>> GetUpdates(
+        double fromTime,
+        CancellationToken cancellationToken,
+        Type? type = null,
+        Action? action = null)
+    {
+        var updatesClient = _serviceProvider.GetRequiredService<IUpdatesClient>();
+        await LoginAsync().ConfigureAwait(false);
+        var updatesResult = await updatesClient.UpdatesAsync(since: fromTime, type: type, action: action, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return updatesResult.Data;
+    }
+
+    /// <summary>
     /// Purge the cache.
     /// </summary>
     /// <returns>True if success else false.</returns>
@@ -561,6 +584,7 @@ public class TvdbClientManager : IDisposable
         services.AddTransient<IArtworkClient>(_ => new ArtworkClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<IArtwork_TypesClient>(_ => new Artwork_TypesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<ILanguagesClient>(_ => new LanguagesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
+        services.AddTransient<IUpdatesClient>(_ => new UpdatesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
 
         return services.BuildServiceProvider();
     }

@@ -13,6 +13,7 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         public const string ProjectApiKey = "7f7eed88-2530-4f84-8ee7-f154471b8f87";
         private int _cacheDurationInHours = 1;
         private int _cacheDurationInDays = 7;
+        private int _metadataUpdateInHours = 2;
 
         /// <summary>
         /// Gets or sets the tvdb api key for user.
@@ -38,6 +39,15 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         {
             get => _cacheDurationInDays;
             set => _cacheDurationInDays = value < 1 ? 7 : value;
+        }
+
+        /// <summary>
+        /// Gets or sets the metadata update in hours.
+        /// </summary>
+        public int MetadataUpdateInHours
+        {
+            get => _metadataUpdateInHours;
+            set => _metadataUpdateInHours = value < 1 ? 1 : value;
         }
     }
 }
