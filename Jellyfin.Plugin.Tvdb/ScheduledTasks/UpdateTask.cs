@@ -72,7 +72,8 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
             double currentProgress = 10;
             foreach (BaseItem item in toUpdateItems)
             {
-                progress.Report(currentProgress + increment);
+                currentProgress += increment;
+                progress.Report(currentProgress);
                 await _providerManager.RefreshSingleItem(
                     item,
                     refreshOptions,
