@@ -12,6 +12,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Tasks;
+using Microsoft.Extensions.Logging;
 using Tvdb.Sdk;
 
 using Action = Tvdb.Sdk.Action;
@@ -27,6 +28,7 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
         private readonly ILibraryManager _libraryManager;
         private readonly IProviderManager _providerManager;
         private readonly IFileSystem _fileSystem;
+        private readonly ILogger<UpdateTask> _logger;
         private readonly TvdbClientManager _tvdbClientManager;
 
         /// <summary>
@@ -36,11 +38,13 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
         /// <param name="libraryManager">Library Manager.</param>
         /// <param name="providerManager">Provider Manager.</param>
         /// <param name="fileSystem">File System.</param>
-        public UpdateTask(TvdbClientManager tvdbClientManager, ILibraryManager libraryManager, IProviderManager providerManager, IFileSystem fileSystem)
+        /// <param name="logger">Logger.</param>
+        public UpdateTask(TvdbClientManager tvdbClientManager, ILibraryManager libraryManager, IProviderManager providerManager, IFileSystem fileSystem, ILogger<UpdateTask> logger)
         {
             _libraryManager = libraryManager;
             _providerManager = providerManager;
             _fileSystem = fileSystem;
+            _logger = logger;
             _tvdbClientManager = tvdbClientManager;
         }
 
@@ -62,7 +66,9 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
         public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         {
             progress.Report(0);
+            _logger.LogInformation("Checking for metadata updates.");
             var toUpdateItems = await GetItemsUpdated(cancellationToken).ConfigureAwait(false);
+            _logger.LogInformation("Found {0} items to update.", toUpdateItems.Count);
             progress.Report(10);
             MetadataRefreshOptions refreshOptions = new MetadataRefreshOptions(new DirectoryService(_fileSystem))
             {
@@ -72,6 +78,7 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
             double currentProgress = 10;
             foreach (BaseItem item in toUpdateItems)
             {
+                _logger.LogInformation("Refreshing metadata for {0}", item.Name);
                 await _providerManager.RefreshSingleItem(
                     item,
                     refreshOptions,
@@ -95,22 +102,29 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
         /// <returns>List of items that have been updated.</returns>
         private async Task<List<BaseItem>> GetItemsUpdated(CancellationToken cancellationToken)
         {
-            InternalItemsQuery query = new InternalItemsQuery
-            {
-                HasTvdbId = true
-            };
-
-            List<BaseItem> itemList = _libraryManager.GetItemList(query);
-
             double fromTime = DateTimeOffset.UtcNow.AddHours(MetadataUpdateInHours).ToUnixTimeSeconds();
             IReadOnlyList<EntityUpdate> episodeUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Episodes, Action.Update).ConfigureAwait(false);
             IReadOnlyList<EntityUpdate> seriesUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Series, Action.Update).ConfigureAwait(false);
 
+            var allUpdates = episodeUpdates.Concat(seriesUpdates);
+
             string providerId = MetadataProvider.Tvdb.ToString();
-            List<BaseItem> toUpdateItems = await itemList.ToAsyncEnumerable().Where(x =>
-                episodeUpdates.Any(y => string.Equals(y.RecordId?.ToString(CultureInfo.InvariantCulture), x.ProviderIds[providerId], StringComparison.OrdinalIgnoreCase)) ||
-                seriesUpdates.Any(y => string.Equals(y.RecordId?.ToString(CultureInfo.InvariantCulture), x.ProviderIds[providerId], StringComparison.OrdinalIgnoreCase)))
-                .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+            List<BaseItem> toUpdateItems = new List<BaseItem>();
+
+            Dictionary<string, string> providerIdPair = new Dictionary<string, string>() { { providerId, string.Empty } };
+            InternalItemsQuery query = new InternalItemsQuery();
+
+            foreach (EntityUpdate update in allUpdates)
+            {
+                providerIdPair[providerId] = update.RecordId!.Value.ToString(CultureInfo.InvariantCulture);
+                query.HasAnyProviderId = providerIdPair;
+                List<BaseItem> itemList = _libraryManager.GetItemList(query);
+                if (itemList.Count > 0 && !toUpdateItems.Contains(itemList[0]))
+                {
+                    toUpdateItems.Add(itemList[0]);
+                }
+            }
 
             return toUpdateItems;
         }

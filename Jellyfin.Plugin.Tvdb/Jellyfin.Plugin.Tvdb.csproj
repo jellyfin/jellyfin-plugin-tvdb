@@ -25,7 +25,6 @@
     <PackageReference Include="Jellyfin.Common" Version="10.*-*" />
     <PackageReference Include="Jellyfin.Model" Version="10.*-*" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-    <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     <PackageReference Include="Tvdb.Sdk" Version="4.7.9.1" />
   </ItemGroup>
 
