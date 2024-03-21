@@ -55,8 +55,6 @@ internal static class CollectionExtensions
             }
 
             return 0;
-        })
-            .ThenByDescending(i => i.CommunityRating ?? 0)
-            .ThenByDescending(i => i.VoteCount ?? 0);
+        });
     }
 }
