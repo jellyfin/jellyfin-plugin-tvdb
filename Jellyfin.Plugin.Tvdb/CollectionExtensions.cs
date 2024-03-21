@@ -1,5 +1,8 @@
-﻿using System.Collections;
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using MediaBrowser.Model.Providers;
 
 namespace Jellyfin.Plugin.Tvdb;
 
@@ -20,5 +23,38 @@ internal static class CollectionExtensions
         }
 
         return collection;
+    }
+
+    internal static IEnumerable<RemoteImageInfo> OrderByLanguageDescending(this IEnumerable<RemoteImageInfo> remoteImageInfos, string requestedLanguage)
+    {
+        if (string.IsNullOrWhiteSpace(requestedLanguage))
+        {
+            // Default to English if no requested language is specified.
+            requestedLanguage = "en";
+        }
+
+        var isRequestedLanguageEn = string.Equals(requestedLanguage, "en", StringComparison.OrdinalIgnoreCase);
+
+        return remoteImageInfos.OrderByDescending(i =>
+        {
+            if (string.Equals(requestedLanguage, i.Language, StringComparison.OrdinalIgnoreCase))
+            {
+                return 3;
+            }
+
+            if (!isRequestedLanguageEn && string.Equals(i.Language, "en", StringComparison.OrdinalIgnoreCase))
+            {
+                // Prioritize English over non-requested languages.
+                return 2;
+            }
+
+            if (string.IsNullOrEmpty(i.Language))
+            {
+                // Empty image language is image without any text. Set it to the lowest priority.
+                return 0;
+            }
+
+            return 1;
+        });
     }
 }
