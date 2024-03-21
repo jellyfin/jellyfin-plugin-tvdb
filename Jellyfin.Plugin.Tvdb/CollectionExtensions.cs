@@ -42,19 +42,19 @@ internal static class CollectionExtensions
                 return 3;
             }
 
-            if (string.IsNullOrEmpty(i.Language))
-            {
-                // Empty image language is image without any text
-                return 2;
-            }
-
             if (!isRequestedLanguageEn && string.Equals(i.Language, "en", StringComparison.OrdinalIgnoreCase))
             {
                 // Prioritize English over non-requested languages.
-                return 1;
+                return 2;
             }
 
-            return 0;
+            if (string.IsNullOrEmpty(i.Language))
+            {
+                // Empty image language is image without any text. Set it to the lowest priority.
+                return 0;
+            }
+
+            return 1;
         });
     }
 }
