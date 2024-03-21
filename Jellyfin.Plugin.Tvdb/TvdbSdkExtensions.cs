@@ -27,7 +27,7 @@ public static class TvdbSdkExtensions
     {
         return translations?
             .NameTranslations?
-            .FirstOrDefault(translation => IsMatch(translation.Language, language))?
+            .FirstOrDefault(translation => IsMatch(translation.Language, language) && translation.IsAlias != true)?
             .Name;
     }
 
