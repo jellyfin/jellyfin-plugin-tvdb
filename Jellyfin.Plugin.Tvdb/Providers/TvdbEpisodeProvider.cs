@@ -157,21 +157,24 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 QueriedById = true
             };
 
-            string? episodeTvdbId = null;
+            var episodeTvdbId = searchInfo.GetTvdbId().ToString(CultureInfo.InvariantCulture);
             try
             {
-                episodeTvdbId = await _tvdbClientManager
-                    .GetEpisodeTvdbId(searchInfo, searchInfo.MetadataLanguage, cancellationToken)
-                    .ConfigureAwait(false);
-                if (string.IsNullOrEmpty(episodeTvdbId))
+                if (string.Equals(episodeTvdbId, "0", StringComparison.OrdinalIgnoreCase))
                 {
-                    _logger.LogError(
-                        "Episode S{Season:00}E{Episode:00} not found for series {SeriesTvdbId}:{Name}",
-                        searchInfo.ParentIndexNumber,
-                        searchInfo.IndexNumber,
-                        searchInfo.GetTvdbId(),
-                        searchInfo.Name);
-                    return result;
+                    episodeTvdbId = await _tvdbClientManager
+                        .GetEpisodeTvdbId(searchInfo, searchInfo.MetadataLanguage, cancellationToken)
+                        .ConfigureAwait(false);
+                    if (string.IsNullOrEmpty(episodeTvdbId))
+                    {
+                        _logger.LogError(
+                            "Episode S{Season:00}E{Episode:00} not found for series {SeriesTvdbId}:{Name}",
+                            searchInfo.ParentIndexNumber,
+                            searchInfo.IndexNumber,
+                            searchInfo.GetTvdbId(),
+                            searchInfo.Name);
+                        return result;
+                    }
                 }
 
                 var episodeResult = await _tvdbClientManager.GetEpisodesAsync(
