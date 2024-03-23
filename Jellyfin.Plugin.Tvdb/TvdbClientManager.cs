@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -47,8 +48,8 @@ public class TvdbClientManager : IDisposable
         _tokenUpdatedAt = DateTime.MinValue;
 
         // Set the cultures and countries for the TvdbCultureInfo
-        TvdbCultureInfo.SetCultures(localizationManager.GetCultures());
-        TvdbCultureInfo.SetCountries(localizationManager.GetCountries());
+        TvdbCultureInfo.SetCultures(localizationManager.GetCultures().ToArray());
+        TvdbCultureInfo.SetCountries(localizationManager.GetCountries().ToArray());
     }
 
     private static string? UserPin => TvdbPlugin.Instance?.Configuration.SubscriberPIN;

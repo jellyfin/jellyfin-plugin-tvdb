@@ -11,15 +11,15 @@ namespace Jellyfin.Plugin.Tvdb
     /// </summary>
     internal static class TvdbCultureInfo
     {
-        private static IEnumerable<CultureDto> _cultures = new List<CultureDto>();
-        private static IEnumerable<CountryInfo> _countries = new List<CountryInfo>();
+        private static CultureDto[] _cultures = Array.Empty<CultureDto>();
+        private static CountryInfo[] _countries = Array.Empty<CountryInfo>();
 
-        internal static void SetCultures(IEnumerable<CultureDto> cultures)
+        internal static void SetCultures(CultureDto[] cultures)
         {
             _cultures = cultures;
         }
 
-        internal static void SetCountries(IEnumerable<CountryInfo> countries)
+        internal static void SetCountries(CountryInfo[] countries)
         {
             _countries = countries;
         }
