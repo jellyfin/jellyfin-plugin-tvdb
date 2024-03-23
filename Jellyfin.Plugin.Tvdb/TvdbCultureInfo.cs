@@ -9,21 +9,19 @@ namespace Jellyfin.Plugin.Tvdb
     /// <summary>
     /// Tvdb culture info.
     /// </summary>
-    public class TvdbCultureInfo
+    internal static class TvdbCultureInfo
     {
         private static IEnumerable<CultureDto> _cultures = new List<CultureDto>();
         private static IEnumerable<CountryInfo> _countries = new List<CountryInfo>();
-        private readonly ILocalizationManager _localizationManager;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="TvdbCultureInfo"/> class.
-        /// </summary>
-        /// <param name="localizationManager">Instance of the <see cref="ILocalizationManager"/> interface.</param>
-        public TvdbCultureInfo(ILocalizationManager localizationManager)
+        internal static void SetCultures(IEnumerable<CultureDto> cultures)
         {
-            _localizationManager = localizationManager;
-            _countries = _localizationManager.GetCountries();
-            _cultures = _localizationManager.GetCultures();
+            _cultures = cultures;
+        }
+
+        internal static void SetCountries(IEnumerable<CountryInfo> countries)
+        {
+            _countries = countries;
         }
 
         /// <summary>
@@ -31,7 +29,7 @@ namespace Jellyfin.Plugin.Tvdb
         /// </summary>
         /// <param name="language">Language.</param>
         /// <returns>CultureInfo.</returns>
-        public static CultureDto? GetCultureInfo(string language)
+        internal static CultureDto? GetCultureInfo(string language)
         {
             foreach (var culture in _cultures)
             {
@@ -52,7 +50,7 @@ namespace Jellyfin.Plugin.Tvdb
         /// </summary>
         /// <param name="country"> Country.</param>
         /// <returns>CountryInfo.</returns>
-        public static CountryInfo? GetCountryInfo(string country)
+        internal static CountryInfo? GetCountryInfo(string country)
         {
             foreach (var countryInfo in _countries)
             {

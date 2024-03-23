@@ -46,8 +46,9 @@ public class TvdbClientManager : IDisposable
 
         _tokenUpdatedAt = DateTime.MinValue;
 
-        // Creates a new instance of the TvdbCultureInfo class to popluate the _cultures and _countries fields.
-        _ = new TvdbCultureInfo(localizationManager);
+        // Set the cultures and countries for the TvdbCultureInfo
+        TvdbCultureInfo.SetCultures(localizationManager.GetCultures());
+        TvdbCultureInfo.SetCountries(localizationManager.GetCountries());
     }
 
     private static string? UserPin => TvdbPlugin.Instance?.Configuration.SubscriberPIN;
