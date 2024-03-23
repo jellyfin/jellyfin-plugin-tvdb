@@ -11,7 +11,6 @@ namespace Jellyfin.Plugin.Tvdb
         /// <inheritdoc />
         public void RegisterServices(IServiceCollection serviceCollection)
         {
-            serviceCollection.AddSingleton<TvdbCultureInfo>();
             serviceCollection.AddSingleton<TvdbClientManager>();
         }
     }

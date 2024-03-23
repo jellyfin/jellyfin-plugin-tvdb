@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Jellyfin.Plugin.Tvdb.Configuration;
 using MediaBrowser.Common;
 using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.Globalization;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Tvdb.Sdk;
@@ -28,7 +29,6 @@ public class TvdbClientManager : IDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly IMemoryCache _memoryCache;
     private readonly SdkClientSettings _sdkClientSettings;
-    private readonly TvdbCultureInfo _tvdbCultureInfo;
 
     private DateTime _tokenUpdatedAt;
 
@@ -36,16 +36,18 @@ public class TvdbClientManager : IDisposable
     /// Initializes a new instance of the <see cref="TvdbClientManager"/> class.
     /// </summary>
     /// <param name="applicationHost">Instance of the <see cref="IApplicationHost"/> interface.</param>
-    /// <param name="tvdbCultureInfo">Instance of the <see cref="TvdbCultureInfo"/> interface. Just to populate the 2 list in TvdbCultureInfo.</param>
-    public TvdbClientManager(IApplicationHost applicationHost, TvdbCultureInfo tvdbCultureInfo)
+    /// <param name="localizationManager">Instance of the <see cref="ILocalizationManager"/> interface.</param>
+    public TvdbClientManager(IApplicationHost applicationHost, ILocalizationManager localizationManager)
     {
         _serviceProvider = ConfigureService(applicationHost);
         _httpClientFactory = _serviceProvider.GetRequiredService<IHttpClientFactory>();
         _sdkClientSettings = _serviceProvider.GetRequiredService<SdkClientSettings>();
-        _tvdbCultureInfo = tvdbCultureInfo;
         _memoryCache = new MemoryCache(new MemoryCacheOptions());
 
         _tokenUpdatedAt = DateTime.MinValue;
+
+        // Creates a new instance of the TvdbCultureInfo class to popluate the _cultures and _countries fields.
+        _ = new TvdbCultureInfo(localizationManager);
     }
 
     private static string? UserPin => TvdbPlugin.Instance?.Configuration.SubscriberPIN;
