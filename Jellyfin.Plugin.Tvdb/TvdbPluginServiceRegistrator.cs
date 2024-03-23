@@ -1,4 +1,4 @@
-﻿using MediaBrowser.Common.Plugins;
+using MediaBrowser.Common.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Jellyfin.Plugin.Tvdb
@@ -11,6 +11,7 @@ namespace Jellyfin.Plugin.Tvdb
         /// <inheritdoc />
         public void RegisterServices(IServiceCollection serviceCollection)
         {
+            serviceCollection.AddSingleton<TvdbCultureInfo>();
             serviceCollection.AddSingleton<TvdbClientManager>();
         }
     }

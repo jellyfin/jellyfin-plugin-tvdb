@@ -28,6 +28,7 @@ public class TvdbClientManager : IDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly IMemoryCache _memoryCache;
     private readonly SdkClientSettings _sdkClientSettings;
+    private readonly TvdbCultureInfo _tvdbCultureInfo;
 
     private DateTime _tokenUpdatedAt;
 
@@ -35,11 +36,13 @@ public class TvdbClientManager : IDisposable
     /// Initializes a new instance of the <see cref="TvdbClientManager"/> class.
     /// </summary>
     /// <param name="applicationHost">Instance of the <see cref="IApplicationHost"/> interface.</param>
-    public TvdbClientManager(IApplicationHost applicationHost)
+    /// <param name="tvdbCultureInfo">Instance of the <see cref="TvdbCultureInfo"/> interface. Just to populate the 2 list in TvdbCultureInfo.</param>
+    public TvdbClientManager(IApplicationHost applicationHost, TvdbCultureInfo tvdbCultureInfo)
     {
         _serviceProvider = ConfigureService(applicationHost);
         _httpClientFactory = _serviceProvider.GetRequiredService<IHttpClientFactory>();
         _sdkClientSettings = _serviceProvider.GetRequiredService<SdkClientSettings>();
+        _tvdbCultureInfo = tvdbCultureInfo;
         _memoryCache = new MemoryCache(new MemoryCacheOptions());
 
         _tokenUpdatedAt = DateTime.MinValue;
