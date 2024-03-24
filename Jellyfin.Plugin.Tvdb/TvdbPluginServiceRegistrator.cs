@@ -1,4 +1,4 @@
-﻿using MediaBrowser.Common.Plugins;
+using MediaBrowser.Common.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Jellyfin.Plugin.Tvdb

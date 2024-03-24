@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -10,6 +11,7 @@ using System.Threading.Tasks;
 using Jellyfin.Plugin.Tvdb.Configuration;
 using MediaBrowser.Common;
 using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.Globalization;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Tvdb.Sdk;
@@ -35,7 +37,8 @@ public class TvdbClientManager : IDisposable
     /// Initializes a new instance of the <see cref="TvdbClientManager"/> class.
     /// </summary>
     /// <param name="applicationHost">Instance of the <see cref="IApplicationHost"/> interface.</param>
-    public TvdbClientManager(IApplicationHost applicationHost)
+    /// <param name="localizationManager">Instance of the <see cref="ILocalizationManager"/> interface.</param>
+    public TvdbClientManager(IApplicationHost applicationHost, ILocalizationManager localizationManager)
     {
         _serviceProvider = ConfigureService(applicationHost);
         _httpClientFactory = _serviceProvider.GetRequiredService<IHttpClientFactory>();
@@ -43,6 +46,10 @@ public class TvdbClientManager : IDisposable
         _memoryCache = new MemoryCache(new MemoryCacheOptions());
 
         _tokenUpdatedAt = DateTime.MinValue;
+
+        // Set the cultures and countries for the TvdbCultureInfo
+        TvdbCultureInfo.SetCultures(localizationManager.GetCultures().ToArray());
+        TvdbCultureInfo.SetCountries(localizationManager.GetCountries().ToArray());
     }
 
     private static string? UserPin => TvdbPlugin.Instance?.Configuration.SubscriberPIN;

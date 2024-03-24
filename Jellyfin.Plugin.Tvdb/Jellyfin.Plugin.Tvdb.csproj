@@ -12,11 +12,7 @@
 
   <ItemGroup>
     <None Remove="Configuration\config.html" />
-    <None Remove="countries.json" />
-    <None Remove="iso6392.txt" />
     <EmbeddedResource Include="Configuration\config.html" />
-    <EmbeddedResource Include="countries.json" />
-    <EmbeddedResource Include="iso6392.txt" />
   </ItemGroup>
 
   <ItemGroup>
