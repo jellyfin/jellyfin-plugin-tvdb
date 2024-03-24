@@ -78,7 +78,7 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
             double currentProgress = 10;
             foreach (BaseItem item in toUpdateItems)
             {
-                _logger.LogInformation("Refreshing metadata for {0}", item.Name);
+                _logger.LogInformation("Refreshing metadata for TvdbId {Tvdbid}:{Name}", item.GetTvdbId(), item.Name);
                 await _providerManager.RefreshSingleItem(
                     item,
                     refreshOptions,
