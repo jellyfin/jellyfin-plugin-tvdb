@@ -35,6 +35,13 @@
                             The cache time in days for Languages and Activity Type metadata.
                         </div>
                     </div>
+                    <div class="inputContainer">
+                        <label for="metadataUpdateInHours">Metadata Update In Hours:</label>
+                        <input type="number" id="metadataUpdateInHours" required="required" is="emby-input" />
+                        <div class="fieldDescription">
+                            How many hours ago should the metadata be last updated on TheTvdb. Should be greater than the value of cache time in hours.
+                        </div>
+                    </div>
                     <br />
                     <div>
                         <button is="emby-button" type="submit" data-theme="b" class="raised button-submit block">
@@ -56,6 +63,7 @@
                     document.getElementById('txtTvdbSubscriberPIN').value = config.SubscriberPIN || '';
                     document.getElementById('cacheDurationInHours').value = config.CacheDurationInHours;
                     document.getElementById('cacheDurationInDays').value = config.CacheDurationInDays;
+                    document.getElementById('metadataUpdateInHours').value = config.MetadataUpdateInHours;
                     Dashboard.hideLoadingMsg();
                 });
             },
@@ -67,6 +75,7 @@
                     config.SubscriberPIN = document.getElementById('txtTvdbSubscriberPIN').value;
                     config.CacheDurationInHours = document.getElementById('cacheDurationInHours').value;
                     config.CacheDurationInDays = document.getElementById('cacheDurationInDays').value;
+                    config.MetadataUpdateInHours = document.getElementById('metadataUpdateInHours').value;
                     ApiClient.updatePluginConfiguration(TvdbPluginConfiguration.uniquePluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
                     });
