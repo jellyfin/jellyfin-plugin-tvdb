@@ -553,7 +553,7 @@ public class TvdbClientManager : IDisposable
     {
         if (_memoryCache is MemoryCache memoryCache)
         {
-            memoryCache.Compact(1);
+            memoryCache.Clear();
             return true;
         }
         else
