@@ -95,7 +95,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             var libraryOptions = _libraryManager.GetLibraryOptions(series);
-            var typeOptions = libraryOptions.GetTypeOptions(item.GetType().Name);
+            var typeOptions = libraryOptions.GetTypeOptions(series.GetType().Name);
             return _baseItemManager.IsMetadataFetcherEnabled(series, typeOptions, ProviderName);
         }
 
