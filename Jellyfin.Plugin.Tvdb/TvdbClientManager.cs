@@ -31,7 +31,7 @@ public class TvdbClientManager : IDisposable
 
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IServiceProvider _serviceProvider;
-    private readonly IMemoryCache _memoryCache;
+    private readonly MemoryCache _memoryCache;
     private readonly SdkClientSettings _sdkClientSettings;
 
     private DateTime _tokenUpdatedAt;
@@ -113,7 +113,8 @@ public class TvdbClientManager : IDisposable
         CancellationToken cancellationToken)
     {
         var key = $"TvdbSeriesSearch_{name}";
-        if (_memoryCache.TryGetValue(key, out IReadOnlyList<SearchResult> series))
+        if (_memoryCache.TryGetValue(key, out IReadOnlyList<SearchResult>? series)
+            && series is not null)
         {
             return series;
         }
@@ -139,7 +140,8 @@ public class TvdbClientManager : IDisposable
         CancellationToken cancellationToken)
     {
         var key = $"TvdbSeries_{tvdbId.ToString(CultureInfo.InvariantCulture)}";
-        if (_memoryCache.TryGetValue(key, out SeriesBaseRecord series))
+        if (_memoryCache.TryGetValue(key, out SeriesBaseRecord? series)
+            && series is not null)
         {
             return series;
         }
@@ -169,7 +171,8 @@ public class TvdbClientManager : IDisposable
         bool? small = null)
     {
         var key = $"TvdbSeriesExtended_{tvdbId.ToString(CultureInfo.InvariantCulture)}_{meta}_{small}";
-        if (_memoryCache.TryGetValue(key, out SeriesExtendedRecord series))
+        if (_memoryCache.TryGetValue(key, out SeriesExtendedRecord? series)
+            && series is not null)
         {
             return series;
         }
@@ -197,7 +200,8 @@ public class TvdbClientManager : IDisposable
         CancellationToken cancellationToken)
     {
         var key = $"TvdbSeriesEpisodes_{tvdbId.ToString(CultureInfo.InvariantCulture)}_{seasonType}";
-        if (_memoryCache.TryGetValue(key, out Data2 series))
+        if (_memoryCache.TryGetValue(key, out Data2? series)
+            && series is not null)
         {
             return series;
         }
@@ -223,7 +227,8 @@ public class TvdbClientManager : IDisposable
         CancellationToken cancellationToken)
     {
         var key = $"TvdbSeason_{seasonTvdbId.ToString(CultureInfo.InvariantCulture)}";
-        if (_memoryCache.TryGetValue(key, out SeasonExtendedRecord season))
+        if (_memoryCache.TryGetValue(key, out SeasonExtendedRecord? season)
+            && season is not null)
         {
             return season;
         }
@@ -249,7 +254,8 @@ public class TvdbClientManager : IDisposable
         CancellationToken cancellationToken)
     {
         var key = $"TvdbEpisode_{episodeTvdbId.ToString(CultureInfo.InvariantCulture)}";
-        if (_memoryCache.TryGetValue(key, out EpisodeExtendedRecord episode))
+        if (_memoryCache.TryGetValue(key, out EpisodeExtendedRecord? episode)
+            && episode is not null)
         {
             return episode;
         }
@@ -275,7 +281,8 @@ public class TvdbClientManager : IDisposable
         CancellationToken cancellationToken)
     {
         var key = $"TvdbSeriesRemoteId_{remoteId}";
-        if (_memoryCache.TryGetValue(key, out IReadOnlyList<SearchByRemoteIdResult> series))
+        if (_memoryCache.TryGetValue(key, out IReadOnlyList<SearchByRemoteIdResult>? series)
+            && series is not null)
         {
             return series;
         }
@@ -301,7 +308,8 @@ public class TvdbClientManager : IDisposable
         CancellationToken cancellationToken)
     {
         var key = $"TvdbPeople_{tvdbId.ToString(CultureInfo.InvariantCulture)}";
-        if (_memoryCache.TryGetValue(key, out PeopleBaseRecord people))
+        if (_memoryCache.TryGetValue(key, out PeopleBaseRecord? people)
+            && people is not null)
         {
             return people;
         }
@@ -327,7 +335,8 @@ public class TvdbClientManager : IDisposable
         CancellationToken cancellationToken)
     {
         var key = $"TvdbArtwork_{imageTvdbId.ToString(CultureInfo.InvariantCulture)}";
-        if (_memoryCache.TryGetValue(key, out ArtworkExtendedRecord artwork))
+        if (_memoryCache.TryGetValue(key, out ArtworkExtendedRecord? artwork)
+            && artwork is not null)
         {
             return artwork;
         }
@@ -353,7 +362,8 @@ public class TvdbClientManager : IDisposable
         CancellationToken cancellationToken)
     {
         var key = $"TvdbSeriesArtwork_{tvdbId.ToString(CultureInfo.InvariantCulture)}";
-        if (_memoryCache.TryGetValue(key, out SeriesExtendedRecord series))
+        if (_memoryCache.TryGetValue(key, out SeriesExtendedRecord? series)
+            && series is not null)
         {
             return series;
         }
@@ -374,7 +384,8 @@ public class TvdbClientManager : IDisposable
     public async Task<IReadOnlyList<Language>> GetLanguagesAsync(CancellationToken cancellationToken)
     {
         var key = "TvdbLanguages";
-        if (_memoryCache.TryGetValue(key, out IReadOnlyList<Language> languages))
+        if (_memoryCache.TryGetValue(key, out IReadOnlyList<Language>? languages)
+            && languages is not null)
         {
             return languages;
         }
@@ -395,7 +406,8 @@ public class TvdbClientManager : IDisposable
     public async Task<IReadOnlyList<ArtworkType>> GetArtworkTypeAsync(CancellationToken cancellationToken)
     {
         var key = "TvdbArtworkTypes";
-        if (_memoryCache.TryGetValue(key, out IReadOnlyList<ArtworkType> artworkTypes))
+        if (_memoryCache.TryGetValue(key, out IReadOnlyList<ArtworkType>? artworkTypes)
+            && artworkTypes is not null)
         {
             return artworkTypes;
         }
