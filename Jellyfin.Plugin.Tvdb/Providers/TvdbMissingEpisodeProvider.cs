@@ -174,7 +174,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         private async Task HandleSeason(Season season)
         {
             var series = season.Series;
-            if (series.HasTvdbId())
+            if (!series.HasTvdbId())
             {
                 _logger.LogDebug("No TVDB Id available.");
                 return;
