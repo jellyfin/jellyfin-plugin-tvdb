@@ -72,7 +72,8 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
             progress.Report(10);
             MetadataRefreshOptions refreshOptions = new MetadataRefreshOptions(new DirectoryService(_fileSystem))
             {
-                MetadataRefreshMode = MetadataRefreshMode.FullRefresh
+                MetadataRefreshMode = MetadataRefreshMode.FullRefresh,
+                ReplaceAllMetadata = true,
             };
             double increment = 90.0 / toUpdateItems.Count;
             double currentProgress = 10;
