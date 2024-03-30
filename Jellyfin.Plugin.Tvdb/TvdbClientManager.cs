@@ -533,7 +533,7 @@ public class TvdbClientManager : IDisposable
     /// <param name="type"> Type of data.</param>
     /// <param name="action">Delete, update or null.</param>
     /// <returns>A list of updates.</returns>
-    public async Task<IReadOnlyList<EntityUpdate>> GetUpdates(
+    public async Task<IEnumerable<EntityUpdate>> GetUpdates(
         double fromTime,
         CancellationToken cancellationToken,
         Type? type = null,
@@ -542,7 +542,18 @@ public class TvdbClientManager : IDisposable
         var updatesClient = _serviceProvider.GetRequiredService<IUpdatesClient>();
         await LoginAsync().ConfigureAwait(false);
         var updatesResult = await updatesClient.UpdatesAsync(since: fromTime, type: type, action: action, cancellationToken: cancellationToken).ConfigureAwait(false);
-        return updatesResult.Data;
+        IEnumerable<EntityUpdate> updates = updatesResult.Data;
+
+        // Each page has limit of 500 updates. Get all updates starting from page 1. First page (page 0) is already fetched.
+        int page = 1;
+        while (updatesResult.Links.Next != null)
+        {
+            updatesResult = await updatesClient.UpdatesAsync(since: fromTime, type: type, action: action, page: page, cancellationToken: cancellationToken).ConfigureAwait(false);
+            updates = updates.Concat(updatesResult.Data);
+            page++;
+        }
+
+        return updates;
     }
 
     /// <summary>
