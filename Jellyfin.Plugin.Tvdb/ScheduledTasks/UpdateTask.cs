@@ -104,8 +104,8 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
         private async Task<List<BaseItem>> GetItemsUpdated(CancellationToken cancellationToken)
         {
             double fromTime = DateTimeOffset.UtcNow.AddHours(MetadataUpdateInHours).ToUnixTimeSeconds();
-            IReadOnlyList<EntityUpdate> episodeUpdates = (await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Episodes, Action.Update).ConfigureAwait(false)).ToList();
-            IReadOnlyList<EntityUpdate> seriesUpdates = (await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Series, Action.Update).ConfigureAwait(false)).ToList();
+            IReadOnlyList<EntityUpdate> episodeUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Episodes, Action.Update).ConfigureAwait(false);
+            IReadOnlyList<EntityUpdate> seriesUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Series, Action.Update).ConfigureAwait(false);
 
             var allUpdates = episodeUpdates.Concat(seriesUpdates);
 

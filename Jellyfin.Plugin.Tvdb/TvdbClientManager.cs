@@ -533,7 +533,7 @@ public class TvdbClientManager : IDisposable
     /// <param name="type"> Type of data.</param>
     /// <param name="action">Delete, update or null.</param>
     /// <returns>A list of updates.</returns>
-    public async Task<IEnumerable<EntityUpdate>> GetUpdates(
+    public async Task<IReadOnlyList<EntityUpdate>> GetUpdates(
         double fromTime,
         CancellationToken cancellationToken,
         Type? type = null,
@@ -553,7 +553,7 @@ public class TvdbClientManager : IDisposable
             page++;
         }
 
-        return updates;
+        return updates.ToList();
     }
 
     /// <summary>
