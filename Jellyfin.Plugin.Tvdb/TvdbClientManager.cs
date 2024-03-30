@@ -542,18 +542,18 @@ public class TvdbClientManager : IDisposable
         var updatesClient = _serviceProvider.GetRequiredService<IUpdatesClient>();
         await LoginAsync().ConfigureAwait(false);
         var updatesResult = await updatesClient.UpdatesAsync(since: fromTime, type: type, action: action, cancellationToken: cancellationToken).ConfigureAwait(false);
-        IEnumerable<EntityUpdate> updates = updatesResult.Data;
+        var updates = updatesResult.Data.ToList();
 
         // Each page has limit of 500 updates. Get all updates starting from page 1. First page (page 0) is already fetched.
         int page = 1;
         while (updatesResult.Links.Next != null)
         {
             updatesResult = await updatesClient.UpdatesAsync(since: fromTime, type: type, action: action, page: page, cancellationToken: cancellationToken).ConfigureAwait(false);
-            updates = updates.Concat(updatesResult.Data);
+            updates.AddRange(updatesResult.Data);
             page++;
         }
 
-        return updates.ToList();
+        return updates;
     }
 
     /// <summary>
