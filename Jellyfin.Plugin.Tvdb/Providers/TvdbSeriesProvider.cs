@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Data.Enums;
+using Jellyfin.Extensions;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
@@ -356,7 +357,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     remoteSearchResult.SetProviderIdIfHasValue(MetadataProvider.Zap2It, zap2ItId);
 
                     var tmdbId = seriesResult.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "TheMovieDB.com", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
-                    remoteSearchResult.SetProviderIdIfHasValue(MetadataProvider.Tmdb, tmdbId);
+
+                    // Sometimes, tvdb will return tmdbid as {tmdbid}-{title} like in the tmdb url. Grab the tmdbid only.
+                    var tmdbIdLeft = StringExtensions.LeftPart(tmdbId, '-').ToString();
+                    remoteSearchResult.SetProviderIdIfHasValue(MetadataProvider.Tmdb, tmdbIdLeft);
                 }
                 catch (Exception e)
                 {
