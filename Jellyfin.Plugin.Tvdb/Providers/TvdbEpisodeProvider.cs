@@ -116,8 +116,15 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             {
                 var tempEpisodeInfo = info;
                 info.IndexNumber = episode;
-
-                results.Add(await GetEpisode(tempEpisodeInfo, cancellationToken).ConfigureAwait(false));
+                // First step in the loop, try use the tvdbid field. Else, ignore the field
+                if (episode == startIndex)
+                {
+                    results.Add(await GetEpisode(tempEpisodeInfo, cancellationToken).ConfigureAwait(false));
+                }
+                else
+                {
+                    results.Add(await GetEpisode(tempEpisodeInfo, cancellationToken, true).ConfigureAwait(false));
+                }
             }
 
             var result = CombineResults(results);
@@ -151,7 +158,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             return result;
         }
 
-        private async Task<MetadataResult<Episode>> GetEpisode(EpisodeInfo searchInfo, CancellationToken cancellationToken)
+        private async Task<MetadataResult<Episode>> GetEpisode(EpisodeInfo searchInfo, CancellationToken cancellationToken, bool ignoreTvdbIdField = false)
         {
             var result = new MetadataResult<Episode>
             {
@@ -161,7 +168,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var episodeTvdbId = searchInfo.GetTvdbId().ToString(CultureInfo.InvariantCulture);
             try
             {
-                if (string.Equals(episodeTvdbId, "0", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(episodeTvdbId, "0", StringComparison.OrdinalIgnoreCase) || ignoreTvdbIdField)
                 {
                     episodeTvdbId = await _tvdbClientManager
                         .GetEpisodeTvdbId(searchInfo, searchInfo.MetadataLanguage, cancellationToken)
