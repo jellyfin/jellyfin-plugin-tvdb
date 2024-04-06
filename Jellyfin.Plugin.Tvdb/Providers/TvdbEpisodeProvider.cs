@@ -117,7 +117,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 var tempEpisodeInfo = info;
                 info.IndexNumber = episode;
 
-                results.Add(await GetEpisode(tempEpisodeInfo, cancellationToken).ConfigureAwait(false));
+                results.Add(await GetEpisode(tempEpisodeInfo, cancellationToken, true).ConfigureAwait(false));
             }
 
             var result = CombineResults(results);
@@ -151,7 +151,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             return result;
         }
 
-        private async Task<MetadataResult<Episode>> GetEpisode(EpisodeInfo searchInfo, CancellationToken cancellationToken)
+        private async Task<MetadataResult<Episode>> GetEpisode(EpisodeInfo searchInfo, CancellationToken cancellationToken, bool isMultiple = false)
         {
             var result = new MetadataResult<Episode>
             {
@@ -161,7 +161,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var episodeTvdbId = searchInfo.GetTvdbId().ToString(CultureInfo.InvariantCulture);
             try
             {
-                if (string.Equals(episodeTvdbId, "0", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(episodeTvdbId, "0", StringComparison.OrdinalIgnoreCase) || isMultiple)
                 {
                     episodeTvdbId = await _tvdbClientManager
                         .GetEpisodeTvdbId(searchInfo, searchInfo.MetadataLanguage, cancellationToken)
