@@ -1,7 +1,7 @@
 name: "TheTVDB"
 guid: "a677c0da-fac5-4cde-941a-7134223f14c8"
 imageUrl: "https://repo.jellyfin.org/releases/plugin/images/jellyfin-plugin-tvdb.png"
-version: 10
+version: 11
 targetAbi: "10.9.0.0"
 framework: "net8.0"
 owner: "jellyfin"
@@ -14,3 +14,33 @@ artifacts:
   - "Jellyfin.Plugin.Tvdb.dll"
   - "Tvdb.Sdk.dll"
 changelog: |-
+  - 10.9 (#134) @crobibero
+  - Use ILocalizationManager instead of forming own country and iso6392 lists (#128) @scampower3
+  - Don't retrieve tvdbId for episode if there is tvdbid already provided (#127) @scampower3
+  - Prevent images with no language tag to have same priority as matched language (#126) @scampower3
+  - Grab non alias name instead of first one that matches the language (#125) @scampower3
+  - Fixes some cache key clashes and other improvements. (#123) @scampower3
+  - Fixes some poorly named variables and label "for" tag fixes (#122) @scampower3
+  - Remove required from the input for API key (#121) @scampower3
+  - Add cache time configurations (#120) @scampower3
+  - Add Caching for api calls (#118) @scampower3
+  - Fix: Combine original titles for multi episode files (#117) @scampower3
+  - Fixes issues retrieving episode metadata (#116) @scampower3
+  - Improvements and fixes tvdb sdk 4.7.9.1 + PR #112 (#115) @BobSilent
+
+  ### Major features and improvements ###
+  - Tvdb v4 migration (#93) @scampower3
+
+  ### New features and improvements ###
+  - Feat: Add a polling task to check for update via the update api endpoint (#124) @scampower3
+
+  ### Bug Fixes ###
+  - Update to Tvdb sdk 4.7.9.1 (#113) @scampower3
+  - Fix duplicate entries Missing and not Missing (#106) @BobSilent
+  - Fixes for tvdb v4 migration (#110) @BobSilent
+  - Don't require user pin (#108) @crobibero
+
+  ### Code or Repo Maintenance ###
+  - Make Tvdb Client usage more resilient and robust (#112) @BobSilent
+  - Add the project's api key (#107) @crobibero
+  - Update link to Jellyfin website (#103) @methbkts
