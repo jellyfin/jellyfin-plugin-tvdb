@@ -26,7 +26,7 @@ This plugin adds the metadata provider for [TVDB](https://www.thetvdb.com/).
 
 ## Build
 
-1. To build this plugin you will need [.Net 5.x](https://dotnet.microsoft.com/download/dotnet/5.0).
+1. To build this plugin you will need [.Net 8.x](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
 
 2. Build plugin with following command
   ```
