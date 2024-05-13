@@ -49,5 +49,10 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
             get => _metadataUpdateInHours;
             set => _metadataUpdateInHours = value < 1 ? 1 : value;
         }
+
+        /// <summary>
+        /// Gets or sets the fallback languages.
+        /// </summary>
+        public string FallbackLanguages { get; set; } = string.Empty;
     }
 }

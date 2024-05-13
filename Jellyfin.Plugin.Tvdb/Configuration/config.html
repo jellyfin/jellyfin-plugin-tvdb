@@ -42,6 +42,13 @@
                             How many hours ago should the metadata be last updated on TheTvdb. Should be greater than the value of cache time in hours.
                         </div>
                     </div>
+                    <div class="inputContainer">
+                        <label for="fallbackLanguages">Fallback Languages:</label>
+                        <input type="text" id="fallbackLanguages" is="emby-input" />
+                        <div class="fieldDescription">
+                            If the preferred metadata language is not available, the plugin will attempt to retrieve metadata in these languages (in the order listed). Separate language codes with commas (e.g., en, fr, de, ja).
+                        </div>
+                    </div>
                     <br />
                     <div>
                         <button is="emby-button" type="submit" data-theme="b" class="raised button-submit block">
@@ -64,6 +71,7 @@
                     document.getElementById('cacheDurationInHours').value = config.CacheDurationInHours;
                     document.getElementById('cacheDurationInDays').value = config.CacheDurationInDays;
                     document.getElementById('metadataUpdateInHours').value = config.MetadataUpdateInHours;
+                    document.getElementById('fallbackLanguages').value = config.FallbackLanguages;
                     Dashboard.hideLoadingMsg();
                 });
             },
@@ -76,6 +84,7 @@
                     config.CacheDurationInHours = document.getElementById('cacheDurationInHours').value;
                     config.CacheDurationInDays = document.getElementById('cacheDurationInDays').value;
                     config.MetadataUpdateInHours = document.getElementById('metadataUpdateInHours').value;
+                    config.FallbackLanguages = document.getElementById('fallbackLanguages').value;
                     ApiClient.updatePluginConfiguration(TvdbPluginConfiguration.uniquePluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
                     });

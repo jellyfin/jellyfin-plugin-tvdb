@@ -18,6 +18,11 @@ namespace Jellyfin.Plugin.Tvdb;
 public static class TvdbSdkExtensions
 {
     /// <summary>
+    /// Gets the fallback languages which have been selected, ignoring whitespace and empty entries.
+    /// </summary>
+    private static string[]? FallbackLanguages => TvdbPlugin.Instance?.Configuration.FallbackLanguages.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    /// <summary>
     /// Get the translated Name, or <see langword="null"/>.
     /// </summary>
     /// <param name="translations">Available translations.</param>
@@ -28,7 +33,13 @@ public static class TvdbSdkExtensions
         return translations?
             .NameTranslations?
             .FirstOrDefault(translation => IsMatch(translation.Language, language) && translation.IsAlias != true)?
-            .Name;
+            .Name
+            ?? FallbackLanguages?
+            .Select(lang => translations?
+                .NameTranslations?
+                .FirstOrDefault(translation => IsMatch(translation.Language, lang) && translation.IsAlias != true)?
+                .Name)
+            .FirstOrDefault(name => name != null);
     }
 
     /// <summary>
@@ -41,7 +52,12 @@ public static class TvdbSdkExtensions
     {
         return translations?
             .FirstOrDefault(translation => IsMatch(translation.Key, language))
-            .Value;
+            .Value
+            ?? FallbackLanguages?
+            .Select(lang => translations?
+                .FirstOrDefault(translation => IsMatch(translation.Key, lang))
+                .Value)
+            .FirstOrDefault(name => name != null);
     }
 
     /// <summary>
@@ -55,7 +71,13 @@ public static class TvdbSdkExtensions
         return translations?
             .OverviewTranslations?
             .FirstOrDefault(translation => IsMatch(translation.Language, language))?
-            .Overview;
+            .Overview
+            ?? FallbackLanguages?
+            .Select(lang => translations?
+                .OverviewTranslations?
+                .FirstOrDefault(translation => IsMatch(translation.Language, lang))?
+            .Overview)
+            .FirstOrDefault(overview => overview != null);
     }
 
     private static bool IsMatch(this string translation, string? language)
