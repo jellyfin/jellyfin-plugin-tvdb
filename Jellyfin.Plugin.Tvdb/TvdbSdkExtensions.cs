@@ -131,6 +131,7 @@ public static class TvdbSdkExtensions
             "banner" => ImageType.Banner,
             "background" => ImageType.Backdrop,
             "clearlogo" => ImageType.Logo,
+            "clearart" => ImageType.Art,
             _ => null,
         };
     }
