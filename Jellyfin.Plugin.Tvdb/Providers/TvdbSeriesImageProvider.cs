@@ -61,6 +61,8 @@ public class TvdbSeriesImageProvider : IRemoteImageProvider
         yield return ImageType.Primary;
         yield return ImageType.Banner;
         yield return ImageType.Backdrop;
+        yield return ImageType.Logo;
+        yield return ImageType.Art;
     }
 
     /// <inheritdoc />
