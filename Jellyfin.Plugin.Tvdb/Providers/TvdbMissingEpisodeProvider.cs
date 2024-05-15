@@ -182,7 +182,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             // Remove seasons that are empty
-            var emptySeasons = existingSeasons
+            var emptySeasons = orphanedSeasons
                 .Where(season => season.GetEpisodes().Count == 0)
                 .ToList();
             DeleteVirtualItems(emptySeasons);
