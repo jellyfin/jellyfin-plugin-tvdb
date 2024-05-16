@@ -178,7 +178,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             // Handle orphaned seasons
             foreach (var orphanedSeason in orphanedSeasons)
             {
-                await HandleSeason(orphanedSeason).ConfigureAwait(false);
+                var orphanedSeasonVirtualEpisodes = orphanedSeason.GetEpisodes().OfType<Episode>().Where(e => e.IsVirtualItem).ToList();
+                // Remove all virtual episodes for the orphaned season
+                DeleteVirtualItems(orphanedSeasonVirtualEpisodes);
             }
 
             // Remove seasons that are empty
