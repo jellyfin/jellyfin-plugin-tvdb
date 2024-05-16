@@ -16,6 +16,8 @@ namespace Jellyfin.Plugin.Tvdb
     /// </summary>
     public class TvdbPlugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
+        private readonly ILogger<TvdbPlugin> _logger;
+
         /// <summary>
         /// Gets the provider name.
         /// </summary>
@@ -26,13 +28,12 @@ namespace Jellyfin.Plugin.Tvdb
         /// </summary>
         public const string ProviderId = "Tvdb";
 
-        private readonly ILogger<TvdbPlugin> _logger;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="TvdbPlugin"/> class.
         /// </summary>
         /// <param name="applicationPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
         /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
+        /// <param name="logger">Instance of the <see cref="ILogger{TvdbPlugin}"/> interface.</param>
         public TvdbPlugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILogger<TvdbPlugin> logger)
             : base(applicationPaths, xmlSerializer)
         {
