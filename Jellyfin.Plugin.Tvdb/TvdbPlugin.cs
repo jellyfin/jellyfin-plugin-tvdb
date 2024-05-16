@@ -7,6 +7,7 @@ using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.Tvdb
 {
@@ -25,18 +26,27 @@ namespace Jellyfin.Plugin.Tvdb
         /// </summary>
         public const string ProviderId = "Tvdb";
 
+        private readonly ILogger<TvdbPlugin> _logger;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="TvdbPlugin"/> class.
         /// </summary>
         /// <param name="applicationPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
         /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
-        public TvdbPlugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer)
+        public TvdbPlugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILogger<TvdbPlugin> logger)
             : base(applicationPaths, xmlSerializer)
         {
             Instance = this;
-
+            _logger = logger;
             var path = Path.Join(applicationPaths.WebPath, "index.html");
-            InjectDisplayOrderOptions(path);
+            try
+            {
+                InjectDisplayOrderOptions(path);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to inject display order options script.");
+            }
         }
 
         /// <summary>
@@ -75,12 +85,14 @@ namespace Jellyfin.Plugin.Tvdb
             var script = "<script src=\"configurationpage?name=more-display-order-options.js\"></script>";
             if (content.Contains(script, StringComparison.OrdinalIgnoreCase))
             {
+                _logger.LogInformation("Display order options script already injected.");
                 return;
             }
 
             var headEnd = new Regex("</head>", RegexOptions.IgnoreCase);
             content = headEnd.Replace(content, script + "</head>", 1);
             File.WriteAllText(path, content);
+            _logger.LogInformation("Display order options script injected.");
         }
     }
 }
