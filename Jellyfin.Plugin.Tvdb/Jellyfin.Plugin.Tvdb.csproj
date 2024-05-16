@@ -12,7 +12,9 @@
 
   <ItemGroup>
     <None Remove="Configuration\config.html" />
+    <None Remove="Configuration\more-display-order-options.js" />
     <EmbeddedResource Include="Configuration\config.html" />
+    <EmbeddedResource Include="Configuration\more-display-order-options.js" />
   </ItemGroup>
 
   <ItemGroup>

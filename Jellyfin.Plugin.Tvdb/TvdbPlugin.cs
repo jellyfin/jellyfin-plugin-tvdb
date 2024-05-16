@@ -1,5 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
 using Jellyfin.Plugin.Tvdb.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
@@ -32,6 +34,9 @@ namespace Jellyfin.Plugin.Tvdb
             : base(applicationPaths, xmlSerializer)
         {
             Instance = this;
+
+            var path = Path.Join(applicationPaths.WebPath, "index.html");
+            InjectDisplayOrderOptions(path);
         }
 
         /// <summary>
@@ -48,11 +53,34 @@ namespace Jellyfin.Plugin.Tvdb
         /// <inheritdoc />
         public IEnumerable<PluginPageInfo> GetPages()
         {
-            yield return new PluginPageInfo
+            return new[]
             {
-                Name = Name,
-                EmbeddedResourcePath = $"{GetType().Namespace}.Configuration.config.html"
+                new PluginPageInfo
+                {
+                    Name = Name,
+                    EmbeddedResourcePath = $"{GetType().Namespace}.Configuration.config.html"
+                },
+                new PluginPageInfo
+                {
+                    Name = "more-display-order-options.js",
+                    EmbeddedResourcePath = $"{GetType().Namespace}.Configuration.more-display-order-options.js"
+                }
             };
+        }
+
+        private void InjectDisplayOrderOptions(string path)
+        {
+            var content = File.ReadAllText(path);
+
+            var script = "<script src=\"configurationpage?name=more-display-order-options.js\"></script>";
+            if (content.Contains(script, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var headEnd = new Regex("</head>", RegexOptions.IgnoreCase);
+            content = headEnd.Replace(content, script + "</head>", 1);
+            File.WriteAllText(path, content);
         }
     }
 }
