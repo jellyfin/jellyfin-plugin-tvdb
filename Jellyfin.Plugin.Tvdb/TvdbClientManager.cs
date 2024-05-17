@@ -450,6 +450,9 @@ public class TvdbClientManager : IDisposable
         {
             switch (searchInfo.SeriesDisplayOrder)
             {
+                case "regional":
+                case "alternate":
+                case "altdvd":
                 case "dvd":
                     episodeNumber = searchInfo.IndexNumber.Value;
                     seasonNumber = searchInfo.ParentIndexNumber.Value;
@@ -493,6 +496,9 @@ public class TvdbClientManager : IDisposable
         {
             switch (searchInfo.SeriesDisplayOrder)
             {
+                case "regional":
+                case "alternate":
+                case "altdvd":
                 case "dvd":
                 case "absolute":
                     seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: seriesTvdbId, season_type: searchInfo.SeriesDisplayOrder, season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
