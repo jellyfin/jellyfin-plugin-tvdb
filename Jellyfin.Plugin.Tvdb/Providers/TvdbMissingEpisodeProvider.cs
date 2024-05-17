@@ -159,16 +159,35 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
             }
 
-            var allEpisodes = await GetAllEpisodes(tvdbId, series.GetPreferredMetadataLanguage()).ConfigureAwait(false);
+            var allEpisodes = await GetAllEpisodes(tvdbId, series.DisplayOrder, series.GetPreferredMetadataLanguage()).ConfigureAwait(false);
+
             var allSeasons = allEpisodes
                 .Where(ep => ep.SeasonNumber.HasValue)
                 .Select(ep => ep.SeasonNumber!.Value)
                 .Distinct()
                 .ToList();
-
             // Add missing seasons
             var newSeasons = AddMissingSeasons(series, existingSeasons, allSeasons);
             AddMissingEpisodes(existingEpisodes, allEpisodes, existingSeasons.Concat(newSeasons).ToList());
+
+            // Get seasons that does not match the TVDB seasons
+            var orphanedSeasons = existingSeasons
+                .Where(season => !allSeasons.Contains(season.IndexNumber!.Value))
+                .ToList();
+
+            // Handle orphaned seasons
+            foreach (var orphanedSeason in orphanedSeasons)
+            {
+                var orphanedSeasonVirtualEpisodes = orphanedSeason.GetEpisodes().OfType<Episode>().Where(e => e.IsVirtualItem).ToList();
+                // Remove all virtual episodes for the orphaned season
+                DeleteVirtualItems(orphanedSeasonVirtualEpisodes);
+            }
+
+            // Remove seasons that are empty
+            var emptySeasons = orphanedSeasons
+                .Where(season => season.GetEpisodes().Count == 0)
+                .ToList();
+            DeleteVirtualItems(emptySeasons);
         }
 
         private async Task HandleSeason(Season season)
@@ -181,7 +200,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             var tvdbId = series.GetTvdbId();
-            var allEpisodes = await GetAllEpisodes(tvdbId, season.GetPreferredMetadataLanguage())
+            var allEpisodes = await GetAllEpisodes(tvdbId, series.DisplayOrder, season.GetPreferredMetadataLanguage())
                 .ConfigureAwait(false);
 
             var seasonEpisodes = allEpisodes.Where(e => e.SeasonNumber == season.IndexNumber).ToList();
@@ -299,8 +318,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
 
                 var tvdbId = episode.Series.GetTvdbId();
+                var displayOrder = episode.Series.DisplayOrder;
 
-                var episodeRecords = GetAllEpisodes(tvdbId, episode.GetPreferredMetadataLanguage()).GetAwaiter().GetResult();
+                var episodeRecords = GetAllEpisodes(tvdbId, displayOrder, episode.GetPreferredMetadataLanguage()).GetAwaiter().GetResult();
 
                 EpisodeBaseRecord? episodeRecord = null;
                 if (episodeRecords.Count > 0)
@@ -312,12 +332,18 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
         }
 
-        private async Task<IReadOnlyList<EpisodeBaseRecord>> GetAllEpisodes(int tvdbId, string acceptedLanguage)
+        private async Task<IReadOnlyList<EpisodeBaseRecord>> GetAllEpisodes(int tvdbId, string displayOrder, string acceptedLanguage)
         {
             try
             {
+                // If displayOrder is not set, use default
+                if (string.IsNullOrEmpty(displayOrder))
+                {
+                    displayOrder = "default";
+                }
+
                 // Fetch all episodes for the series
-                var seriesInfo = await _tvdbClientManager.GetSeriesEpisodesAsync(tvdbId, acceptedLanguage, "default", CancellationToken.None).ConfigureAwait(false);
+                var seriesInfo = await _tvdbClientManager.GetSeriesEpisodesAsync(tvdbId, acceptedLanguage, displayOrder, CancellationToken.None).ConfigureAwait(false);
                 var allEpisodes = seriesInfo.Episodes;
                 if (allEpisodes is null || !allEpisodes.Any())
                 {
