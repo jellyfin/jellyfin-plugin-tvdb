@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ICU4N.Text;
 using Jellyfin.Data.Enums;
 using Jellyfin.Extensions;
 using MediaBrowser.Common.Net;
@@ -190,7 +191,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     searchInfo.MetadataLanguage,
                     cancellationToken).ConfigureAwait(false);
 
-                result = MapEpisodeToResult(searchInfo, episodeResult);
+                result = await MapEpisodeToResult(searchInfo, episodeResult, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -205,7 +206,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             return result;
         }
 
-        private static MetadataResult<Episode> MapEpisodeToResult(EpisodeInfo id, EpisodeExtendedRecord episode)
+        private async Task<MetadataResult<Episode>> MapEpisodeToResult(EpisodeInfo id, EpisodeExtendedRecord episode, CancellationToken cancellationToken)
         {
             var result = new MetadataResult<Episode>
             {
@@ -232,32 +233,29 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var imdbID = episode.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id;
             item.SetProviderIdIfHasValue(MetadataProvider.Imdb, imdbID);
 
-            if (string.Equals(id.SeriesDisplayOrder, "dvd", StringComparison.OrdinalIgnoreCase))
+            // Missing episodes loses the episode number when refreshed.
+            if (id.IsMissingEpisode)
             {
-                var dvdInfo = episode.Seasons.FirstOrDefault(x => string.Equals(x.Type.Name, "dvd", StringComparison.OrdinalIgnoreCase));
-                if (dvdInfo is null)
+                id.SeriesProviderIds.TryGetValue(MetadataProvider.Tvdb.ToString(), out var seriesTvdbIdString);
+                if (!string.IsNullOrEmpty(seriesTvdbIdString))
                 {
-                    item.IndexNumber = episode.Number;
-                }
-                else
-                {
-                    item.IndexNumber = Convert.ToInt32(dvdInfo.Number, CultureInfo.InvariantCulture);
-                }
+                    int seriesTvdbId = int.Parse(seriesTvdbIdString, CultureInfo.InvariantCulture);
+                    var displayOrder = id.SeriesDisplayOrder;
+                    if (string.IsNullOrEmpty(displayOrder))
+                    {
+                        displayOrder = "default";
+                    }
 
-                item.ParentIndexNumber = episode.SeasonNumber;
-            }
-            else if (string.Equals(id.SeriesDisplayOrder, "absolute", StringComparison.OrdinalIgnoreCase))
-            {
-                var absoluteInfo = episode.Seasons.FirstOrDefault(x => string.Equals(x.Type.Name, "absolute", StringComparison.OrdinalIgnoreCase));
-                if (absoluteInfo is not null)
-                {
-                    item.IndexNumber = Convert.ToInt32(absoluteInfo.Number, CultureInfo.InvariantCulture);
+                    // EpisodeExtendedRecord does not provide all the episode numbers for various display orders. So have to get all episodes for the series and search for the episode.
+                    var allEpisodes = await _tvdbClientManager.GetSeriesEpisodesAsync(seriesTvdbId, item.PreferredMetadataLanguage, displayOrder, cancellationToken).ConfigureAwait(false);
+                    var info = allEpisodes.Episodes.FirstOrDefault(x => x.Id == episode.Id);
+
+                    if (info is not null)
+                    {
+                        item.ParentIndexNumber = info.SeasonNumber;
+                        item.IndexNumber = info.Number;
+                    }
                 }
-            }
-            else
-            {
-                item.IndexNumber = episode.Number;
-                item.ParentIndexNumber = episode.SeasonNumber;
             }
 
             if (DateTime.TryParse(episode.Aired, out var date))
