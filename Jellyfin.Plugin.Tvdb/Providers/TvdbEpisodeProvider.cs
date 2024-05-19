@@ -168,7 +168,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var episodeTvdbId = searchInfo.GetTvdbId().ToString(CultureInfo.InvariantCulture);
             try
             {
-                if (string.Equals(episodeTvdbId, "0", StringComparison.OrdinalIgnoreCase) || ignoreTvdbIdField)
+                if (string.Equals(episodeTvdbId, "0", StringComparison.OrdinalIgnoreCase) || ignoreTvdbIdField || searchInfo.IsAutomated)
                 {
                     episodeTvdbId = await _tvdbClientManager
                         .GetEpisodeTvdbId(searchInfo, searchInfo.MetadataLanguage, cancellationToken)
