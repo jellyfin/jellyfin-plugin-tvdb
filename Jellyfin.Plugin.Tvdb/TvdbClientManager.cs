@@ -477,7 +477,7 @@ public class TvdbClientManager : IDisposable
                     break;
             }
 
-            key = $"FindTvdbEpisodeId_{seriesTvdbIdString}_{seasonNumber.Value.ToString(CultureInfo.InvariantCulture)}_{episodeNumber.Value.ToString(CultureInfo.InvariantCulture)}";
+            key = $"FindTvdbEpisodeId_{seriesTvdbIdString}_{seasonNumber.Value.ToString(CultureInfo.InvariantCulture)}_{episodeNumber.Value.ToString(CultureInfo.InvariantCulture)}_{searchInfo.SeriesDisplayOrder}";
         }
         else if (searchInfo.PremiereDate.HasValue)
         {
