@@ -449,15 +449,21 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 IsVirtualItem = true,
                 SeasonId = season.Id,
                 SeriesId = season.Series.Id,
-                AirsBeforeEpisodeNumber = episode.AirsBeforeEpisode,
-                AirsAfterSeasonNumber = episode.AirsAfterSeason,
-                AirsBeforeSeasonNumber = episode.AirsBeforeSeason,
                 Overview = episode.Overview,
                 SeriesName = season.Series.Name,
                 SeriesPresentationUniqueKey = season.SeriesPresentationUniqueKey,
                 SeasonName = season.Name,
                 DateLastSaved = DateTime.UtcNow
             };
+
+            // Below metadata info only applicable for Aired Order
+            if (string.IsNullOrEmpty(season.Series.DisplayOrder))
+            {
+                newEpisode.AirsBeforeEpisodeNumber = episode.AirsBeforeEpisode;
+                newEpisode.AirsAfterSeasonNumber = episode.AirsAfterSeason;
+                newEpisode.AirsBeforeSeasonNumber = episode.AirsBeforeSeason;
+            }
+
             if (DateTime.TryParse(episode!.Aired, out var premiereDate))
             {
                 newEpisode.PremiereDate = premiereDate;
