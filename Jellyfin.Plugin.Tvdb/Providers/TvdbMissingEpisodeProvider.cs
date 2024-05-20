@@ -62,6 +62,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             _logger = logger;
         }
 
+        private static bool IncludeMissingSpecials => TvdbPlugin.Instance?.Configuration.IncludeMissingSpecials ?? false;
+
         private static bool EpisodeExists(EpisodeBaseRecord episodeRecord, IReadOnlyList<Episode> existingEpisodes)
         {
             return existingEpisodes.Any(episode => EpisodeEquals(episode, episodeRecord));
@@ -160,6 +162,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             var allEpisodes = await GetAllEpisodes(tvdbId, series.DisplayOrder, series.GetPreferredMetadataLanguage()).ConfigureAwait(false);
+
+            if (!IncludeMissingSpecials)
+            {
+                allEpisodes = allEpisodes.Where(e => e.SeasonNumber != 0).ToList().AsReadOnly();
+            }
 
             var allSeasons = allEpisodes
                 .Where(ep => ep.SeasonNumber.HasValue)

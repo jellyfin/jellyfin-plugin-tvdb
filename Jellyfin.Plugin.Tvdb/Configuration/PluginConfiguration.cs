@@ -54,5 +54,10 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         /// Gets or sets the fallback languages.
         /// </summary>
         public string FallbackLanguages { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to include missing specials.
+        /// </summary>
+        public bool IncludeMissingSpecials { get; set; } = true;
     }
 }
