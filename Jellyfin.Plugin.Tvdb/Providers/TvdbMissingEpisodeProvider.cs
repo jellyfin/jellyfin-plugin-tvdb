@@ -165,7 +165,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (!IncludeMissingSpecials)
             {
-                allEpisodes = allEpisodes.Where(e => e.SeasonNumber != 0).ToList().AsReadOnly();
+                allEpisodes = allEpisodes.Where(e => e.SeasonNumber != 0).ToList();
             }
 
             var allSeasons = allEpisodes
