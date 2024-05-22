@@ -74,6 +74,7 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
             {
                 MetadataRefreshMode = MetadataRefreshMode.FullRefresh,
                 ReplaceAllMetadata = true,
+                IsAutomated = false,
             };
             double increment = 90.0 / toUpdateItems.Count;
             double currentProgress = 10;

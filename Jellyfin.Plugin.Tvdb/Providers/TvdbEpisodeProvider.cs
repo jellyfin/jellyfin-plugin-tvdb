@@ -168,7 +168,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var episodeTvdbId = searchInfo.GetTvdbId().ToString(CultureInfo.InvariantCulture);
             try
             {
-                if (string.Equals(episodeTvdbId, "0", StringComparison.OrdinalIgnoreCase) || ignoreTvdbIdField)
+                if (string.Equals(episodeTvdbId, "0", StringComparison.OrdinalIgnoreCase) || ignoreTvdbIdField || searchInfo.IsAutomated)
                 {
                     episodeTvdbId = await _tvdbClientManager
                         .GetEpisodeTvdbId(searchInfo, searchInfo.MetadataLanguage, cancellationToken)
@@ -215,9 +215,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     IndexNumber = id.IndexNumber,
                     ParentIndexNumber = id.ParentIndexNumber,
                     IndexNumberEnd = id.IndexNumberEnd,
-                    AirsBeforeEpisodeNumber = episode.AirsBeforeEpisode,
-                    AirsAfterSeasonNumber = episode.AirsAfterSeason,
-                    AirsBeforeSeasonNumber = episode.AirsBeforeSeason,
                     // Tvdb uses 3 letter code for language (prob ISO 639-2)
                     // Reverts to OriginalName if no translation is found
                     Name = episode.Translations.GetTranslatedNamedOrDefault(id.MetadataLanguage) ?? episode.Name,
@@ -231,6 +228,14 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             item.SetTvdbId(episode.Id);
             var imdbID = episode.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id;
             item.SetProviderIdIfHasValue(MetadataProvider.Imdb, imdbID);
+
+            // Below metadata info only applicable for Aired Order
+            if (string.IsNullOrEmpty(id.SeriesDisplayOrder))
+            {
+                item.AirsBeforeEpisodeNumber = episode.AirsBeforeEpisode;
+                item.AirsAfterSeasonNumber = episode.AirsAfterSeason;
+                item.AirsBeforeSeasonNumber = episode.AirsBeforeSeason;
+            }
 
             // Missing episodes loses the episode number when refreshed.
             if (id.IsMissingEpisode)
