@@ -49,6 +49,10 @@
                             If the preferred metadata language is not available, the plugin will attempt to retrieve metadata in these languages (in the order listed). Separate language codes with commas (e.g., en, fr, de, ja).
                         </div>
                     </div>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="includeMissingSpecials" />
+                        <span>Include missing specials</span>
+                    </label>
                     <br />
                     <div>
                         <button is="emby-button" type="submit" data-theme="b" class="raised button-submit block">
@@ -72,6 +76,7 @@
                     document.getElementById('cacheDurationInDays').value = config.CacheDurationInDays;
                     document.getElementById('metadataUpdateInHours').value = config.MetadataUpdateInHours;
                     document.getElementById('fallbackLanguages').value = config.FallbackLanguages;
+                    document.getElementById('includeMissingSpecials').checked = config.IncludeMissingSpecials || true;
                     Dashboard.hideLoadingMsg();
                 });
             },
@@ -85,6 +90,7 @@
                     config.CacheDurationInDays = document.getElementById('cacheDurationInDays').value;
                     config.MetadataUpdateInHours = document.getElementById('metadataUpdateInHours').value;
                     config.FallbackLanguages = document.getElementById('fallbackLanguages').value;
+                    config.IncludeMissingSpecials = document.getElementById('includeMissingSpecials').checked;
                     ApiClient.updatePluginConfiguration(TvdbPluginConfiguration.uniquePluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
                     });
