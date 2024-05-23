@@ -88,8 +88,14 @@ public class TvdbSeasonImageProvider : IRemoteImageProvider
 
         var seriesTvdbId = series.GetTvdbId();
         var seasonNumber = season.IndexNumber.Value;
+        var displayOrder = season.Series.DisplayOrder;
 
-        var seasonArtworks = await GetSeasonArtworks(seriesTvdbId, seasonNumber, cancellationToken)
+        if (string.IsNullOrEmpty(displayOrder))
+        {
+            displayOrder = "official";
+        }
+
+        var seasonArtworks = await GetSeasonArtworks(seriesTvdbId, seasonNumber, displayOrder, cancellationToken)
             .ConfigureAwait(false);
 
         var remoteImages = new List<RemoteImageInfo>();
@@ -106,13 +112,13 @@ public class TvdbSeasonImageProvider : IRemoteImageProvider
         return remoteImages.OrderByLanguageDescending(item.GetPreferredMetadataLanguage());
     }
 
-    private async Task<IReadOnlyList<ArtworkBaseRecord>> GetSeasonArtworks(int seriesTvdbId, int seasonNumber, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<ArtworkBaseRecord>> GetSeasonArtworks(int seriesTvdbId, int seasonNumber, string displayOrder, CancellationToken cancellationToken)
     {
         try
         {
             var seriesInfo = await _tvdbClientManager.GetSeriesExtendedByIdAsync(seriesTvdbId, string.Empty, cancellationToken, small: true)
                 .ConfigureAwait(false);
-            var seasonTvdbId = seriesInfo.Seasons.FirstOrDefault(s => s.Number == seasonNumber)?.Id;
+            var seasonTvdbId = seriesInfo.Seasons.FirstOrDefault(s => s.Number == seasonNumber && s.Type.Type == displayOrder)?.Id;
 
             var seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(seasonTvdbId ?? 0, string.Empty, cancellationToken)
                 .ConfigureAwait(false);
