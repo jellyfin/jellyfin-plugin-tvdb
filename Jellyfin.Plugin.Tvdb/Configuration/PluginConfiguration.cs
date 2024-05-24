@@ -56,6 +56,11 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         public string FallbackLanguages { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets a value indicating whether to import season name.
+        /// </summary>
+        public bool ImportSeasonName { get; set; } = false;
+
+        /// <summary>
         /// Gets or sets a value indicating whether to include missing specials.
         /// </summary>
         public bool IncludeMissingSpecials { get; set; } = true;
