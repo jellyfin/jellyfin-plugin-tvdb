@@ -118,11 +118,25 @@ public class TvdbSeasonImageProvider : IRemoteImageProvider
         {
             var seriesInfo = await _tvdbClientManager.GetSeriesExtendedByIdAsync(seriesTvdbId, string.Empty, cancellationToken, small: true)
                 .ConfigureAwait(false);
-            var seasonTvdbId = seriesInfo.Seasons.FirstOrDefault(s => s.Number == seasonNumber && s.Type.Type == displayOrder)?.Id;
+            // Get the season information for the particular display order and aired order display order
+            // Ensure that the aired order is always last in the list
+            var seasonBaseList = seriesInfo.Seasons.Where(s => s.Number == seasonNumber && (s.Type.Type == displayOrder || s.Type.Type == "official" )).OrderBy(s => s.Type.Type == "official");
 
+            var seasonTvdbId = seasonBaseList?.FirstOrDefault()?.Id;
             var seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(seasonTvdbId ?? 0, string.Empty, cancellationToken)
                 .ConfigureAwait(false);
-            return seasonInfo.Artwork;
+
+            // If no image are found for the particular display order and the display order is not aired order,
+            // try to get the aired order images
+            if ((seasonInfo.Artwork is null || seasonInfo.Artwork.Count == 0)
+                && !string.Equals(displayOrder, "official", StringComparison.OrdinalIgnoreCase))
+            {
+               seasonTvdbId = seasonBaseList?.Skip(1).FirstOrDefault()?.Id;
+               seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(seasonTvdbId ?? 0, string.Empty, cancellationToken)
+                 .ConfigureAwait(false);
+            }
+
+            return seasonInfo.Artwork ?? Enumerable.Empty<ArtworkBaseRecord>().ToList();
         }
         catch (Exception ex) when (
             (ex is SeriesException seriesEx && seriesEx.InnerException is JsonException)
