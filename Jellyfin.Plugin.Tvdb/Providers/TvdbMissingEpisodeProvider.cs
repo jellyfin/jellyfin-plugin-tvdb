@@ -343,10 +343,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         {
             try
             {
-                // If displayOrder is not set, use default
+                // If displayOrder is not set, use aired order
                 if (string.IsNullOrEmpty(displayOrder))
                 {
-                    displayOrder = "default";
+                    displayOrder = "official";
                 }
 
                 // Fetch all episodes for the series

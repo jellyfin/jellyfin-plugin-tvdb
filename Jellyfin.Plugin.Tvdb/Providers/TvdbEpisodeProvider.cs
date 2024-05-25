@@ -247,7 +247,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     var displayOrder = id.SeriesDisplayOrder;
                     if (string.IsNullOrEmpty(displayOrder))
                     {
-                        displayOrder = "default";
+                        displayOrder = "official";
                     }
 
                     // EpisodeExtendedRecord does not provide all the episode numbers for various display orders. So have to get all episodes for the series and search for the episode.
