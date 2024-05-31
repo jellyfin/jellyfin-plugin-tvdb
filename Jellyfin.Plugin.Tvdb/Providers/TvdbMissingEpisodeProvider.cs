@@ -134,30 +134,15 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             var tvdbId = series.GetTvdbId();
 
-            var children = series.GetRecursiveChildren();
+            var children = series.Children.ToList();
             var existingSeasons = new List<Season>();
-            var existingEpisodes = new Dictionary<int, List<Episode>>();
+
             for (var i = 0; i < children.Count; i++)
             {
-                switch (children[i])
+                var child = children[i];
+                if (child is Season season && child.IndexNumber.HasValue)
                 {
-                    case Season season:
-                        if (season.IndexNumber.HasValue)
-                        {
-                            existingSeasons.Add(season);
-                        }
-
-                        break;
-                    case Episode episode:
-                        var seasonNumber = episode.ParentIndexNumber ?? 1;
-                        if (!existingEpisodes.TryGetValue(seasonNumber, out var value))
-                        {
-                            value = new List<Episode>();
-                            existingEpisodes[seasonNumber] = value;
-                        }
-
-                        value.Add(episode);
-                        break;
+                    existingSeasons.Add(season);
                 }
             }
 
@@ -173,31 +158,33 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 .Select(ep => ep.SeasonNumber!.Value)
                 .Distinct()
                 .ToList();
+
             // Add missing seasons
             var newSeasons = AddMissingSeasons(series, existingSeasons, allSeasons);
-            AddMissingEpisodes(existingEpisodes, allEpisodes, existingSeasons.Concat(newSeasons).ToList());
+
+            // Add new seasons to existingSeasons
+            existingSeasons.AddRange(newSeasons);
+
+            // Run HandleSeason for each season
+            foreach (var newSeason in existingSeasons)
+            {
+                await HandleSeason(newSeason, allEpisodes).ConfigureAwait(false);
+            }
 
             // Get seasons that does not match the TVDB seasons
             var orphanedSeasons = existingSeasons
                 .Where(season => !allSeasons.Contains(season.IndexNumber!.Value))
                 .ToList();
 
-            // Handle orphaned seasons
-            foreach (var orphanedSeason in orphanedSeasons)
-            {
-                var orphanedSeasonVirtualEpisodes = orphanedSeason.GetEpisodes().OfType<Episode>().Where(e => e.IsVirtualItem).ToList();
-                // Remove all virtual episodes for the orphaned season
-                DeleteVirtualItems(orphanedSeasonVirtualEpisodes);
-            }
-
             // Remove seasons that are empty
             var emptySeasons = orphanedSeasons
                 .Where(season => season.GetEpisodes().Count == 0)
                 .ToList();
+
             DeleteVirtualItems(emptySeasons);
         }
 
-        private async Task HandleSeason(Season season)
+        private async Task HandleSeason(Season season, IReadOnlyList<EpisodeBaseRecord>? allEpisodesRemote = null)
         {
             var series = season.Series;
             if (!series.HasTvdbId())
@@ -207,7 +194,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             var tvdbId = series.GetTvdbId();
-            var allEpisodes = await GetAllEpisodes(tvdbId, series.DisplayOrder, season.GetPreferredMetadataLanguage())
+            var allEpisodes = allEpisodesRemote ?? await GetAllEpisodes(tvdbId, series.DisplayOrder, season.GetPreferredMetadataLanguage())
                 .ConfigureAwait(false);
 
             var seasonEpisodes = allEpisodes.Where(e => e.SeasonNumber == season.IndexNumber).ToList();
