@@ -171,17 +171,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 await HandleSeason(newSeason, allEpisodes).ConfigureAwait(false);
             }
 
-            // Get seasons that does not match the TVDB seasons
+            // Get seasons that does not match the TVDB seasons and has no episodes
             var orphanedSeasons = existingSeasons
-                .Where(season => !allSeasons.Contains(season.IndexNumber!.Value))
+                .Where(season => !allSeasons.Contains(season.IndexNumber!.Value) && season.GetEpisodes().Count == 0)
                 .ToList();
 
-            // Remove seasons that are empty
-            var emptySeasons = orphanedSeasons
-                .Where(season => season.GetEpisodes().Count == 0)
-                .ToList();
-
-            DeleteVirtualItems(emptySeasons);
+            DeleteVirtualItems(orphanedSeasons);
         }
 
         private async Task HandleSeason(Season season, IReadOnlyList<EpisodeBaseRecord>? allEpisodesRemote = null)
