@@ -268,7 +268,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         {
             var deleteOptions = new DeleteOptions
             {
-                DeleteFileLocation = true
+                DeleteFileLocation = false
             };
 
             // Remove the virtual season/episode that matches the newly updated item
