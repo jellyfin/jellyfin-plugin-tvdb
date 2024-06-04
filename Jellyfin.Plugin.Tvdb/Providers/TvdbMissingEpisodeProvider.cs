@@ -192,6 +192,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var allEpisodes = allEpisodesRemote ?? await GetAllEpisodes(tvdbId, series.DisplayOrder, season.GetPreferredMetadataLanguage())
                 .ConfigureAwait(false);
 
+            // Skip if called from HandleSeries since it will be filtered there, allEpisodesRemote will not be null when called from HandleSeries
+            // Remove specials if IncludeMissingSpecials is false
+            if (allEpisodesRemote is null && !IncludeMissingSpecials)
+            {
+                allEpisodes = allEpisodes.Where(e => e.SeasonNumber != 0).ToList();
+            }
+
             var seasonEpisodes = allEpisodes.Where(e => e.SeasonNumber == season.IndexNumber).ToList();
             var existingEpisodes = season.GetEpisodes().OfType<Episode>().ToHashSet();
 
