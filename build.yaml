@@ -1,8 +1,8 @@
 name: "TheTVDB"
 guid: "a677c0da-fac5-4cde-941a-7134223f14c8"
 imageUrl: "https://repo.jellyfin.org/releases/plugin/images/jellyfin-plugin-tvdb.png"
-version: 12
-targetAbi: "10.9.2.0"
+version: 13
+targetAbi: "10.9.5.0"
 framework: "net8.0"
 owner: "jellyfin"
 overview: "Get TV metadata from TheTvdb"
@@ -13,20 +13,12 @@ category: "Metadata"
 artifacts:
   - "Jellyfin.Plugin.Tvdb.dll"
   - "Tvdb.Sdk.dll"
-changelog: |2-
-  ### New features and improvements ###
-  - Adds a option to include specials for missing episode provider (#144) @scampower3
-  - Add support for regional, alternate, altdvd orders (#139) @scampower3
-  - Add support for different display order for missing episode provider (#140) @scampower3
-  - Add support for clearart and clearlogo for series images (#138) @scampower3
-  - Add fallback languages (#136) @rlauuzo
+changelog: |-
+  - Simplify Series Handling in Missing Episode Provider (#151) @scampower3
+  - Use official instead of default (#149) @scampower3
 
   ### Bug Fixes ###
-  - Display order change fix, Cache collision fix, restrict airsbefore/after to aired display order (#143) @scampower3
-  - Fix retrieval of episode num for virtual episode. (#142) @scampower3
-
-  ### Documentation updates ###
-  - Bump .NET version in docs (#135) @scampower3
-
-  ### Dependency updates ###
-  - Update dependency Microsoft.Extensions.Http to v8 (#81) @renovate
+  - Fix Specials being added during season refresh when IncludeMissingSpecials is disabled (#152) @scampower3
+  - Set DeleteFileLocation = false (#153) @scampower3
+  - Fix Language mapping for unique cases (#145) @scampower3
+  - Get season id according to selected display order. (#147) @scampower3
