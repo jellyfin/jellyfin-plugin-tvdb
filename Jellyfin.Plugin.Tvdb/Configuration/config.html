@@ -53,6 +53,10 @@
                         <input is="emby-checkbox" type="checkbox" id="includeMissingSpecials" />
                         <span>Include missing specials</span>
                     </label>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="fallbackToOriginalLanguage" />
+                        <span>Fallback to Original Language (Last resort if other fallback languages fails)</span>
+                    </label>
                     <br />
                     <div>
                         <button is="emby-button" type="submit" data-theme="b" class="raised button-submit block">
@@ -77,6 +81,7 @@
                     document.getElementById('metadataUpdateInHours').value = config.MetadataUpdateInHours;
                     document.getElementById('fallbackLanguages').value = config.FallbackLanguages;
                     document.getElementById('includeMissingSpecials').checked = config.IncludeMissingSpecials;
+                    document.getElementById('fallbackToOriginalLanguage').checked = config.FallbackToOriginalLanguage;
                     Dashboard.hideLoadingMsg();
                 });
             },
@@ -91,6 +96,7 @@
                     config.MetadataUpdateInHours = document.getElementById('metadataUpdateInHours').value;
                     config.FallbackLanguages = document.getElementById('fallbackLanguages').value;
                     config.IncludeMissingSpecials = document.getElementById('includeMissingSpecials').checked;
+                    config.FallbackToOriginalLanguage = document.getElementById('fallbackToOriginalLanguage').checked;
                     ApiClient.updatePluginConfiguration(TvdbPluginConfiguration.uniquePluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
                     });
