@@ -15,6 +15,8 @@ namespace Jellyfin.Plugin.Tvdb
         /// </summary>
         public const string TvdbBaseUrl = "https://www.thetvdb.com/";
 
+        private static bool FallbackToOriginalLanguage => TvdbPlugin.Instance?.Configuration.FallbackToOriginalLanguage ?? false;
+
         /// <summary>
         /// Converts SeriesAirsDays to DayOfWeek array.
         /// </summary>
@@ -56,6 +58,16 @@ namespace Jellyfin.Plugin.Tvdb
             {
                 yield return DayOfWeek.Saturday;
             }
+        }
+
+        /// <summary>
+        /// Returns the original language if fallback is enabled.
+        /// </summary>
+        /// <param name="text">String to return if fallback is enabled.</param>
+        /// <returns>string or null.</returns>
+        public static string? ReturnOriginalLanguageOrDefault(string? text)
+        {
+            return FallbackToOriginalLanguage ? text : null;
         }
     }
 }

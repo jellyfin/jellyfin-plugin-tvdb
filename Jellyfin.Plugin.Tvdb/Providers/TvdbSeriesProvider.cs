@@ -152,8 +152,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         {
             var remoteResult = new RemoteSearchResult
             {
-                Name = series.Translations.GetTranslatedNamedOrDefault(language) ?? series.Name,
-                Overview = series.Translations.GetTranslatedOverviewOrDefault(language)?.Trim() ?? series.Overview?.Trim(),
+                Name = series.Translations.GetTranslatedNamedOrDefault(language) ?? TvdbUtils.ReturnOriginalLanguageOrDefault(series.Name),
+                Overview = series.Translations.GetTranslatedOverviewOrDefault(language)?.Trim() ?? TvdbUtils.ReturnOriginalLanguageOrDefault(series.Overview?.Trim()),
                 SearchProviderName = Name,
                 ImageUrl = series.Image
             };
@@ -446,8 +446,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             series.SetTvdbId(tvdbSeries.Id);
             // Tvdb uses 3 letter code for language (prob ISO 639-2)
             // Reverts to OriginalName if no translation is found
-            series.Name = tvdbSeries.Translations.GetTranslatedNamedOrDefault(info.MetadataLanguage) ?? tvdbSeries.Name;
-            series.Overview = tvdbSeries.Translations.GetTranslatedOverviewOrDefault(info.MetadataLanguage) ?? tvdbSeries.Overview;
+            series.Name = tvdbSeries.Translations.GetTranslatedNamedOrDefault(info.MetadataLanguage) ?? TvdbUtils.ReturnOriginalLanguageOrDefault(tvdbSeries.Name);
+            series.Overview = tvdbSeries.Translations.GetTranslatedOverviewOrDefault(info.MetadataLanguage) ?? TvdbUtils.ReturnOriginalLanguageOrDefault(tvdbSeries.Overview);
             series.OriginalTitle = tvdbSeries.Name;
             result.ResultLanguage = info.MetadataLanguage;
             series.AirDays = TvdbUtils.GetAirDays(tvdbSeries.AirsDays).ToArray();
