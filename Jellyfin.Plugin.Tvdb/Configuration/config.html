@@ -50,6 +50,10 @@
                         </div>
                     </div>
                     <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="importSeasonName" />
+                        <span>Import season name from provider.</span>
+                    </label>
+                    <label class="checkboxContainer">
                         <input is="emby-checkbox" type="checkbox" id="includeMissingSpecials" />
                         <span>Include missing specials</span>
                     </label>
@@ -80,6 +84,7 @@
                     document.getElementById('cacheDurationInDays').value = config.CacheDurationInDays;
                     document.getElementById('metadataUpdateInHours').value = config.MetadataUpdateInHours;
                     document.getElementById('fallbackLanguages').value = config.FallbackLanguages;
+                    document.getElementById('importSeasonName').checked = config.ImportSeasonName
                     document.getElementById('includeMissingSpecials').checked = config.IncludeMissingSpecials;
                     document.getElementById('fallbackToOriginalLanguage').checked = config.FallbackToOriginalLanguage;
                     Dashboard.hideLoadingMsg();
@@ -95,6 +100,7 @@
                     config.CacheDurationInDays = document.getElementById('cacheDurationInDays').value;
                     config.MetadataUpdateInHours = document.getElementById('metadataUpdateInHours').value;
                     config.FallbackLanguages = document.getElementById('fallbackLanguages').value;
+                    config.ImportSeasonName = document.getElementById('importSeasonName').checked;
                     config.IncludeMissingSpecials = document.getElementById('includeMissingSpecials').checked;
                     config.FallbackToOriginalLanguage = document.getElementById('fallbackToOriginalLanguage').checked;
                     ApiClient.updatePluginConfiguration(TvdbPluginConfiguration.uniquePluginId, config).then(function (result) {
