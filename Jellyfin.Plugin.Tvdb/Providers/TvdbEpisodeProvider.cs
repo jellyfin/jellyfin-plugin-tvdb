@@ -274,6 +274,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 for (var i = 0; i < episode.Characters.Count; ++i)
                 {
                     var currentActor = episode.Characters[i];
+                    if (currentActor.PersonName is null)
+                    {
+                        // Skip people with no person name
+                        continue;
+                    }
+
                     if (string.Equals(currentActor.PeopleType, "Actor", StringComparison.OrdinalIgnoreCase))
                     {
                         result.AddPerson(new PersonInfo
