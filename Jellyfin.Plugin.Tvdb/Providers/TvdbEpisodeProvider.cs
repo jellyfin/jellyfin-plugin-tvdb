@@ -226,7 +226,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             var item = result.Item;
             item.SetTvdbId(episode.Id);
-            var imdbID = episode.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id;
+            var imdbID = episode.RemoteIds?.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id;
             item.SetProviderIdIfHasValue(MetadataProvider.Imdb, imdbID);
 
             // Below metadata info only applicable for Aired Order
