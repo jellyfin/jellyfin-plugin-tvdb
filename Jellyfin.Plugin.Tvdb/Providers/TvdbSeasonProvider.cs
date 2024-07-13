@@ -122,7 +122,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     IndexNumber = id.IndexNumber,
                     // Tvdb uses 3 letter code for language (prob ISO 639-2)
                     // Reverts to OriginalName if no translation is found
-                    // Overview = season.Translations.GetTranslatedOverviewOrDefault(id.MetadataLanguage) ?? season.Overview
+                    // Overview = season.Translations.GetTranslatedOverviewOrDefault(id.MetadataLanguage),
                 }
             };
 
@@ -131,7 +131,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (ImportSeasonName)
             {
-                // item.Name = season.Translations.GetTranslatedNamedOrDefault(id.MetadataLanguage) ?? season.Name,
+                // item.Name = season.Translations.GetTranslatedNamedOrDefault(id.MetadataLanguage) ?? TvdbUtils.ReturnOriginalLanguageOrDefault(season.Name);
                 item.OriginalTitle = season.Name;
             }
 
