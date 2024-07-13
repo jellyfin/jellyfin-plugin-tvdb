@@ -64,5 +64,10 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         /// Gets or sets a value indicating whether to include missing specials.
         /// </summary>
         public bool IncludeMissingSpecials { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to fallback to original language.
+        /// </summary>
+        public bool FallbackToOriginalLanguage { get; set; } = false;
     }
 }

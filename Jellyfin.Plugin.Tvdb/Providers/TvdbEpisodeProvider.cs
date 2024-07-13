@@ -217,8 +217,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     IndexNumberEnd = id.IndexNumberEnd,
                     // Tvdb uses 3 letter code for language (prob ISO 639-2)
                     // Reverts to OriginalName if no translation is found
-                    Name = episode.Translations.GetTranslatedNamedOrDefault(id.MetadataLanguage) ?? episode.Name,
-                    Overview = episode.Translations.GetTranslatedOverviewOrDefault(id.MetadataLanguage) ?? episode.Overview,
+                    Name = episode.Translations.GetTranslatedNamedOrDefault(id.MetadataLanguage) ?? TvdbUtils.ReturnOriginalLanguageOrDefault(episode.Name),
+                    Overview = episode.Translations.GetTranslatedOverviewOrDefault(id.MetadataLanguage) ?? TvdbUtils.ReturnOriginalLanguageOrDefault(episode.Overview),
                     OriginalTitle = episode.Name,
                 }
             };
