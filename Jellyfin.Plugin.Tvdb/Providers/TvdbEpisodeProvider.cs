@@ -226,7 +226,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             var item = result.Item;
             item.SetTvdbId(episode.Id);
-            var imdbID = episode.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id;
+            var imdbID = episode.RemoteIds?.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id;
             item.SetProviderIdIfHasValue(MetadataProvider.Imdb, imdbID);
 
             // Below metadata info only applicable for Aired Order
@@ -274,6 +274,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 for (var i = 0; i < episode.Characters.Count; ++i)
                 {
                     var currentActor = episode.Characters[i];
+                    if (string.IsNullOrEmpty(currentActor.PersonName))
+                    {
+                        // Skip people with no person name
+                        continue;
+                    }
+
                     if (string.Equals(currentActor.PeopleType, "Actor", StringComparison.OrdinalIgnoreCase))
                     {
                         result.AddPerson(new PersonInfo
