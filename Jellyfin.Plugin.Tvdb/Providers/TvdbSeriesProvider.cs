@@ -456,6 +456,29 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             // Attempts to default to USA if not found
             series.OfficialRating = tvdbSeries.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, TvdbCultureInfo.GetCountryInfo(info.MetadataCountryCode)?.ThreeLetterISORegionName, StringComparison.OrdinalIgnoreCase))?.Name ?? tvdbSeries.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, "usa", StringComparison.OrdinalIgnoreCase))?.Name;
 
+            if (tvdbSeries.Lists is not null && tvdbSeries.Lists is JsonElement jsonElement)
+            {
+                var collections = jsonElement.Deserialize<List<object>>();
+                if (collections is not null)
+                {
+                    string collectionIds = string.Empty;
+                    foreach (var collection in collections)
+                    {
+                        if (collection is JsonElement jsonElementCollection)
+                        {
+                            var isOfficial = jsonElementCollection.GetProperty("isOfficial").GetBoolean();
+                            if (isOfficial is true)
+                            {
+                                var id = jsonElementCollection.GetProperty("id").GetInt32().ToString(CultureInfo.InvariantCulture);
+                                collectionIds += id + ";";
+                            }
+                        }
+                    }
+
+                    series.SetProviderIdIfHasValue(TvdbPlugin.CollectionProviderId, collectionIds);
+                }
+            }
+
             var imdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
             series.SetProviderIdIfHasValue(MetadataProvider.Imdb, imdbId);
 
