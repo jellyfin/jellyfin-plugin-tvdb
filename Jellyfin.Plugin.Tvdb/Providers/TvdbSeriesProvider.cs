@@ -460,7 +460,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 var collections = jsonElement.Deserialize<List<object>>();
                 if (collections is not null)
                 {
-                    string collectionIds = string.Empty;
+                    StringBuilder collectionIds = new StringBuilder();
                     foreach (var collection in collections)
                     {
                         if (collection is JsonElement jsonElementCollection)
@@ -469,12 +469,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                             if (isOfficial is true)
                             {
                                 var id = jsonElementCollection.GetProperty("id").GetInt32().ToString(CultureInfo.InvariantCulture);
-                                collectionIds += id + ";";
+                                collectionIds.Append(id).Append(';');
                             }
                         }
                     }
 
-                    series.SetProviderIdIfHasValue(TvdbPlugin.CollectionProviderId, collectionIds);
+                    series.SetProviderIdIfHasValue(TvdbPlugin.CollectionProviderId, collectionIds.ToString());
                 }
             }
 
