@@ -477,6 +477,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     series.SetProviderIdIfHasValue(TvdbPlugin.CollectionProviderId, collectionIds);
                 }
             }
+
             var imdbId = tvdbSeries.RemoteIds?.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
             series.SetProviderIdIfHasValue(MetadataProvider.Imdb, imdbId);
 
