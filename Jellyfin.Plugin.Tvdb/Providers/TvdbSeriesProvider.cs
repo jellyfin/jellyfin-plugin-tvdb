@@ -460,19 +460,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 var collections = jsonElement.Deserialize<List<object>>();
                 if (collections is not null)
                 {
-                    StringBuilder collectionIds = new StringBuilder();
-                    foreach (var collection in collections)
-                    {
-                        if (collection is JsonElement jsonElementCollection)
-                        {
-                            var isOfficial = jsonElementCollection.GetProperty("isOfficial").GetBoolean();
-                            if (isOfficial is true)
-                            {
-                                var id = jsonElementCollection.GetProperty("id").GetInt32().ToString(CultureInfo.InvariantCulture);
-                                collectionIds.Append(id).Append(';');
-                            }
-                        }
-                    }
+                    var collectionIds = collections.OfType<JsonElement>()
+                        .Where(x => x.GetProperty("isOfficial").GetBoolean())
+                        .Select(x => x.GetProperty("id").GetInt32().ToString(CultureInfo.InvariantCulture))
+                        .Aggregate(new StringBuilder(), (sb, id) => sb.Append(id).Append(';'));
 
                     series.SetProviderIdIfHasValue(TvdbPlugin.CollectionProviderId, collectionIds.ToString());
                 }
