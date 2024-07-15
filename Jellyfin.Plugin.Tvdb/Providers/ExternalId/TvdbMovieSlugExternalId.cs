@@ -6,19 +6,19 @@ using MediaBrowser.Model.Providers;
 namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
 {
     /// <inheritdoc />
-    public class TvdbMovieExternalId : IExternalId
+    public class TvdbMovieSlugExternalId : IExternalId
     {
         /// <inheritdoc />
         public string ProviderName => TvdbPlugin.ProviderId;
 
         /// <inheritdoc />
-        public string Key => TvdbPlugin.ProviderName;
+        public string Key => TvdbPlugin.SlugProviderId;
 
         /// <inheritdoc />
         public ExternalIdMediaType? Type => ExternalIdMediaType.Movie;
 
         /// <inheritdoc />
-        public string? UrlFormatString => null;
+        public string? UrlFormatString => TvdbUtils.TvdbBaseUrl + "movies/{0}";
 
         /// <inheritdoc />
         public bool Supports(IHasProviderIds item) => item is Movie;
