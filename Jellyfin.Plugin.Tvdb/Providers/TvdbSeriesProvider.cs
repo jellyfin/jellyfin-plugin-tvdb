@@ -455,6 +455,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             // series.CommunityRating = (float?)tvdbSeries.SiteRating;
             // Attempts to default to USA if not found
             series.OfficialRating = tvdbSeries.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, TvdbCultureInfo.GetCountryInfo(info.MetadataCountryCode)?.ThreeLetterISORegionName, StringComparison.OrdinalIgnoreCase))?.Name ?? tvdbSeries.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, "usa", StringComparison.OrdinalIgnoreCase))?.Name;
+
+            series.SetProviderIdIfHasValue(TvdbPlugin.SlugProviderId, tvdbSeries.Slug);
+
             if (tvdbSeries.Lists is not null && tvdbSeries.Lists is JsonElement jsonElement)
             {
                 var collections = jsonElement.Deserialize<List<object>>();
