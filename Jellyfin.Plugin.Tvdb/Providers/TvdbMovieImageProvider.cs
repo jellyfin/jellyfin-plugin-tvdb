@@ -101,17 +101,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private async Task<IReadOnlyList<ArtworkBaseRecord>> GetMovieArtworks(int movieTvdbId, CancellationToken cancellationToken)
         {
-            try
-            {
-                var movieInfo = await _tvdbClientManager.GetMovieExtendedByIdAsync(movieTvdbId, cancellationToken)
-                    .ConfigureAwait(false);
-                return movieInfo.Artworks;
-            }
-            catch (SeriesException ex) when (ex.InnerException is JsonException)
-            {
-                _logger.LogError(ex, "Failed to retrieve movie images for {TvDbId}", movieTvdbId);
-                return Array.Empty<ArtworkBaseRecord>();
-            }
+            var movieInfo = await _tvdbClientManager.GetMovieExtendedByIdAsync(movieTvdbId, cancellationToken)
+                .ConfigureAwait(false);
+            return movieInfo?.Artworks ?? Array.Empty<ArtworkBaseRecord>();
         }
 
         /// <inheritdoc />
