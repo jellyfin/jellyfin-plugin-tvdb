@@ -165,7 +165,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 remoteResult.ProductionYear = date.Year;
             }
 
-            var imdbID = series.RemoteIds.FirstOrDefault(x => x.SourceName == "IMDB")?.Id;
+            var imdbID = series.RemoteIds?.FirstOrDefault(x => x.SourceName == "IMDB")?.Id;
             remoteResult.SetProviderIdIfHasValue(MetadataProvider.Imdb, imdbID);
             remoteResult.SetTvdbId(series.Id);
 
@@ -350,13 +350,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                         await _tvdbClientManager.GetSeriesExtendedByIdAsync(Convert.ToInt32(seriesSearchResult.Tvdb_id, CultureInfo.InvariantCulture), language, cancellationToken, small: true)
                             .ConfigureAwait(false);
 
-                    var imdbId = seriesResult.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
+                    var imdbId = seriesResult.RemoteIds?.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
                     remoteSearchResult.SetProviderIdIfHasValue(MetadataProvider.Imdb, imdbId);
 
-                    var zap2ItId = seriesResult.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "Zap2It", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
+                    var zap2ItId = seriesResult.RemoteIds?.FirstOrDefault(x => string.Equals(x.SourceName, "Zap2It", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
                     remoteSearchResult.SetProviderIdIfHasValue(MetadataProvider.Zap2It, zap2ItId);
 
-                    var tmdbId = seriesResult.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "TheMovieDB.com", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
+                    var tmdbId = seriesResult.RemoteIds?.FirstOrDefault(x => string.Equals(x.SourceName, "TheMovieDB.com", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
 
                     // Sometimes, tvdb will return tmdbid as {tmdbid}-{title} like in the tmdb url. Grab the tmdbid only.
                     var tmdbIdLeft = StringExtensions.LeftPart(tmdbId, '-').ToString();
@@ -440,7 +440,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
         }
 
-        private static void MapSeriesToResult(MetadataResult<Series> result, SeriesExtendedRecord tvdbSeries, SeriesInfo info)
+        private void MapSeriesToResult(MetadataResult<Series> result, SeriesExtendedRecord tvdbSeries, SeriesInfo info)
         {
             Series series = result.Item;
             series.SetTvdbId(tvdbSeries.Id);
@@ -455,14 +455,34 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             // series.CommunityRating = (float?)tvdbSeries.SiteRating;
             // Attempts to default to USA if not found
             series.OfficialRating = tvdbSeries.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, TvdbCultureInfo.GetCountryInfo(info.MetadataCountryCode)?.ThreeLetterISORegionName, StringComparison.OrdinalIgnoreCase))?.Name ?? tvdbSeries.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, "usa", StringComparison.OrdinalIgnoreCase))?.Name;
+            if (tvdbSeries.Lists is not null && tvdbSeries.Lists is JsonElement jsonElement)
+            {
+                var collections = jsonElement.Deserialize<List<object>>();
+                if (collections is not null)
+                {
+                    try
+                    {
+                        var collectionIds = collections.OfType<JsonElement>()
+                            .Where(x => x.GetProperty("isOfficial").GetBoolean())
+                            .Select(x => x.GetProperty("id").GetInt32().ToString(CultureInfo.InvariantCulture))
+                            .Aggregate(new StringBuilder(), (sb, id) => sb.Append(id).Append(';'));
 
-            var imdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
+                        series.SetProviderIdIfHasValue(TvdbPlugin.CollectionProviderId, collectionIds.ToString());
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(e, "Failed to retrieve collection for series {TvdbId}:{SeriesName}", tvdbSeries.Id, tvdbSeries.Name);
+                    }
+                }
+            }
+
+            var imdbId = tvdbSeries.RemoteIds?.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
             series.SetProviderIdIfHasValue(MetadataProvider.Imdb, imdbId);
 
-            var zap2ItId = tvdbSeries.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "Zap2It", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
+            var zap2ItId = tvdbSeries.RemoteIds?.FirstOrDefault(x => string.Equals(x.SourceName, "Zap2It", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
             series.SetProviderIdIfHasValue(MetadataProvider.Zap2It, zap2ItId);
 
-            var tmdbId = tvdbSeries.RemoteIds.FirstOrDefault(x => string.Equals(x.SourceName, "TheMovieDB.com", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
+            var tmdbId = tvdbSeries.RemoteIds?.FirstOrDefault(x => string.Equals(x.SourceName, "TheMovieDB.com", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
             series.SetProviderIdIfHasValue(MetadataProvider.Tmdb, tmdbId);
 
             if (Enum.TryParse(tvdbSeries.Status.Name, true, out SeriesStatus seriesStatus))

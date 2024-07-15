@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Jellyfin.Plugin.Tvdb.Configuration;
 using MediaBrowser.Common.Configuration;
@@ -22,6 +22,11 @@ namespace Jellyfin.Plugin.Tvdb
         /// Gets the provider id.
         /// </summary>
         public const string ProviderId = "Tvdb";
+
+        /// <summary>
+        /// Gets the collection provider id.
+        /// </summary>
+        public const string CollectionProviderId = "TvdbCollection";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TvdbPlugin"/> class.
