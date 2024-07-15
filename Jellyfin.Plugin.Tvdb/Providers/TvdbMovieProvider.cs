@@ -68,11 +68,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             throw new System.NotImplementedException();
         }
 
-        private async Task<IEnumerable<RemoteSearchResult>> FetchMovieSearchResult(MovieInfo seriesInfo, CancellationToken cancellationToken)
+        private async Task<IEnumerable<RemoteSearchResult>> FetchMovieSearchResult(MovieInfo movieInfo, CancellationToken cancellationToken)
         {
             async Task<string?> TryGetTvdbIdWithRemoteId(MetadataProvider metadataProvider)
             {
-                var id = seriesInfo.GetProviderId(metadataProvider);
+                var id = movieInfo.GetProviderId(metadataProvider);
                 if (string.IsNullOrEmpty(id))
                 {
                     return null;
@@ -84,9 +84,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             int? tvdbId;
-            if (seriesInfo.HasTvdbId())
+            if (movieInfo.HasTvdbId())
             {
-                tvdbId = seriesInfo.GetTvdbId();
+                tvdbId = movieInfo.GetTvdbId();
             }
             else
             {
@@ -99,7 +99,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (!tvdbId.HasValue)
             {
-                _logger.LogWarning("No valid tvdb id found for series {TvdbId}:{SeriesName}", tvdbId, seriesInfo.Name);
+                _logger.LogWarning("No valid tvdb id found for movie {TvdbId}:{MovieName}", tvdbId, movieInfo.Name);
                 return Array.Empty<RemoteSearchResult>();
             }
 
@@ -109,11 +109,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     await _tvdbClientManager
                         .GetMovieExtendedByIdAsync(tvdbId.Value, cancellationToken)
                         .ConfigureAwait(false);
-                return new[] { MapMovieToRemoteSearchResult(movieResult, seriesInfo.MetadataLanguage) };
+                return new[] { MapMovieToRemoteSearchResult(movieResult, movieInfo.MetadataLanguage) };
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Failed to retrieve series with id {TvdbId}:{SeriesName}", tvdbId, seriesInfo.Name);
+                _logger.LogError(e, "Failed to retrieve movie with id {TvdbId}:{MovieName}", tvdbId, movieInfo.Name);
                 return Array.Empty<RemoteSearchResult>();
             }
         }
@@ -152,13 +152,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
             catch (SearchException ex) when (ex.InnerException is JsonException)
             {
-                _logger.LogError(ex, "Failed to retrieve series with {RemoteId}", remoteId);
+                _logger.LogError(ex, "Failed to retrieve movie with {RemoteId}", remoteId);
                 return null;
             }
 
             if (resultData is null || resultData.Count == 0 || resultData[0]?.Movie?.Id is null)
             {
-                _logger.LogWarning("TvdbSearch: No series found for remote id: {RemoteId}", remoteId);
+                _logger.LogWarning("TvdbSearch: No movie found for remote id: {RemoteId}", remoteId);
                 return null;
             }
 
@@ -196,7 +196,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "No series results found for {Name}", comparableName);
+                _logger.LogError(e, "No movie results found for {Name}", comparableName);
                 return new List<RemoteSearchResult>();
             }
 
@@ -249,7 +249,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(e, "Unable to retrieve series with id {TvdbId}:{SeriesName}", movieSearchResult.Tvdb_id, movieSearchResult.Name);
+                    _logger.LogError(e, "Unable to retrieve movie with id {TvdbId}:{MovieName}", movieSearchResult.Tvdb_id, movieSearchResult.Name);
                 }
 
                 remoteSearchResult.SetTvdbId(movieSearchResult.Tvdb_id);
