@@ -440,7 +440,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
         }
 
-        private static void MapSeriesToResult(MetadataResult<Series> result, SeriesExtendedRecord tvdbSeries, SeriesInfo info)
+        private void MapSeriesToResult(MetadataResult<Series> result, SeriesExtendedRecord tvdbSeries, SeriesInfo info)
         {
             Series series = result.Item;
             series.SetTvdbId(tvdbSeries.Id);
@@ -460,12 +460,19 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 var collections = jsonElement.Deserialize<List<object>>();
                 if (collections is not null)
                 {
-                    var collectionIds = collections.OfType<JsonElement>()
-                        .Where(x => x.GetProperty("isOfficial").GetBoolean())
-                        .Select(x => x.GetProperty("id").GetInt32().ToString(CultureInfo.InvariantCulture))
-                        .Aggregate(new StringBuilder(), (sb, id) => sb.Append(id).Append(';'));
+                    try
+                    {
+                        var collectionIds = collections.OfType<JsonElement>()
+                            .Where(x => x.GetProperty("isOfficial").GetBoolean())
+                            .Select(x => x.GetProperty("id").GetInt32().ToString(CultureInfo.InvariantCulture))
+                            .Aggregate(new StringBuilder(), (sb, id) => sb.Append(id).Append(';'));
 
-                    series.SetProviderIdIfHasValue(TvdbPlugin.CollectionProviderId, collectionIds.ToString());
+                        series.SetProviderIdIfHasValue(TvdbPlugin.CollectionProviderId, collectionIds.ToString());
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(e, "Failed to retrieve collection for series {TvdbId}:{SeriesName}", tvdbSeries.Id, tvdbSeries.Name);
+                    }
                 }
             }
 
