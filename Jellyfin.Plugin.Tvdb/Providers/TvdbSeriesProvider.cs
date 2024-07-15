@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Data.Enums;
@@ -300,7 +299,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         private async Task<List<RemoteSearchResult>> FindSeriesInternal(string name, string language, CancellationToken cancellationToken)
         {
             var parsedName = _libraryManager.ParseName(name);
-            var comparableName = GetComparableName(parsedName.Name);
+            var comparableName = TvdbUtils.GetComparableName(parsedName.Name);
 
             var list = new List<Tuple<List<string>, RemoteSearchResult>>();
             IReadOnlyList<SearchResult> result;
@@ -380,24 +379,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 .Select(i => i.Item2)
                 .Take(MaxSearchResults) // TVDB returns a lot of unrelated results
                 .ToList();
-        }
-
-        /// <summary>
-        /// Gets the name of the comparable.
-        /// </summary>
-        /// <param name="name">The name.</param>
-        /// <returns>System.String.</returns>
-        private static string GetComparableName(string name)
-        {
-            name = name.ToLowerInvariant();
-            name = name.Normalize(NormalizationForm.FormC);
-            name = name.Replace(", the", string.Empty, StringComparison.OrdinalIgnoreCase)
-                .Replace("the ", " ", StringComparison.OrdinalIgnoreCase)
-                .Replace(" the ", " ", StringComparison.OrdinalIgnoreCase);
-            name = name.Replace("&", " and ", StringComparison.OrdinalIgnoreCase);
-            name = Regex.Replace(name, @"[\p{Lm}\p{Mn}]", string.Empty); // Remove diacritics, etc
-            name = Regex.Replace(name, @"[\W\p{Pc}]+", " "); // Replace sequences of non-word characters and _ with " "
-            return name.Trim();
         }
 
         private static void MapActorsToResult(MetadataResult<Series> result, IEnumerable<Character> actors)
