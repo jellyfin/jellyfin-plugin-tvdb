@@ -101,6 +101,81 @@ public class TvdbClientManager : IDisposable
     }
 
     /// <summary>
+    /// Gets movie by name.
+    /// </summary>
+    /// <param name="name">Movie Name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The movie search result.</returns>
+    public async Task<IReadOnlyList<SearchResult>> GetMovieByNameAsync(
+        string name,
+        CancellationToken cancellationToken)
+    {
+        var key = $"TvdbMovieSearch_{name}";
+        if (_memoryCache.TryGetValue(key, out IReadOnlyList<SearchResult>? movies)
+                       && movies is not null)
+        {
+            return movies;
+        }
+
+        var searchClient = _serviceProvider.GetRequiredService<ISearchClient>();
+        await LoginAsync().ConfigureAwait(false);
+        var searchResult = await searchClient.GetSearchResultsAsync(query: name, type: "movie", limit: 5, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        _memoryCache.Set(key, searchResult.Data, TimeSpan.FromHours(CacheDurationInHours));
+        return searchResult.Data;
+    }
+
+    /// <summary>
+    /// Get movie by remoteId.
+    /// </summary>
+    /// <param name="remoteId">Remote Id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The movie search result.</returns>
+    public async Task<IReadOnlyList<SearchByRemoteIdResult>> GetMovieByRemoteIdAsync(
+        string remoteId,
+        CancellationToken cancellationToken)
+    {
+        var key = $"TvdbMovieRemoteId_{remoteId}";
+        if (_memoryCache.TryGetValue(key, out IReadOnlyList<SearchByRemoteIdResult>? movies)
+                                  && movies is not null)
+        {
+            return movies;
+        }
+
+        var searchClient = _serviceProvider.GetRequiredService<ISearchClient>();
+        await LoginAsync().ConfigureAwait(false);
+        var searchResult = await searchClient.GetSearchResultsByRemoteIdAsync(remoteId: remoteId, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        _memoryCache.Set(key, searchResult.Data, TimeSpan.FromHours(CacheDurationInHours));
+        return searchResult.Data;
+    }
+
+    /// <summary>
+    /// Get movie by id.
+    /// </summary>
+    /// <param name="tvdbId">The movie tvdb id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The movie response.</returns>
+    public async Task<MovieExtendedRecord> GetMovieExtendedByIdAsync(
+        int tvdbId,
+        CancellationToken cancellationToken)
+    {
+        var key = $"TvdbMovie_{tvdbId.ToString(CultureInfo.InvariantCulture)}";
+        if (_memoryCache.TryGetValue(key, out MovieExtendedRecord? movie)
+                       && movie is not null)
+        {
+            return movie;
+        }
+
+        var movieClient = _serviceProvider.GetRequiredService<IMoviesClient>();
+        await LoginAsync().ConfigureAwait(false);
+        var movieResult = await movieClient.GetMovieExtendedAsync(id: tvdbId, meta: Meta2.Translations, @short: false,  cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        _memoryCache.Set(key, movieResult.Data, TimeSpan.FromHours(CacheDurationInHours));
+        return movieResult.Data;
+    }
+
+    /// <summary>
     /// Get series by name.
     /// </summary>
     /// <param name="name">Series name.</param>
@@ -621,6 +696,7 @@ public class TvdbClientManager : IDisposable
         services.AddTransient<IArtwork_TypesClient>(_ => new Artwork_TypesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<ILanguagesClient>(_ => new LanguagesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<IUpdatesClient>(_ => new UpdatesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
+        services.AddTransient<IMoviesClient>(_ => new MoviesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
 
         return services.BuildServiceProvider();
     }

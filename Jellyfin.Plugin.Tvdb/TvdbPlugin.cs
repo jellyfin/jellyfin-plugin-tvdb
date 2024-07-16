@@ -29,6 +29,11 @@ namespace Jellyfin.Plugin.Tvdb
         public const string CollectionProviderId = "TvdbCollection";
 
         /// <summary>
+        /// Gets the slug provider id.
+        /// </summary>
+        public const string SlugProviderId = "TvdbSlug";
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="TvdbPlugin"/> class.
         /// </summary>
         /// <param name="applicationPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
