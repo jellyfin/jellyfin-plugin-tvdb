@@ -22,21 +22,6 @@ namespace Jellyfin.Plugin.Tvdb.SeasonClient
             _httpClient = httpClient;
         }
 
-        private static System.Text.Json.JsonSerializerOptions CreateSerializerSettings()
-        {
-            var settings = new System.Text.Json.JsonSerializerOptions();
-            var converters = new JsonConverter[] { new JsonStringEnumConverter() };
-            foreach (var converter in converters)
-            {
-                settings.Converters.Add(converter);
-            }
-
-            UpdateJsonSerializerSettings(settings);
-            return settings;
-        }
-
-        static partial void UpdateJsonSerializerSettings(System.Text.Json.JsonSerializerOptions settings);
-
         /// <inheritdoc/>
         public async System.Threading.Tasks.Task<Response99> GetSeasonExtendedWithTranslationsAsync(double id, System.Threading.CancellationToken cancellationToken = default)
         {
@@ -159,9 +144,7 @@ namespace Jellyfin.Plugin.Tvdb.SeasonClient
                         }
                     }
 
-#pragma warning disable CA1305 // Specify IFormatProvider
-                    var converted = System.Convert.ToString(System.Convert.ChangeType(value, System.Enum.GetUnderlyingType(value.GetType()), cultureInfo));
-#pragma warning restore CA1305 // Specify IFormatProvider
+                    var converted = System.Convert.ToString(System.Convert.ChangeType(value, System.Enum.GetUnderlyingType(value.GetType()), cultureInfo), cultureInfo);
                     return converted == null ? string.Empty : converted;
                 }
             }
@@ -183,9 +166,7 @@ namespace Jellyfin.Plugin.Tvdb.SeasonClient
                 var valueTextArray = new string[valueArray.Length];
                 for (var i = 0; i < valueArray.Length; i++)
                 {
-#pragma warning disable CS8604 // Possible null reference argument.
-                    valueTextArray[i] = ConvertToString(valueArray.GetValue(i), cultureInfo);
-#pragma warning restore CS8604 // Possible null reference argument.
+                    valueTextArray[i] = ConvertToString(valueArray.GetValue(i)!, cultureInfo);
                 }
 
                 return string.Join(",", valueTextArray);
