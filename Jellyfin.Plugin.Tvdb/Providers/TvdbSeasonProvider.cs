@@ -132,7 +132,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (ImportSeasonName)
             {
-                item.Name = season.Translations.GetTranslatedNamedOrDefaultIgnoreAlias(id.MetadataLanguage) ?? TvdbUtils.ReturnOriginalLanguageOrDefault(season.Name);
+                item.Name = season.Translations.GetTranslatedNamedOrDefaultIgnoreAliasProperty(id.MetadataLanguage) ?? TvdbUtils.ReturnOriginalLanguageOrDefault(season.Name);
                 item.OriginalTitle = season.Name;
             }
 

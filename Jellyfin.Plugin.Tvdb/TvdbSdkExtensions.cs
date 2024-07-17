@@ -48,7 +48,7 @@ public static class TvdbSdkExtensions
     /// <param name="translations">Available translations.</param>
     /// <param name="language">Requested language.</param>
     /// <returns>Translated Name, or <see langword="null"/>.</returns>
-    public static string? GetTranslatedNamedOrDefaultIgnoreAlias(this TranslationExtended? translations, string? language)
+    public static string? GetTranslatedNamedOrDefaultIgnoreAliasProperty(this TranslationExtended? translations, string? language)
     {
         return translations?
             .NameTranslations?

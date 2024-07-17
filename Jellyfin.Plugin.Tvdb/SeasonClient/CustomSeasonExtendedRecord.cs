@@ -14,7 +14,6 @@ namespace Jellyfin.Plugin.Tvdb.SeasonClient
         public System.Collections.Generic.IReadOnlyList<ArtworkBaseRecord> Artwork { get; set; } = default!;
 
         [JsonPropertyName("companies")]
-
         public Companies Companies { get; set; } = default!;
 
         [JsonPropertyName("episodes")]
