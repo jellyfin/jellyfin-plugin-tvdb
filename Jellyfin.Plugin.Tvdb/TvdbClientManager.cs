@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.Tvdb.Configuration;
+using Jellyfin.Plugin.Tvdb.SeasonClient;
 using MediaBrowser.Common;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Globalization;
@@ -296,21 +297,21 @@ public class TvdbClientManager : IDisposable
     /// <param name="language">Metadata language.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The episode record.</returns>
-    public async Task<SeasonExtendedRecord> GetSeasonByIdAsync(
+    public async Task<CustomSeasonExtendedRecord> GetSeasonByIdAsync(
         int seasonTvdbId,
         string language,
         CancellationToken cancellationToken)
     {
         var key = $"TvdbSeason_{seasonTvdbId.ToString(CultureInfo.InvariantCulture)}";
-        if (_memoryCache.TryGetValue(key, out SeasonExtendedRecord? season)
+        if (_memoryCache.TryGetValue(key, out CustomSeasonExtendedRecord? season)
             && season is not null)
         {
             return season;
         }
 
-        var seasonClient = _serviceProvider.GetRequiredService<ISeasonsClient>();
+        var seasonClient = _serviceProvider.GetRequiredService<IExtendedSeasonClient>();
         await LoginAsync().ConfigureAwait(false);
-        var seasonResult = await seasonClient.GetSeasonExtendedAsync(id: seasonTvdbId, cancellationToken: cancellationToken)
+        var seasonResult = await seasonClient.GetSeasonExtendedWithTranslationsAsync(id: seasonTvdbId, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         _memoryCache.Set(key, seasonResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return seasonResult.Data;
@@ -689,7 +690,7 @@ public class TvdbClientManager : IDisposable
         services.AddTransient<ILoginClient>(_ => new LoginClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<ISearchClient>(_ => new SearchClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<ISeriesClient>(_ => new SeriesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
-        services.AddTransient<ISeasonsClient>(_ => new SeasonsClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
+        services.AddTransient<IExtendedSeasonClient>(_ => new ExtendedSeasonClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<IEpisodesClient>(_ => new EpisodesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<IPeopleClient>(_ => new PeopleClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<IArtworkClient>(_ => new ArtworkClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
