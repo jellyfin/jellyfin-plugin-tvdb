@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.Tvdb.SeasonClient;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
@@ -112,7 +113,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             return MapSeasonToResult(info, seasonInfo);
         }
 
-        private MetadataResult<Season> MapSeasonToResult(SeasonInfo id, SeasonExtendedRecord season)
+        private MetadataResult<Season> MapSeasonToResult(SeasonInfo id, CustomSeasonExtendedRecord season)
         {
             var result = new MetadataResult<Season>
             {
@@ -122,7 +123,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     IndexNumber = id.IndexNumber,
                     // Tvdb uses 3 letter code for language (prob ISO 639-2)
                     // Reverts to OriginalName if no translation is found
-                    // Overview = season.Translations.GetTranslatedOverviewOrDefault(id.MetadataLanguage),
+                    Overview = season.Translations.GetTranslatedOverviewOrDefault(id.MetadataLanguage),
                 }
             };
 
@@ -131,7 +132,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (ImportSeasonName)
             {
-                // item.Name = season.Translations.GetTranslatedNamedOrDefault(id.MetadataLanguage) ?? TvdbUtils.ReturnOriginalLanguageOrDefault(season.Name);
+                item.Name = season.Translations.GetTranslatedNamedOrDefaultIgnoreAlias(id.MetadataLanguage) ?? TvdbUtils.ReturnOriginalLanguageOrDefault(season.Name);
                 item.OriginalTitle = season.Name;
             }
 

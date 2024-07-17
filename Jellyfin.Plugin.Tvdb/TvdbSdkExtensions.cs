@@ -48,6 +48,26 @@ public static class TvdbSdkExtensions
     /// <param name="translations">Available translations.</param>
     /// <param name="language">Requested language.</param>
     /// <returns>Translated Name, or <see langword="null"/>.</returns>
+    public static string? GetTranslatedNamedOrDefaultIgnoreAlias(this TranslationExtended? translations, string? language)
+    {
+        return translations?
+            .NameTranslations?
+            .FirstOrDefault(translation => IsMatch(translation.Language, language))?
+            .Name
+            ?? FallbackLanguages?
+            .Select(lang => translations?
+                .NameTranslations?
+                .FirstOrDefault(translation => IsMatch(translation.Language, lang))?
+                .Name)
+            .FirstOrDefault(name => name != null);
+    }
+
+    /// <summary>
+    /// Get the translated Name, or <see langword="null"/>.
+    /// </summary>
+    /// <param name="translations">Available translations.</param>
+    /// <param name="language">Requested language.</param>
+    /// <returns>Translated Name, or <see langword="null"/>.</returns>
     public static string? GetTranslatedNamedOrDefault(this TranslationSimple? translations, string? language)
     {
         return translations?
