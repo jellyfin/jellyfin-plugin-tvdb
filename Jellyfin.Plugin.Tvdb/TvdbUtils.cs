@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-
+using System.Text;
+using System.Text.RegularExpressions;
 using Tvdb.Sdk;
 
 namespace Jellyfin.Plugin.Tvdb
@@ -68,6 +69,24 @@ namespace Jellyfin.Plugin.Tvdb
         public static string? ReturnOriginalLanguageOrDefault(string? text)
         {
             return FallbackToOriginalLanguage ? text : null;
+        }
+
+        /// <summary>
+        /// Gets the name of the comparable.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <returns>System.String.</returns>
+        public static string GetComparableName(string name)
+        {
+            name = name.ToLowerInvariant();
+            name = name.Normalize(NormalizationForm.FormC);
+            name = name.Replace(", the", string.Empty, StringComparison.OrdinalIgnoreCase)
+                .Replace("the ", " ", StringComparison.OrdinalIgnoreCase)
+                .Replace(" the ", " ", StringComparison.OrdinalIgnoreCase);
+            name = name.Replace("&", " and ", StringComparison.OrdinalIgnoreCase);
+            name = Regex.Replace(name, @"[\p{Lm}\p{Mn}]", string.Empty); // Remove diacritics, etc
+            name = Regex.Replace(name, @"[\W\p{Pc}]+", " "); // Replace sequences of non-word characters and _ with " "
+            return name.Trim();
         }
     }
 }
