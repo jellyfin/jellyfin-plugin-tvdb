@@ -1,8 +1,8 @@
 name: "TheTVDB"
 guid: "a677c0da-fac5-4cde-941a-7134223f14c8"
 imageUrl: "https://repo.jellyfin.org/releases/plugin/images/jellyfin-plugin-tvdb.png"
-version: 13
-targetAbi: "10.9.5.0"
+version: 14
+targetAbi: "10.9.7.0"
 framework: "net8.0"
 owner: "jellyfin"
 overview: "Get TV metadata from TheTvdb"
@@ -13,12 +13,18 @@ category: "Metadata"
 artifacts:
   - "Jellyfin.Plugin.Tvdb.dll"
   - "Tvdb.Sdk.dll"
-changelog: |-
-  - Simplify Series Handling in Missing Episode Provider (#151) @scampower3
-  - Use official instead of default (#149) @scampower3
+changelog: |2-
+  ### Major features and improvements ###
+  - Add Movie support (#164) @scampower3
+
+  ### New features and improvements ###
+  - Season support with extended season client (#165) @scampower3
+  - Add Tvdb Collection Ids (#162) @scampower3
 
   ### Bug Fixes ###
-  - Fix Specials being added during season refresh when IncludeMissingSpecials is disabled (#152) @scampower3
-  - Set DeleteFileLocation = false (#153) @scampower3
-  - Fix Language mapping for unique cases (#145) @scampower3
-  - Get season id according to selected display order. (#147) @scampower3
+  - Skip Characters with person name is null / Handle null RemoteIds (#160) @scampower3
+  - Add season url (#161) @scampower3
+  - Add option to fallback to original language (#156) @scampower3
+
+  ### Dependency updates ###
+  - Update dependency Tvdb.Sdk to v4.7.10 (#158) @renovate
