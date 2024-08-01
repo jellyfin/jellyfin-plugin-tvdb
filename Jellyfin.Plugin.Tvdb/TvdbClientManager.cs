@@ -608,6 +608,56 @@ public class TvdbClientManager : IDisposable
     }
 
     /// <summary>
+    /// Get BoxSet by name.
+    /// </summary>
+    /// <param name="name">BoxSet Name.</param>
+    /// <param name="cancellationToken">Cancellation Token.</param>
+    /// <returns>The box set search result.</returns>
+    public async Task<IReadOnlyList<SearchResult>> GetBoxSetByNameAsync(
+        string name,
+        CancellationToken cancellationToken)
+    {
+        var key = $"TvdbBoxSetSearch_{name}";
+        if (_memoryCache.TryGetValue(key, out IReadOnlyList<SearchResult>? boxSets)
+                                  && boxSets is not null)
+        {
+            return boxSets;
+        }
+
+        var searchClient = _serviceProvider.GetRequiredService<ISearchClient>();
+        await LoginAsync().ConfigureAwait(false);
+        var searchResult = await searchClient.GetSearchResultsAsync(query: name, type: "list", limit: 5, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        _memoryCache.Set(key, searchResult.Data, TimeSpan.FromHours(CacheDurationInHours));
+        return searchResult.Data;
+    }
+
+    /// <summary>
+    /// Get BoxSet by remoteId.
+    /// </summary>
+    /// <param name="tvdbId">The BoxSet tvdb id.</param>
+    /// <param name="cancellationToken">Cancellation Token.</param>
+    /// <returns>The box set response.</returns>
+    public async Task<ListExtendedRecord> GetBoxSetExtendedByIdAsync(
+        int tvdbId,
+        CancellationToken cancellationToken)
+    {
+        var key = $"TvdbBoxSet_{tvdbId.ToString(CultureInfo.InvariantCulture)}";
+        if (_memoryCache.TryGetValue(key, out ListExtendedRecord? boxSet)
+                                  && boxSet is not null)
+        {
+            return boxSet;
+        }
+
+        var boxSetClient = _serviceProvider.GetRequiredService<IListsClient>();
+        await LoginAsync().ConfigureAwait(false);
+        var boxSetResult = await boxSetClient.GetListExtendedAsync(id: tvdbId, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        _memoryCache.Set(key, boxSetResult.Data, TimeSpan.FromHours(CacheDurationInHours));
+        return boxSetResult.Data;
+    }
+
+    /// <summary>
     /// Gets updates from tvdb since a given time. No caching.
     /// </summary>
     /// <param name="fromTime">From time in unix timestamp.</param>
@@ -698,6 +748,7 @@ public class TvdbClientManager : IDisposable
         services.AddTransient<ILanguagesClient>(_ => new LanguagesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<IUpdatesClient>(_ => new UpdatesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<IMoviesClient>(_ => new MoviesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
+        services.AddTransient<IListsClient>(_ => new ListsClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
 
         return services.BuildServiceProvider();
     }
