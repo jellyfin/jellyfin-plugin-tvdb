@@ -9,7 +9,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
     public class TvdbMovieSlugExternalId : IExternalId
     {
         /// <inheritdoc />
-        public string ProviderName => TvdbPlugin.ProviderName + " Slug";
+        public string ProviderName => TvdbPlugin.ProviderName;
 
         /// <inheritdoc />
         public string Key => TvdbPlugin.SlugProviderId;
