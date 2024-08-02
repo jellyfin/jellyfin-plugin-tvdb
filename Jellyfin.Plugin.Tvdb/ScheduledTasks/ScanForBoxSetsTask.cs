@@ -130,6 +130,11 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
 
         private async Task AddItemToCollection(IReadOnlyList<BaseItem> items, string collectionId, BoxSet? boxSet)
         {
+            if (items.Count < 2)
+            {
+                return;
+            }
+
             if (boxSet == null)
             {
                 var collectionName = await GetBoxSetName(collectionId).ConfigureAwait(false);
