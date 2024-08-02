@@ -11,7 +11,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
     public class TvdbBoxSetExternalId : IExternalId
     {
         /// <inheritdoc />
-        public string ProviderName => TvdbPlugin.ProviderName;
+        public string ProviderName => TvdbPlugin.ProviderName + " Numerical";
 
         /// <inheritdoc />
         public string Key => TvdbPlugin.ProviderId;

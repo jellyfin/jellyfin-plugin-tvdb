@@ -220,7 +220,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             // Tvdb uses 3 letter code for language (prob ISO 639-2)
             // Reverts to OriginalName if no translation is found
             // boxSet.Name = tvdbBoxSet.Translations.GetTranslatedNamedOrDefault(info.MetadataLanguage) ?? TvdbUtils.ReturnOriginalLanguageOrDefault(tvdbMovie.Name);
+            boxSet.Name = tvdbBoxSet.Name;
             // boxSet.Overview = tvdbBoxSet.Translations.GetTranslatedOverviewOrDefault(info.MetadataLanguage);
+            boxSet.Overview = tvdbBoxSet.Overview;
             boxSet.OriginalTitle = tvdbBoxSet.Name;
             result.ResultLanguage = info.MetadataLanguage;
             // Attempts to default to USA if not found
