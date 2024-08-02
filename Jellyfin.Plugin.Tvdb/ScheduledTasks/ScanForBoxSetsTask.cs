@@ -61,7 +61,7 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
         public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Starting TMDbBoxSets refresh library task");
-            await ScanForBoxSets(progress).ConfigureAwait(false);
+            await ScanForBoxSets(progress, cancellationToken).ConfigureAwait(false);
             _logger.LogInformation("TMDbBoxSets refresh library task finished");
         }
 
@@ -71,7 +71,7 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
             return Enumerable.Empty<TaskTriggerInfo>();
         }
 
-        private async Task ScanForBoxSets(IProgress<double> progress)
+        private async Task ScanForBoxSets(IProgress<double> progress, CancellationToken cancellationToken)
         {
             var items = GetItemsWithCollectionId();
             _logger.LogInformation("Found {0} items with tvdb collection id", items.Count);
@@ -92,7 +92,7 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
                 progress.Report(100.0 * index / itemsByCollectionId.Count);
                 var collectionId = itemCollection.Key;
                 var boxSet = boxSets.FirstOrDefault(b => b.GetProviderId(TvdbPlugin.ProviderId) == collectionId);
-                await AddItemToCollection(itemCollection.Select(i => i.Item).ToList(), collectionId, boxSet).ConfigureAwait(false);
+                await AddItemToCollection(itemCollection.Select(i => i.Item).ToList(), collectionId, boxSet, cancellationToken).ConfigureAwait(false);
                 index++;
             }
 
@@ -128,7 +128,7 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
             }).OfType<BoxSet>().ToList();
         }
 
-        private async Task AddItemToCollection(IReadOnlyList<BaseItem> items, string collectionId, BoxSet? boxSet)
+        private async Task AddItemToCollection(IReadOnlyList<BaseItem> items, string collectionId, BoxSet? boxSet, CancellationToken cancellationToken)
         {
             if (items.Count < 2)
             {
@@ -137,7 +137,7 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
 
             if (boxSet == null)
             {
-                var collectionName = await GetBoxSetName(collectionId).ConfigureAwait(false);
+                var collectionName = await GetBoxSetName(collectionId, cancellationToken).ConfigureAwait(false);
                 boxSet = await _collectionManager.CreateCollectionAsync(new CollectionCreationOptions
                 {
                     Name = collectionName,
@@ -161,10 +161,10 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
             await _collectionManager.AddToCollectionAsync(boxSet.Id, itemIds).ConfigureAwait(false);
         }
 
-        private async Task<string> GetBoxSetName(string collectionId)
+        private async Task<string> GetBoxSetName(string collectionId, CancellationToken cancellationToken)
         {
             var collectionIdInt = int.Parse(collectionId, CultureInfo.InvariantCulture);
-            var collection = await _tvdbClientManager.GetBoxSetExtendedByIdAsync(collectionIdInt, CancellationToken.None).ConfigureAwait(false);
+            var collection = await _tvdbClientManager.GetBoxSetExtendedByIdAsync(collectionIdInt, cancellationToken).ConfigureAwait(false);
             return collection.Name;
         }
     }
