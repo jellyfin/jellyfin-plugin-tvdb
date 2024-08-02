@@ -25,7 +25,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<TvdbEpisodeProvider> _logger;
-        private readonly ILibraryManager _libraryManager;
         private readonly TvdbClientManager _tvdbClientManager;
 
         /// <summary>
@@ -33,13 +32,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// </summary>
         /// <param name="httpClientFactory">Instance of <see cref="IHttpClientFactory"/>.</param>
         /// <param name="logger">Instance of <see cref="ILogger{TvdbEpisodeProvider}"/>.</param>
-        /// <param name="libraryManager">Instance of <see cref="ILibraryManager"/>.</param>
         /// <param name="tvdbClientManager">Instance of <see cref="TvdbClientManager"/>.</param>
-        public TvdbBoxSetImageProvider(IHttpClientFactory httpClientFactory, ILogger<TvdbEpisodeProvider> logger, ILibraryManager libraryManager, TvdbClientManager tvdbClientManager)
+        public TvdbBoxSetImageProvider(IHttpClientFactory httpClientFactory, ILogger<TvdbEpisodeProvider> logger, TvdbClientManager tvdbClientManager)
         {
             _httpClientFactory = httpClientFactory;
             _logger = logger;
-            _libraryManager = libraryManager;
             _tvdbClientManager = tvdbClientManager;
         }
 
