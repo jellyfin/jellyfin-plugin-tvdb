@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
-using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
 using Tvdb.Sdk;
@@ -108,7 +106,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "No movie results found for {Name}", comparableName);
+                _logger.LogError(e, "No BoxSet results found for {Name}", comparableName);
                 return new List<RemoteSearchResult>();
             }
 
@@ -132,17 +130,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 if (!string.IsNullOrEmpty(boxSetSearchResult.Image_url))
                 {
                     remoteSearchResult.ImageUrl = boxSetSearchResult.Image_url;
-                }
-
-                try
-                {
-                    var movieResult =
-                        await _tvdbClientManager.GetBoxSetExtendedByIdAsync(Convert.ToInt32(boxSetSearchResult.Tvdb_id, CultureInfo.InvariantCulture), cancellationToken)
-                            .ConfigureAwait(false);
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Unable to retrieve movie with id {TvdbId}:{MovieName}", boxSetSearchResult.Tvdb_id, boxSetSearchResult.Name);
                 }
 
                 remoteSearchResult.SetTvdbId(boxSetSearchResult.Tvdb_id);
@@ -189,7 +176,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (string.IsNullOrWhiteSpace(tvdbIdTxt))
             {
-                _logger.LogWarning("No valid tvdb id found for movie {TvdbId}:{MovieName}", tvdbIdTxt, boxSetInfo.Name);
+                _logger.LogWarning("No valid tvdb id found for BoxSet {TvdbId}:{BoxSetName}", tvdbIdTxt, boxSetInfo.Name);
                 return;
             }
 
@@ -201,14 +188,10 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                         .GetBoxSetExtendedByIdAsync(tvdbId, cancellationToken)
                         .ConfigureAwait(false);
                 MapBoxSetToResult(result, boxSetResult, boxSetInfo);
-
-                result.ResetPeople();
-
-                List<Character> people = new List<Character>();
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Failed to retrieve movie with id {TvdbId}:{MovieName}", tvdbId, boxSetInfo.Name);
+                _logger.LogError(e, "Failed to retrieve BoxSet with id {TvdbId}:{BoxSetName}", tvdbId, boxSetInfo.Name);
                 return;
             }
         }
