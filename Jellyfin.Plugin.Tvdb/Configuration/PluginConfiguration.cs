@@ -42,15 +42,6 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         }
 
         /// <summary>
-        /// Gets or sets the metadata update in hours.
-        /// </summary>
-        public int MetadataUpdateInHours
-        {
-            get => _metadataUpdateInHours;
-            set => _metadataUpdateInHours = value < 1 ? 1 : value;
-        }
-
-        /// <summary>
         /// Gets or sets the fallback languages.
         /// </summary>
         public string FallbackLanguages { get; set; } = string.Empty;
@@ -69,5 +60,34 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         /// Gets or sets a value indicating whether to fallback to original language.
         /// </summary>
         public bool FallbackToOriginalLanguage { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets the metadata update in hours for the Check for Metadata Updates Scheduled Task.
+        /// </summary>
+        public int MetadataUpdateInHours
+        {
+            get => _metadataUpdateInHours;
+            set => _metadataUpdateInHours = value < 1 ? 1 : value;
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to update series for the Check for Metadata Updates Scheduled Task.
+        /// </summary>
+        public bool UpdateSeriesScheduledTask { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to update season for the Check for Metadata Updates Scheduled Task.
+        /// </summary>
+        public bool UpdateSeasonScheduledTask { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to update episode for the Check for Metadata Updates Scheduled Task.
+        /// </summary>
+        public bool UpdateEpisodeScheduledTask { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to update movie for the Check for Metadata Updates Scheduled Task.
+        /// </summary>
+        public bool UpdateMovieScheduledTask { get; set; } = false;
     }
 }
