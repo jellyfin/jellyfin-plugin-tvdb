@@ -62,6 +62,14 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
 
         private static int MetadataUpdateInHours => TvdbPlugin.Instance?.Configuration.MetadataUpdateInHours * -1 ?? -1;
 
+        private static bool UpdateSeriesScheduledTask => TvdbPlugin.Instance?.Configuration.UpdateSeriesScheduledTask ?? false;
+
+        private static bool UpdateSeasonScheduledTask => TvdbPlugin.Instance?.Configuration.UpdateSeasonScheduledTask ?? false;
+
+        private static bool UpdateEpisodeScheduledTask => TvdbPlugin.Instance?.Configuration.UpdateEpisodeScheduledTask ?? false;
+
+        private static bool UpdateMovieScheduledTask => TvdbPlugin.Instance?.Configuration.UpdateMovieScheduledTask ?? false;
+
         /// <inheritdoc/>
         public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         {
@@ -105,10 +113,31 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
         private async Task<List<BaseItem>> GetItemsUpdated(CancellationToken cancellationToken)
         {
             double fromTime = DateTimeOffset.UtcNow.AddHours(MetadataUpdateInHours).ToUnixTimeSeconds();
-            IReadOnlyList<EntityUpdate> episodeUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Episodes, Action.Update).ConfigureAwait(false);
-            IReadOnlyList<EntityUpdate> seriesUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Series, Action.Update).ConfigureAwait(false);
+            List<EntityUpdate> allUpdates = new List<EntityUpdate>();
 
-            var allUpdates = episodeUpdates.Concat(seriesUpdates);
+            if (UpdateSeriesScheduledTask)
+            {
+                var seriesUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Series, Action.Update).ConfigureAwait(false);
+                allUpdates.AddRange(seriesUpdates);
+            }
+
+            if (UpdateSeasonScheduledTask)
+            {
+                var seasonUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Seasons, Action.Update).ConfigureAwait(false);
+                allUpdates.AddRange(seasonUpdates);
+            }
+
+            if (UpdateEpisodeScheduledTask)
+            {
+                var episodeUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Episodes, Action.Update).ConfigureAwait(false);
+                allUpdates.AddRange(episodeUpdates);
+            }
+
+            if (UpdateMovieScheduledTask)
+            {
+                var movieUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Movies, Action.Update).ConfigureAwait(false);
+                allUpdates.AddRange(movieUpdates);
+            }
 
             string providerId = MetadataProvider.Tvdb.ToString();
 

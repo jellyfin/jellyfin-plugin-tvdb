@@ -36,13 +36,6 @@
                         </div>
                     </div>
                     <div class="inputContainer">
-                        <label for="metadataUpdateInHours">Metadata Update In Hours:</label>
-                        <input type="number" id="metadataUpdateInHours" required="required" is="emby-input" />
-                        <div class="fieldDescription">
-                            How many hours ago should the metadata be last updated on TheTvdb. Should be greater than the value of cache time in hours.
-                        </div>
-                    </div>
-                    <div class="inputContainer">
                         <label for="fallbackLanguages">Fallback Languages:</label>
                         <input type="text" id="fallbackLanguages" is="emby-input" />
                         <div class="fieldDescription">
@@ -62,6 +55,32 @@
                         <span>Fallback to Original Language (Last resort if other fallback languages fails)</span>
                     </label>
                     <br />
+                    <div class="sectionTitleContainer flex align-items-center">
+                        <h2 class="sectionTitle">Check for Metadata Updates Scheduled Task Settings:</h2>
+                    </div>
+                    <div class="inputContainer">
+                        <label for="metadataUpdateInHours">Metadata Update In Hours:</label>
+                        <input type="number" id="metadataUpdateInHours" required="required" is="emby-input" />
+                        <div class="fieldDescription">
+                            How many hours ago should the metadata be last updated on TheTvdb. Should be greater than the value of cache time in hours.
+                        </div>
+                    </div>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="updateSeriesScheduledTask" />
+                        <span>Update Series</span>
+                    </label>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="updateSeasonScheduledTask" />
+                        <span>Update Season</span>
+                    </label>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="updateEpisodeScheduledTask" />
+                        <span>Update Episode</span>
+                    </label>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="updateMovieScheduledTask" />
+                        <span>Update Movie</span>
+                    </label>
                     <div>
                         <button is="emby-button" type="submit" data-theme="b" class="raised button-submit block">
                             <span>Save</span>
@@ -82,11 +101,17 @@
                     document.getElementById('txtTvdbSubscriberPIN').value = config.SubscriberPIN || '';
                     document.getElementById('cacheDurationInHours').value = config.CacheDurationInHours;
                     document.getElementById('cacheDurationInDays').value = config.CacheDurationInDays;
-                    document.getElementById('metadataUpdateInHours').value = config.MetadataUpdateInHours;
                     document.getElementById('fallbackLanguages').value = config.FallbackLanguages;
                     document.getElementById('importSeasonName').checked = config.ImportSeasonName
                     document.getElementById('includeMissingSpecials').checked = config.IncludeMissingSpecials;
                     document.getElementById('fallbackToOriginalLanguage').checked = config.FallbackToOriginalLanguage;
+
+                    // Check for Metadata Updates Scheduled Task Settings
+                    document.getElementById('metadataUpdateInHours').value = config.MetadataUpdateInHours;
+                    document.getElementById('updateSeriesScheduledTask').checked = config.UpdateSeriesScheduledTask;
+                    document.getElementById('updateSeasonScheduledTask').checked = config.UpdateSeasonScheduledTask;
+                    document.getElementById('updateEpisodeScheduledTask').checked = config.UpdateEpisodeScheduledTask;
+                    document.getElementById('updateMovieScheduledTask').checked = config.UpdateMovieScheduledTask;
                     Dashboard.hideLoadingMsg();
                 });
             },
@@ -98,11 +123,18 @@
                     config.SubscriberPIN = document.getElementById('txtTvdbSubscriberPIN').value;
                     config.CacheDurationInHours = document.getElementById('cacheDurationInHours').value;
                     config.CacheDurationInDays = document.getElementById('cacheDurationInDays').value;
-                    config.MetadataUpdateInHours = document.getElementById('metadataUpdateInHours').value;
                     config.FallbackLanguages = document.getElementById('fallbackLanguages').value;
                     config.ImportSeasonName = document.getElementById('importSeasonName').checked;
                     config.IncludeMissingSpecials = document.getElementById('includeMissingSpecials').checked;
                     config.FallbackToOriginalLanguage = document.getElementById('fallbackToOriginalLanguage').checked;
+
+                    //Check for Metadata Updates Scheduled Task Settings
+                    config.MetadataUpdateInHours = document.getElementById('metadataUpdateInHours').value;
+                    config.UpdateSeriesScheduledTask = document.getElementById('updateSeriesScheduledTask').checked;
+                    config.UpdateSeasonScheduledTask = document.getElementById('updateSeasonScheduledTask').checked;
+                    config.UpdateEpisodeScheduledTask = document.getElementById('updateEpisodeScheduledTask').checked;
+                    config.UpdateMovieScheduledTask = document.getElementById('updateMovieScheduledTask').checked;
+
                     ApiClient.updatePluginConfiguration(TvdbPluginConfiguration.uniquePluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
                     });
