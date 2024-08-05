@@ -395,7 +395,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             movie.OriginalTitle = tvdbMovie.Name;
             result.ResultLanguage = info.MetadataLanguage;
             // Attempts to default to USA if not found
-            movie.OfficialRating = tvdbMovie.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, TvdbCultureInfo.GetCountryInfo(info.MetadataCountryCode)?.ThreeLetterISORegionName, StringComparison.OrdinalIgnoreCase))?.Name ?? tvdbMovie.ContentRatings.FirstOrDefault(x => string.Equals(x.Country, "usa", StringComparison.OrdinalIgnoreCase))?.Name;
+            movie.OfficialRating = tvdbMovie.ContentRatings?.FirstOrDefault(x => string.Equals(x.Country, TvdbCultureInfo.GetCountryInfo(info.MetadataCountryCode)?.ThreeLetterISORegionName, StringComparison.OrdinalIgnoreCase))?.Name ?? tvdbMovie.ContentRatings?.FirstOrDefault(x => string.Equals(x.Country, "usa", StringComparison.OrdinalIgnoreCase))?.Name;
 
             var collectionIds = tvdbMovie.Lists.Where(x => x.IsOfficial is true)
                 .Select(x => x.Id?.ToString(CultureInfo.InvariantCulture))
