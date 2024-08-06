@@ -67,7 +67,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var personTvdbIdInt = int.Parse(personTvdbId!, CultureInfo.InvariantCulture);
             try
             {
-                var personResult = await _tvdbClientManager.GetActorExtendedAsync(personTvdbIdInt, cancellationToken).ConfigureAwait(false);
+                var personResult = await _tvdbClientManager.GetActorExtendedByIdAsync(personTvdbIdInt, cancellationToken).ConfigureAwait(false);
                 if (personResult.Image is null)
                 {
                     return Enumerable.Empty<RemoteImageInfo>();
