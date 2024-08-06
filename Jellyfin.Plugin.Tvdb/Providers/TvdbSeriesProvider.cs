@@ -389,12 +389,17 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 {
                     Type = PersonKind.Actor,
                     Name = (actor.PersonName ?? string.Empty).Trim(),
-                    Role = actor.Name
+                    Role = actor.Name,
                 };
 
                 if (!string.IsNullOrEmpty(actor.PersonImgURL))
                 {
                     personInfo.ImageUrl = actor.PersonImgURL;
+                }
+
+                if (actor.PeopleId.HasValue)
+                {
+                    personInfo.SetTvdbId(actor.PeopleId.Value);
                 }
 
                 if (!string.IsNullOrWhiteSpace(personInfo.Name))
