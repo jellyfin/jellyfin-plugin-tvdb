@@ -375,16 +375,14 @@ public class TvdbClientManager : IDisposable
     /// Get actors by tvdb id.
     /// </summary>
     /// <param name="tvdbId">People Tvdb id.</param>
-    /// <param name="language">Metadata language.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The actors attached to the id.</returns>
-    public async Task<PeopleBaseRecord> GetActorAsync(
+    public async Task<PeopleExtendedRecord> GetActorExtendedAsync(
         int tvdbId,
-        string language,
         CancellationToken cancellationToken)
     {
         var key = $"TvdbPeople_{tvdbId.ToString(CultureInfo.InvariantCulture)}";
-        if (_memoryCache.TryGetValue(key, out PeopleBaseRecord? people)
+        if (_memoryCache.TryGetValue(key, out PeopleExtendedRecord? people)
             && people is not null)
         {
             return people;
@@ -392,7 +390,7 @@ public class TvdbClientManager : IDisposable
 
         var peopleClient = _serviceProvider.GetRequiredService<IPeopleClient>();
         await LoginAsync().ConfigureAwait(false);
-        var peopleResult = await peopleClient.GetPeopleBaseAsync(id: tvdbId, cancellationToken: cancellationToken)
+        var peopleResult = await peopleClient.GetPeopleExtendedAsync(id: tvdbId, meta: Meta3.Translations, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         _memoryCache.Set(key, peopleResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return peopleResult.Data;
