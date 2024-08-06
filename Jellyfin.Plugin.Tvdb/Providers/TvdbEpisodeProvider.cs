@@ -280,40 +280,31 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                         continue;
                     }
 
+                    var person = new PersonInfo
+                    {
+                        Name = currentActor.PersonName,
+                    };
+                    person.SetTvdbId(currentActor.PeopleId);
                     if (string.Equals(currentActor.PeopleType, "Actor", StringComparison.OrdinalIgnoreCase))
                     {
-                        result.AddPerson(new PersonInfo
-                        {
-                            Type = PersonKind.Actor,
-                            Name = currentActor.PersonName,
-                            Role = currentActor.Name
-                        });
+                        person.Type = PersonKind.Actor;
+                        person.Role = currentActor.Name;
                     }
                     else if (string.Equals(currentActor.PeopleType, "Director", StringComparison.OrdinalIgnoreCase))
                     {
-                        result.AddPerson(new PersonInfo
-                        {
-                            Type = PersonKind.Director,
-                            Name = currentActor.PersonName
-                        });
+                        person.Type = PersonKind.Director;
                     }
                     else if (string.Equals(currentActor.PeopleType, "Writer", StringComparison.OrdinalIgnoreCase))
                     {
-                        result.AddPerson(new PersonInfo
-                        {
-                            Type = PersonKind.Writer,
-                            Name = currentActor.PersonName
-                        });
+                        person.Type = PersonKind.Writer;
                     }
                     else if (string.Equals(currentActor.PeopleType, "Guest Star", StringComparison.OrdinalIgnoreCase))
                     {
-                        result.AddPerson(new PersonInfo
-                        {
-                            Type = PersonKind.GuestStar,
-                            Name = currentActor.PersonName,
-                            Role = currentActor.Name
-                        });
+                        person.Type = PersonKind.GuestStar;
+                        person.Role = currentActor.Name;
                     }
+
+                    result.AddPerson(person);
                 }
             }
 
