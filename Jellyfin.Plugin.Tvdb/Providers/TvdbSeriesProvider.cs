@@ -26,7 +26,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
     /// </summary>
     public class TvdbSeriesProvider : IRemoteMetadataProvider<Series, SeriesInfo>
     {
-        private const int MaxSearchResults = 10;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<TvdbSeriesProvider> _logger;
         private readonly ILibraryManager _libraryManager;
@@ -377,7 +376,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 .ThenBy(i => i.Item1.Any(title => title.Contains(comparableName, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
                 .ThenBy(i => list.IndexOf(i))
                 .Select(i => i.Item2)
-                .Take(MaxSearchResults) // TVDB returns a lot of unrelated results
                 .ToList();
         }
 
