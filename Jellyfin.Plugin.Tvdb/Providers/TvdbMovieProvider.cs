@@ -453,6 +453,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     personInfo.ImageUrl = actor.PersonImgURL;
                 }
 
+                if (actor.PeopleId.HasValue)
+                {
+                    personInfo.SetTvdbId(actor.PeopleId.Value);
+                }
+
                 if (!string.IsNullOrWhiteSpace(personInfo.Name))
                 {
                     result.AddPerson(personInfo);

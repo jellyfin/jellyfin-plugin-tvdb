@@ -372,19 +372,67 @@ public class TvdbClientManager : IDisposable
     }
 
     /// <summary>
+    /// Gets Actor by name.
+    /// </summary>
+    /// <param name="name">Name.</param>
+    /// <param name="cancellationToken">Cancellation Token.</param>
+    /// <returns>Search Results.</returns>
+    public async Task<IReadOnlyList<SearchResult>> GetActorByNameAsync(
+        string name,
+        CancellationToken cancellationToken)
+    {
+        var key = $"TvdbPeopleSearch_{name}";
+        if (_memoryCache.TryGetValue(key, out IReadOnlyList<SearchResult>? people)
+            && people is not null)
+        {
+            return people;
+        }
+
+        var searchClient = _serviceProvider.GetRequiredService<ISearchClient>();
+        await LoginAsync().ConfigureAwait(false);
+        var searchResult = await searchClient.GetSearchResultsAsync(query: name, type: "person", limit: 5, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        _memoryCache.Set(key, searchResult.Data, TimeSpan.FromHours(CacheDurationInHours));
+        return searchResult.Data;
+    }
+
+    /// <summary>
+    /// Get Actor by remoteId.
+    /// </summary>
+    /// <param name="remoteId">Remote Id.</param>
+    /// <param name="cancellationToken">Cancellation Token.</param>
+    /// <returns>Searched results.</returns>
+    public async Task<IReadOnlyList<SearchByRemoteIdResult>> GetActorByRemoteIdAsync(
+        string remoteId,
+        CancellationToken cancellationToken)
+    {
+        var key = $"TvdbPeopleRemoteId_{remoteId}";
+        if (_memoryCache.TryGetValue(key, out IReadOnlyList<SearchByRemoteIdResult>? people)
+            && people is not null)
+        {
+            return people;
+        }
+
+        var searchClient = _serviceProvider.GetRequiredService<ISearchClient>();
+        await LoginAsync().ConfigureAwait(false);
+        var searchResult = await searchClient.GetSearchResultsByRemoteIdAsync(remoteId: remoteId, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        _memoryCache.Set(key, searchResult.Data, TimeSpan.FromHours(CacheDurationInHours));
+        return searchResult.Data;
+    }
+
+    /// <summary>
     /// Get actors by tvdb id.
     /// </summary>
     /// <param name="tvdbId">People Tvdb id.</param>
-    /// <param name="language">Metadata language.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The actors attached to the id.</returns>
-    public async Task<PeopleBaseRecord> GetActorAsync(
+    public async Task<PeopleExtendedRecord> GetActorExtendedByIdAsync(
         int tvdbId,
-        string language,
         CancellationToken cancellationToken)
     {
         var key = $"TvdbPeople_{tvdbId.ToString(CultureInfo.InvariantCulture)}";
-        if (_memoryCache.TryGetValue(key, out PeopleBaseRecord? people)
+        if (_memoryCache.TryGetValue(key, out PeopleExtendedRecord? people)
             && people is not null)
         {
             return people;
@@ -392,7 +440,7 @@ public class TvdbClientManager : IDisposable
 
         var peopleClient = _serviceProvider.GetRequiredService<IPeopleClient>();
         await LoginAsync().ConfigureAwait(false);
-        var peopleResult = await peopleClient.GetPeopleBaseAsync(id: tvdbId, cancellationToken: cancellationToken)
+        var peopleResult = await peopleClient.GetPeopleExtendedAsync(id: tvdbId, meta: Meta3.Translations, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         _memoryCache.Set(key, peopleResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return peopleResult.Data;
