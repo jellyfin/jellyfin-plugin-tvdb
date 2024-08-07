@@ -73,15 +73,15 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     return Enumerable.Empty<RemoteImageInfo>();
                 }
 
-                return new List<RemoteImageInfo>
-                {
+                return
+                [
                     new RemoteImageInfo
                     {
                         ProviderName = Name,
                         Type = ImageType.Primary,
                         Url = personResult.Image,
                     },
-                };
+                ];
             }
             catch (Exception ex)
             {
