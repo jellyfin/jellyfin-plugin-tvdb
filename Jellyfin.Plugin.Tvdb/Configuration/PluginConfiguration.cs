@@ -52,14 +52,19 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         public bool ImportSeasonName { get; set; } = false;
 
         /// <summary>
-        /// Gets or sets a value indicating whether to include missing specials.
+        /// Gets or sets a value indicating whether to fallback to original language.
+        /// </summary>
+        public bool FallbackToOriginalLanguage { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to include missing specials for Missing Episode Provider.
         /// </summary>
         public bool IncludeMissingSpecials { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets a value indicating whether to fallback to original language.
+        /// Gets or sets a value indicating whether to remove all missing episodes on refresh for Missing Episode Provider.
         /// </summary>
-        public bool FallbackToOriginalLanguage { get; set; } = false;
+        public bool RemoveAllMissingEpisodesOnRefresh { get; set; } = false;
 
         /// <summary>
         /// Gets or sets the metadata update in hours for the Check for Metadata Updates Scheduled Task.
@@ -89,5 +94,6 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         /// Gets or sets a value indicating whether to update movie for the Check for Metadata Updates Scheduled Task.
         /// </summary>
         public bool UpdateMovieScheduledTask { get; set; } = false;
+
     }
 }
