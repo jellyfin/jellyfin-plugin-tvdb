@@ -64,6 +64,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private static bool IncludeMissingSpecials => TvdbPlugin.Instance?.Configuration.IncludeMissingSpecials ?? false;
 
+        private static bool RemoveAllMissingEpisodesOnRefresh => TvdbPlugin.Instance?.Configuration.RemoveAllMissingEpisodesOnRefresh ?? false;
+
         private static bool EpisodeExists(EpisodeBaseRecord episodeRecord, IReadOnlyList<Episode> existingEpisodes)
         {
             return existingEpisodes.Any(episode => EpisodeEquals(episode, episodeRecord));
@@ -146,7 +148,15 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
             }
 
-            var allEpisodes = await GetAllEpisodes(tvdbId, series.DisplayOrder, series.GetPreferredMetadataLanguage()).ConfigureAwait(false);
+            IReadOnlyList<EpisodeBaseRecord>? allEpisodes = null;
+            if (RemoveAllMissingEpisodesOnRefresh)
+            {
+                allEpisodes = Enumerable.Empty<EpisodeBaseRecord>().ToList();
+            }
+            else
+            {
+                allEpisodes = await GetAllEpisodes(tvdbId, series.DisplayOrder, series.GetPreferredMetadataLanguage()).ConfigureAwait(false);
+            }
 
             if (!IncludeMissingSpecials)
             {
@@ -189,8 +199,16 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             var tvdbId = series.GetTvdbId();
-            var allEpisodes = allEpisodesRemote ?? await GetAllEpisodes(tvdbId, series.DisplayOrder, season.GetPreferredMetadataLanguage())
-                .ConfigureAwait(false);
+            IReadOnlyList<EpisodeBaseRecord>? allEpisodes = null;
+            if (RemoveAllMissingEpisodesOnRefresh)
+            {
+                allEpisodes = Enumerable.Empty<EpisodeBaseRecord>().ToList();
+            }
+            else
+            {
+                allEpisodes = allEpisodesRemote ?? await GetAllEpisodes(tvdbId, series.DisplayOrder, season.GetPreferredMetadataLanguage())
+                    .ConfigureAwait(false);
+            }
 
             // Skip if called from HandleSeries since it will be filtered there, allEpisodesRemote will not be null when called from HandleSeries
             // Remove specials if IncludeMissingSpecials is false
