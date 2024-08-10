@@ -148,15 +148,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
             }
 
-            IReadOnlyList<EpisodeBaseRecord>? allEpisodes = null;
-            if (RemoveAllMissingEpisodesOnRefresh)
-            {
-                allEpisodes = Enumerable.Empty<EpisodeBaseRecord>().ToList();
-            }
-            else
-            {
-                allEpisodes = await GetAllEpisodes(tvdbId, series.DisplayOrder, series.GetPreferredMetadataLanguage()).ConfigureAwait(false);
-            }
+            var allEpisodes = RemoveAllMissingEpisodesOnRefresh ?
+                Enumerable.Empty<EpisodeBaseRecord>().ToList() :
+                await GetAllEpisodes(tvdbId, series.DisplayOrder, series.GetPreferredMetadataLanguage()).ConfigureAwait(false);
 
             if (!IncludeMissingSpecials)
             {
@@ -199,17 +193,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             var tvdbId = series.GetTvdbId();
-            IReadOnlyList<EpisodeBaseRecord>? allEpisodes = null;
-            if (RemoveAllMissingEpisodesOnRefresh)
-            {
-                allEpisodes = Enumerable.Empty<EpisodeBaseRecord>().ToList();
-            }
-            else
-            {
-                allEpisodes = allEpisodesRemote ?? await GetAllEpisodes(tvdbId, series.DisplayOrder, season.GetPreferredMetadataLanguage())
+            var allEpisodes = RemoveAllMissingEpisodesOnRefresh ?
+                Enumerable.Empty<EpisodeBaseRecord>().ToList() :
+                allEpisodesRemote ??
+                await GetAllEpisodes(tvdbId, series.DisplayOrder, season.GetPreferredMetadataLanguage())
                     .ConfigureAwait(false);
-            }
-
             // Skip if called from HandleSeries since it will be filtered there, allEpisodesRemote will not be null when called from HandleSeries
             // Remove specials if IncludeMissingSpecials is false
             if (allEpisodesRemote is null && !IncludeMissingSpecials)
