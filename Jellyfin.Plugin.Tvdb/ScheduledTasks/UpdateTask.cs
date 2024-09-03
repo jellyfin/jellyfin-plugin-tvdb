@@ -110,7 +110,7 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
         /// Gets all items that have been updated.
         /// </summary>
         /// <returns>List of items that have been updated.</returns>
-        private async Task<List<BaseItem>> GetItemsUpdated(CancellationToken cancellationToken)
+        private async Task<HashSet<BaseItem>> GetItemsUpdated(CancellationToken cancellationToken)
         {
             double fromTime = DateTimeOffset.UtcNow.AddHours(MetadataUpdateInHours).ToUnixTimeSeconds();
             List<EntityUpdate> allUpdates = new List<EntityUpdate>();
@@ -141,7 +141,7 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
 
             string providerId = MetadataProvider.Tvdb.ToString();
 
-            List<BaseItem> toUpdateItems = new List<BaseItem>();
+            HashSet<BaseItem> toUpdateItems = new HashSet<BaseItem>();
 
             Dictionary<string, string> providerIdPair = new Dictionary<string, string>() { { providerId, string.Empty } };
             InternalItemsQuery query = new InternalItemsQuery();
@@ -151,10 +151,7 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
                 providerIdPair[providerId] = update.RecordId!.Value.ToString(CultureInfo.InvariantCulture);
                 query.HasAnyProviderId = providerIdPair;
                 List<BaseItem> itemList = _libraryManager.GetItemList(query);
-                if (itemList.Count > 0 && !toUpdateItems.Contains(itemList[0]))
-                {
-                    toUpdateItems.Add(itemList[0]);
-                }
+                toUpdateItems.UnionWith(itemList);
             }
 
             return toUpdateItems;
