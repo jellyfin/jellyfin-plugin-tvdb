@@ -151,10 +151,8 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
                 providerIdPair[providerId] = update.RecordId!.Value.ToString(CultureInfo.InvariantCulture);
                 query.HasAnyProviderId = providerIdPair;
                 List<BaseItem> itemList = _libraryManager.GetItemList(query);
-                if (itemList.Count > 0 && !toUpdateItems.Contains(itemList[0]))
-                {
-                    toUpdateItems.Add(itemList[0]);
-                }
+                var newUpdateItems = itemList.Except(toUpdateItems);
+                toUpdateItems.AddRange(newUpdateItems);
             }
 
             return toUpdateItems;
