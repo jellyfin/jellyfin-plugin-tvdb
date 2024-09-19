@@ -6,7 +6,7 @@ using MediaBrowser.Model.Providers;
 namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
 {
     /// <inheritdoc />
-    public class TvdbExternalId : IExternalId
+    public class TvdbSeriesExternalId : IExternalId
     {
         /// <inheritdoc />
         public string ProviderName => TvdbPlugin.ProviderName;
@@ -18,7 +18,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
         public ExternalIdMediaType? Type => null;
 
         /// <inheritdoc />
-        public string UrlFormatString => TvdbUtils.TvdbBaseUrl + "?tab=series&id={0}";
+        public string? UrlFormatString => null;
 
         /// <inheritdoc />
         public bool Supports(IHasProviderIds item) => item is Series;
