@@ -16,7 +16,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
     /// </summary>
     public class TvdbExternalUrlProvider : IExternalUrlProvider
     {
-        private readonly ImmutableHashSet<string> _supportedOrders = ["offical", "regional", "alternate", "altdvd", "dvd", "absolute"];
+        private readonly ImmutableHashSet<string> _supportedOrders = ["official", "regional", "alternate", "altdvd", "dvd", "absolute"];
 
         /// <inheritdoc/>
         public string Name => TvdbPlugin.ProviderName;
