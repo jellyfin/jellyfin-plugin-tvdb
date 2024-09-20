@@ -85,8 +85,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     }
 
                     break;
-                default:
-                    break;
             }
         }
     }
