@@ -1,8 +1,6 @@
-#pragma warning disable SA1010 // Opening square brackets should be spaced correctly
-
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
@@ -16,7 +14,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
     /// </summary>
     public class TvdbExternalUrlProvider : IExternalUrlProvider
     {
-        private readonly ImmutableHashSet<string> _supportedOrders = ["official", "regional", "alternate", "altdvd", "dvd", "absolute"];
+        private readonly FrozenSet<string> _supportedOrders = new[] { "official", "regional", "alternate", "altdvd", "dvd", "absolute" }.ToFrozenSet();
 
         /// <inheritdoc/>
         public string Name => TvdbPlugin.ProviderName;
