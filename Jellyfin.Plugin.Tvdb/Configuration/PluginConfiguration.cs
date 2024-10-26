@@ -62,6 +62,11 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         public bool FallbackToOriginalLanguage { get; set; } = false;
 
         /// <summary>
+        /// Gets or sets a value indicating whether to include original country in tags.
+        /// </summary>
+        public bool IncludeOriginalCountryInTags { get; set; } = false;
+
+        /// <summary>
         /// Gets or sets the metadata update in hours for the Check for Metadata Updates Scheduled Task.
         /// </summary>
         public int MetadataUpdateInHours

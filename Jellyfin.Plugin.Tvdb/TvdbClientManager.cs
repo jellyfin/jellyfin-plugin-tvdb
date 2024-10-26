@@ -545,6 +545,28 @@ public class TvdbClientManager : IDisposable
     }
 
     /// <summary>
+    /// Gets all tvdb Countries.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation Token.</param>
+    /// <returns>All tvdb countries.</returns>
+    public async Task<IReadOnlyList<Country>> GetCountriesAsync(CancellationToken cancellationToken)
+    {
+        var key = "TvdbCountries";
+        if (_memoryCache.TryGetValue(key, out IReadOnlyList<Country>? countries)
+                       && countries is not null)
+        {
+            return countries;
+        }
+
+        var countriesClient = _serviceProvider.GetRequiredService<ICountriesClient>();
+        await LoginAsync().ConfigureAwait(false);
+        var countriesResult = await countriesClient.GetAllCountriesAsync(cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        _memoryCache.Set(key, countriesResult.Data, TimeSpan.FromDays(CacheDurationInDays));
+        return countriesResult.Data;
+    }
+
+    /// <summary>
     /// Get an episode's tvdb id.
     /// </summary>
     /// <param name="searchInfo">Episode search info.</param>
@@ -744,6 +766,7 @@ public class TvdbClientManager : IDisposable
         services.AddTransient<IArtworkClient>(_ => new ArtworkClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<IArtwork_TypesClient>(_ => new Artwork_TypesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<ILanguagesClient>(_ => new LanguagesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
+        services.AddTransient<ICountriesClient>(_ => new CountriesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<IUpdatesClient>(_ => new UpdatesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
         services.AddTransient<IMoviesClient>(_ => new MoviesClient(_sdkClientSettings, _httpClientFactory.CreateClient(TvdbHttpClient)));
 

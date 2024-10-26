@@ -53,6 +53,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <inheritdoc/>
         public string Name => TvdbPlugin.ProviderName;
 
+        private static bool IncludeOriginalCountryInTags => TvdbPlugin.Instance?.Configuration.IncludeOriginalCountryInTags ?? false;
+
         /// <inheritdoc/>
         public async Task<IEnumerable<RemoteSearchResult>> GetSearchResults(MovieInfo searchInfo, CancellationToken cancellationToken)
         {
@@ -373,6 +375,16 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 else
                 {
                     _logger.LogError("Failed to retrieve actors for movie {TvdbId}:{MovieName}", tvdbId, movieInfo.Name);
+                }
+
+                if (IncludeOriginalCountryInTags && !string.IsNullOrWhiteSpace(movieResult.OriginalCountry))
+                {
+                    var countries = await _tvdbClientManager.GetCountriesAsync(cancellationToken).ConfigureAwait(false);
+                    var country = countries.FirstOrDefault(x => string.Equals(x.Id, movieResult.OriginalCountry, StringComparison.OrdinalIgnoreCase))?.Name;
+                    if (!string.IsNullOrWhiteSpace(country))
+                    {
+                        movieMetadata.AddTag(country);
+                    }
                 }
             }
             catch (Exception e)
