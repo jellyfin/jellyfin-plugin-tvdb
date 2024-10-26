@@ -9,7 +9,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
     public class TvdbMovieSlugExternalId : IExternalId
     {
         /// <inheritdoc />
-        public string ProviderName => TvdbPlugin.ProviderName;
+        public string ProviderName => TvdbPlugin.ProviderName + " Slug";
 
         /// <inheritdoc />
         public string Key => TvdbPlugin.SlugProviderId;
@@ -18,7 +18,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
         public ExternalIdMediaType? Type => ExternalIdMediaType.Movie;
 
         /// <inheritdoc />
-        public string? UrlFormatString => TvdbUtils.TvdbBaseUrl + "movies/{0}";
+        public string? UrlFormatString => null;
 
         /// <inheritdoc />
         public bool Supports(IHasProviderIds item) => item is Movie;

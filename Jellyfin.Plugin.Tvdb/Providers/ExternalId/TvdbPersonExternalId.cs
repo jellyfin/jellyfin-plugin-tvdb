@@ -25,7 +25,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
         public ExternalIdMediaType? Type => ExternalIdMediaType.Person;
 
         /// <inheritdoc />
-        public string? UrlFormatString => TvdbUtils.TvdbBaseUrl + "people/{0}";
+        public string? UrlFormatString => null;
 
         /// <inheritdoc />
         public bool Supports(IHasProviderIds item) => item is Person;
