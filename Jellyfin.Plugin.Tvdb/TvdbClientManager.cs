@@ -147,8 +147,17 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var searchResult = await searchClient.GetSearchResultsByRemoteIdAsync(remoteId: remoteId, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, searchResult.Data, TimeSpan.FromHours(CacheDurationInHours));
-        return searchResult.Data;
+
+        // Some movies are part of the a series in tvdb and thus episode results are returned with movie results. Filter out the episodes.
+        var filteredMovies = searchResult.Data?.Where(x => x.Movie?.Id is not null).ToList();
+        if (filteredMovies is not null)
+        {
+            _memoryCache.Set(key, filteredMovies, TimeSpan.FromHours(CacheDurationInHours));
+            return filteredMovies;
+        }
+
+        _memoryCache.Set(key, Array.Empty<SearchByRemoteIdResult>(), TimeSpan.FromHours(CacheDurationInHours));
+        return Array.Empty<SearchByRemoteIdResult>();
     }
 
     /// <summary>
