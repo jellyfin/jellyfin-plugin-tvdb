@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 using MediaBrowser.Model.Entities;
@@ -117,6 +118,6 @@ internal static class ProviderIdsExtensions
         return result;
     }
 
-    private static bool HasValue(string? value)
+    private static bool HasValue([NotNullWhen(true)] string? value)
         => !string.IsNullOrWhiteSpace(value);
 }
