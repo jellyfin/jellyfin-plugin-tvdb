@@ -312,7 +312,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var parsedName = _libraryManager.ParseName(name);
             var comparableName = TvdbUtils.GetComparableName(parsedName.Name);
 
-            var list = new List<Tuple<List<string>, RemoteSearchResult>>();
+            var list = new List<(List<string> Titles, RemoteSearchResult SearchResult)>();
             IReadOnlyList<SearchResult> result;
             try
             {
@@ -378,16 +378,16 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
 
                 remoteSearchResult.SetTvdbId(seriesSearchResult.Tvdb_id);
-                list.Add(new Tuple<List<string>, RemoteSearchResult>(tvdbTitles, remoteSearchResult));
+                list.Add((tvdbTitles, remoteSearchResult));
             }
 
             return list
-                .OrderBy(i => i.Item1.Contains(name, StringComparer.OrdinalIgnoreCase) ? 0 : 1)
-                .ThenBy(i => i.Item1.Any(title => title.Contains(parsedName.Name, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
-                .ThenBy(i => i.Item2.ProductionYear.HasValue && i.Item2.ProductionYear.Equals(parsedName.Year) ? 0 : 1)
-                .ThenBy(i => i.Item1.Any(title => title.Contains(comparableName, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
+                .OrderBy(i => i.Titles.Contains(name, StringComparer.OrdinalIgnoreCase) ? 0 : 1)
+                .ThenBy(i => i.Titles.Any(title => title.Contains(parsedName.Name, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
+                .ThenBy(i => i.SearchResult.ProductionYear.HasValue && i.Item2.ProductionYear.Equals(parsedName.Year) ? 0 : 1)
+                .ThenBy(i => i.Titles.Any(title => title.Contains(comparableName, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
                 .ThenBy(i => list.IndexOf(i))
-                .Select(i => i.Item2)
+                .Select(i => i.SearchResult)
                 .ToList();
         }
 
