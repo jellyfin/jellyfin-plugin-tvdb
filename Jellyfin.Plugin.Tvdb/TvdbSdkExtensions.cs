@@ -107,17 +107,17 @@ public static class TvdbSdkExtensions
             return false;
         }
 
-        language = language?.ToLowerInvariant() switch
+        var mappedlanguage = language?.ToLowerInvariant() switch
         {
             "zh-tw" => "zhtw", // Unique case for zh-TW
             "pt-br" => "pt", // Unique case for pt-BR0
             "pt-pt" => "por", // Unique case for pt-PT
-            _ => language,
+            _ => null,
         };
 
-        if (translation.Equals(language, StringComparison.OrdinalIgnoreCase))
+        if (mappedlanguage is not null)
         {
-            return true;
+            return translation.Equals(mappedlanguage, StringComparison.OrdinalIgnoreCase);
         }
 
         // try to find a match (ISO 639-2)
