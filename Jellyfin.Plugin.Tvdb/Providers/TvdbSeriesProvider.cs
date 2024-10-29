@@ -49,6 +49,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <inheritdoc />
         public string Name => TvdbPlugin.ProviderName;
 
+        private static bool IncludeOriginalCountryInTags => TvdbPlugin.Instance?.Configuration.IncludeOriginalCountryInTags ?? false;
+
         /// <inheritdoc />
         public async Task<IEnumerable<RemoteSearchResult>> GetSearchResults(SeriesInfo searchInfo, CancellationToken cancellationToken)
         {
@@ -239,6 +241,16 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 {
                     _logger.LogError("Failed to retrieve actors for series {TvdbId}:{SeriesName}", tvdbId, seriesInfo.Name);
                 }
+
+                if (IncludeOriginalCountryInTags && !string.IsNullOrWhiteSpace(seriesResult.OriginalCountry))
+                {
+                    var countries = await _tvdbClientManager.GetCountriesAsync(cancellationToken).ConfigureAwait(false);
+                    var country = countries.FirstOrDefault(x => string.Equals(x.Id, seriesResult.OriginalCountry, StringComparison.OrdinalIgnoreCase))?.Name;
+                    if (!string.IsNullOrWhiteSpace(country))
+                    {
+                        seriesMetadata.AddTag(country);
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -300,7 +312,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var parsedName = _libraryManager.ParseName(name);
             var comparableName = TvdbUtils.GetComparableName(parsedName.Name);
 
-            var list = new List<Tuple<List<string>, RemoteSearchResult>>();
+            var list = new List<(List<string> Titles, RemoteSearchResult SearchResult)>();
             IReadOnlyList<SearchResult> result;
             try
             {
@@ -366,16 +378,16 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
 
                 remoteSearchResult.SetTvdbId(seriesSearchResult.Tvdb_id);
-                list.Add(new Tuple<List<string>, RemoteSearchResult>(tvdbTitles, remoteSearchResult));
+                list.Add((tvdbTitles, remoteSearchResult));
             }
 
             return list
-                .OrderBy(i => i.Item1.Contains(name, StringComparer.OrdinalIgnoreCase) ? 0 : 1)
-                .ThenBy(i => i.Item1.Any(title => title.Contains(parsedName.Name, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
-                .ThenBy(i => i.Item2.ProductionYear.HasValue && i.Item2.ProductionYear.Equals(parsedName.Year) ? 0 : 1)
-                .ThenBy(i => i.Item1.Any(title => title.Contains(comparableName, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
+                .OrderBy(i => i.Titles.Contains(name, StringComparer.OrdinalIgnoreCase) ? 0 : 1)
+                .ThenBy(i => i.Titles.Any(title => title.Contains(parsedName.Name, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
+                .ThenBy(i => i.SearchResult.ProductionYear.HasValue && i.Item2.ProductionYear.Equals(parsedName.Year) ? 0 : 1)
+                .ThenBy(i => i.Titles.Any(title => title.Contains(comparableName, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
                 .ThenBy(i => list.IndexOf(i))
-                .Select(i => i.Item2)
+                .Select(i => i.SearchResult)
                 .ToList();
         }
 
@@ -436,9 +448,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             result.ResultLanguage = info.MetadataLanguage;
             series.AirDays = TvdbUtils.GetAirDays(tvdbSeries.AirsDays).ToArray();
             series.AirTime = tvdbSeries.AirsTime;
-            // series.CommunityRating = (float?)tvdbSeries.SiteRating;
             // Attempts to default to USA if not found
             series.OfficialRating = tvdbSeries.ContentRatings?.FirstOrDefault(x => string.Equals(x.Country, TvdbCultureInfo.GetCountryInfo(info.MetadataCountryCode)?.ThreeLetterISORegionName, StringComparison.OrdinalIgnoreCase))?.Name ?? tvdbSeries.ContentRatings?.FirstOrDefault(x => string.Equals(x.Country, "usa", StringComparison.OrdinalIgnoreCase))?.Name;
+
+            series.SetProviderIdIfHasValue(TvdbPlugin.SlugProviderId, tvdbSeries.Slug);
+
             if (tvdbSeries.Lists is not null && tvdbSeries.Lists is JsonElement jsonElement)
             {
                 var collections = jsonElement.Deserialize<List<object>>();

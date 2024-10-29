@@ -61,6 +61,10 @@
                         <input is="emby-checkbox" type="checkbox" id="removeAllMissingEpisodesOnRefresh" />
                         <span>Remove All Missing Episodes On Refresh</span>
                     </label>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="includeOriginalCountryInTags" />
+                        <span>Include original country of the movie or series in tags.</span>
+                    </label>
                     <div class="sectionTitleContainer flex align-items-center">
                         <h2 class="sectionTitle">Check for Metadata Updates Scheduled Task Settings:</h2>
                     </div>
@@ -110,9 +114,12 @@
                     document.getElementById('fallbackLanguages').value = config.FallbackLanguages;
                     document.getElementById('importSeasonName').checked = config.ImportSeasonName
                     document.getElementById('fallbackToOriginalLanguage').checked = config.FallbackToOriginalLanguage;
+                    document.getElementById('includeOriginalCountryInTags').checked = config.IncludeOriginalCountryInTags;
+                  
                     // Missing Episode Provider Settings
                     document.getElementById('includeMissingSpecials').checked = config.IncludeMissingSpecials;
                     document.getElementById('removeAllMissingEpisodesOnRefresh').checked = config.RemoveAllMissingEpisodesOnRefresh;
+
                     // Check for Metadata Updates Scheduled Task Settings
                     document.getElementById('metadataUpdateInHours').value = config.MetadataUpdateInHours;
                     document.getElementById('updateSeriesScheduledTask').checked = config.UpdateSeriesScheduledTask;
@@ -133,9 +140,12 @@
                     config.FallbackLanguages = document.getElementById('fallbackLanguages').value;
                     config.ImportSeasonName = document.getElementById('importSeasonName').checked;
                     config.FallbackToOriginalLanguage = document.getElementById('fallbackToOriginalLanguage').checked;
+                    config.IncludeOriginalCountryInTags = document.getElementById('includeOriginalCountryInTags').checked;
+                  
                     // Missing Episode Provider Settings
                     config.IncludeMissingSpecials = document.getElementById('includeMissingSpecials').checked;
                     config.RemoveAllMissingEpisodesOnRefresh = document.getElementById('removeAllMissingEpisodesOnRefresh').checked;
+
                     //Check for Metadata Updates Scheduled Task Settings
                     config.MetadataUpdateInHours = document.getElementById('metadataUpdateInHours').value;
                     config.UpdateSeriesScheduledTask = document.getElementById('updateSeriesScheduledTask').checked;
