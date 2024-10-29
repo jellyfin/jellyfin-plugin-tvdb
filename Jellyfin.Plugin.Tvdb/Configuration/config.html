@@ -44,15 +44,22 @@
                     </div>
                     <label class="checkboxContainer">
                         <input is="emby-checkbox" type="checkbox" id="importSeasonName" />
-                        <span>Import season name from provider.</span>
+                        <span>Import season name from provider</span>
                     </label>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="fallbackToOriginalLanguage" />
+                        <span>Fallback to Original Language (Last resort if other fallback languages fails)</span>
+                    </label>
+                    <div class="sectionTitleContainer flex align-items-center">
+                        <h2 class="sectionTitle">Missing Episode Provider Settings:</h2>
+                    </div>
                     <label class="checkboxContainer">
                         <input is="emby-checkbox" type="checkbox" id="includeMissingSpecials" />
                         <span>Include missing specials</span>
                     </label>
                     <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="fallbackToOriginalLanguage" />
-                        <span>Fallback to Original Language (Last resort if other fallback languages fails)</span>
+                        <input is="emby-checkbox" type="checkbox" id="removeAllMissingEpisodesOnRefresh" />
+                        <span>Remove All Missing Episodes On Refresh</span>
                     </label>
                     <label class="checkboxContainer">
                         <input is="emby-checkbox" type="checkbox" id="includeOriginalCountryInTags" />
@@ -106,9 +113,12 @@
                     document.getElementById('cacheDurationInDays').value = config.CacheDurationInDays;
                     document.getElementById('fallbackLanguages').value = config.FallbackLanguages;
                     document.getElementById('importSeasonName').checked = config.ImportSeasonName
-                    document.getElementById('includeMissingSpecials').checked = config.IncludeMissingSpecials;
                     document.getElementById('fallbackToOriginalLanguage').checked = config.FallbackToOriginalLanguage;
                     document.getElementById('includeOriginalCountryInTags').checked = config.IncludeOriginalCountryInTags;
+                  
+                    // Missing Episode Provider Settings
+                    document.getElementById('includeMissingSpecials').checked = config.IncludeMissingSpecials;
+                    document.getElementById('removeAllMissingEpisodesOnRefresh').checked = config.RemoveAllMissingEpisodesOnRefresh;
 
                     // Check for Metadata Updates Scheduled Task Settings
                     document.getElementById('metadataUpdateInHours').value = config.MetadataUpdateInHours;
@@ -129,9 +139,12 @@
                     config.CacheDurationInDays = document.getElementById('cacheDurationInDays').value;
                     config.FallbackLanguages = document.getElementById('fallbackLanguages').value;
                     config.ImportSeasonName = document.getElementById('importSeasonName').checked;
-                    config.IncludeMissingSpecials = document.getElementById('includeMissingSpecials').checked;
                     config.FallbackToOriginalLanguage = document.getElementById('fallbackToOriginalLanguage').checked;
                     config.IncludeOriginalCountryInTags = document.getElementById('includeOriginalCountryInTags').checked;
+                  
+                    // Missing Episode Provider Settings
+                    config.IncludeMissingSpecials = document.getElementById('includeMissingSpecials').checked;
+                    config.RemoveAllMissingEpisodesOnRefresh = document.getElementById('removeAllMissingEpisodesOnRefresh').checked;
 
                     //Check for Metadata Updates Scheduled Task Settings
                     config.MetadataUpdateInHours = document.getElementById('metadataUpdateInHours').value;
