@@ -53,6 +53,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <inheritdoc/>
         public string Name => TvdbPlugin.ProviderName;
 
+        private static bool IncludeOriginalCountryInTags => TvdbPlugin.Instance?.Configuration.IncludeOriginalCountryInTags ?? false;
+
         /// <inheritdoc/>
         public async Task<IEnumerable<RemoteSearchResult>> GetSearchResults(MovieInfo searchInfo, CancellationToken cancellationToken)
         {
@@ -211,7 +213,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var parsedName = _libraryManager.ParseName(name);
             var comparableName = TvdbUtils.GetComparableName(parsedName.Name);
 
-            var list = new List<Tuple<List<string>, RemoteSearchResult>>();
+            var list = new List<(List<string> Titles, RemoteSearchResult SearchResult)>();
             IReadOnlyList<SearchResult> result;
             try
             {
@@ -277,16 +279,16 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
 
                 remoteSearchResult.SetTvdbId(movieSearchResult.Tvdb_id);
-                list.Add(new Tuple<List<string>, RemoteSearchResult>(tvdbTitles, remoteSearchResult));
+                list.Add((tvdbTitles, remoteSearchResult));
             }
 
             return list
-                .OrderBy(i => i.Item1.Contains(name, StringComparer.OrdinalIgnoreCase) ? 0 : 1)
-                .ThenBy(i => i.Item1.Any(title => title.Contains(parsedName.Name, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
-                .ThenBy(i => i.Item2.ProductionYear.HasValue && i.Item2.ProductionYear.Equals(parsedName.Year) ? 0 : 1)
-                .ThenBy(i => i.Item1.Any(title => title.Contains(comparableName, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
+                .OrderBy(i => i.Titles.Contains(name, StringComparer.OrdinalIgnoreCase) ? 0 : 1)
+                .ThenBy(i => i.Titles.Any(title => title.Contains(parsedName.Name, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
+                .ThenBy(i => i.SearchResult.ProductionYear.HasValue && i.SearchResult.ProductionYear.Equals(parsedName.Year) ? 0 : 1)
+                .ThenBy(i => i.Titles.Any(title => title.Contains(comparableName, StringComparison.OrdinalIgnoreCase)) ? 0 : 1)
                 .ThenBy(i => list.IndexOf(i))
-                .Select(i => i.Item2)
+                .Select(i => i.SearchResult)
                 .ToList();
         }
 
@@ -373,6 +375,16 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 else
                 {
                     _logger.LogError("Failed to retrieve actors for movie {TvdbId}:{MovieName}", tvdbId, movieInfo.Name);
+                }
+
+                if (IncludeOriginalCountryInTags && !string.IsNullOrWhiteSpace(movieResult.OriginalCountry))
+                {
+                    var countries = await _tvdbClientManager.GetCountriesAsync(cancellationToken).ConfigureAwait(false);
+                    var country = countries.FirstOrDefault(x => string.Equals(x.Id, movieResult.OriginalCountry, StringComparison.OrdinalIgnoreCase))?.Name;
+                    if (!string.IsNullOrWhiteSpace(country))
+                    {
+                        movieMetadata.AddTag(country);
+                    }
                 }
             }
             catch (Exception e)

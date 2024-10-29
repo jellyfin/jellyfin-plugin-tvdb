@@ -62,38 +62,21 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             int? seasonId = info.GetTvdbId();
-            string displayOrder;
+            string displayOrder = info.SeriesDisplayOrder;
 
-            // If the seasonId is 0, then we have to get the series metadata to get display order and then get the seasonId.
-            // If is automated is true, means that display order has changed,do the same as above.
+            // If the seasonId is 0, it means the season is not yet identified and we need to find it
+            // If IsAutomated is true, it means that the order has changed and we need to find the new season id
             if (seasonId == 0 || info.IsAutomated)
             {
-                info.SeriesProviderIds.TryGetValue(MetadataProvider.Tvdb.ToString(), out var seriesId);
-                if (string.IsNullOrWhiteSpace(seriesId))
-                {
-                    _logger.LogDebug("No series identity found for {EpisodeName}", info.Name);
-                    return new MetadataResult<Season>
-                    {
-                        QueriedById = true
-                    };
-                }
-
-                var query = new InternalItemsQuery()
-                {
-                    HasAnyProviderId = new Dictionary<string, string>
-                    {
-                        { MetadataProvider.Tvdb.ToString(), seriesId }
-                    }
-                };
-
-                var series = _libraryManager.GetItemList(query).OfType<Series>().FirstOrDefault();
-                displayOrder = series!.DisplayOrder;
                 if (string.IsNullOrWhiteSpace(displayOrder))
                 {
                     displayOrder = "official";
                 }
 
-                var seriesInfo = await _tvdbClientManager.GetSeriesExtendedByIdAsync(series.GetTvdbId(), string.Empty, cancellationToken, small: true)
+                info.SeriesProviderIds.TryGetValue(MetadataProvider.Tvdb.ToString(), out var seriesId);
+                var seriesIdInt = Convert.ToInt32(seriesId, CultureInfo.InvariantCulture);
+
+                var seriesInfo = await _tvdbClientManager.GetSeriesExtendedByIdAsync(seriesIdInt, string.Empty, cancellationToken, small: true)
                 .ConfigureAwait(false);
                 seasonId = seriesInfo.Seasons.FirstOrDefault(s => s.Number == info.IndexNumber && string.Equals(s.Type.Type, displayOrder, StringComparison.OrdinalIgnoreCase))?.Id;
 

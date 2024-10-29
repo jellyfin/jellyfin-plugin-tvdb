@@ -18,7 +18,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
         public ExternalIdMediaType? Type => ExternalIdMediaType.Episode;
 
         /// <inheritdoc />
-        public string UrlFormatString => TvdbUtils.TvdbBaseUrl + "?tab=episode&id={0}";
+        public string? UrlFormatString => null;
 
         /// <inheritdoc />
         public bool Supports(IHasProviderIds item) => item is Episode;
