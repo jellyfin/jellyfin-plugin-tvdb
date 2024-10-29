@@ -46,7 +46,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                         displayOrder = "official";
                     }
 
-                    if (_supportedOrders.Contains(displayOrder) && !string.IsNullOrEmpty(seriesSlugId))
+                    if (_supportedOrders.Contains(displayOrder) && !string.IsNullOrEmpty(seriesSlugId) && !string.IsNullOrEmpty(externalId))
                     {
                         yield return TvdbUtils.TvdbBaseUrl + $"series/{seriesSlugId}/seasons/{displayOrder}/{item.IndexNumber}";
                     }
