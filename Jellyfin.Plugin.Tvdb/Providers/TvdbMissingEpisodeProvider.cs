@@ -148,9 +148,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 }
             }
 
-            var allEpisodes = RemoveAllMissingEpisodesOnRefresh ?
-                Enumerable.Empty<EpisodeBaseRecord>().ToList() :
-                await GetAllEpisodes(tvdbId, series.DisplayOrder, series.GetPreferredMetadataLanguage()).ConfigureAwait(false);
+            var allEpisodes = RemoveAllMissingEpisodesOnRefresh
+                ? Array.Empty<EpisodeBaseRecord>()
+                : await GetAllEpisodes(tvdbId, series.DisplayOrder, series.GetPreferredMetadataLanguage()).ConfigureAwait(false);
 
             if (!IncludeMissingSpecials)
             {
@@ -193,9 +193,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             var tvdbId = series.GetTvdbId();
-            var allEpisodes = RemoveAllMissingEpisodesOnRefresh ?
-                Enumerable.Empty<EpisodeBaseRecord>().ToList() :
-                allEpisodesRemote ??
+            var allEpisodes = RemoveAllMissingEpisodesOnRefresh
+                ? Array.Empty<EpisodeBaseRecord>()
+                : allEpisodesRemote ??
                 await GetAllEpisodes(tvdbId, series.DisplayOrder, season.GetPreferredMetadataLanguage())
                     .ConfigureAwait(false);
             // Skip if called from HandleSeries since it will be filtered there, allEpisodesRemote will not be null when called from HandleSeries
