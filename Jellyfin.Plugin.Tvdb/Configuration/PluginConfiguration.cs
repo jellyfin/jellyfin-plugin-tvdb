@@ -99,5 +99,10 @@ namespace Jellyfin.Plugin.Tvdb.Configuration
         /// Gets or sets a value indicating whether to update movie for the Check for Metadata Updates Scheduled Task.
         /// </summary>
         public bool UpdateMovieScheduledTask { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to update person for the Check for Metadata Updates Scheduled Task.
+        /// </summary>
+        public bool UpdatePersonScheduledTask { get; set; } = false;
     }
 }
