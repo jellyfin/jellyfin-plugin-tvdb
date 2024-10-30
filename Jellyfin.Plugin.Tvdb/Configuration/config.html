@@ -91,6 +91,10 @@
                         <input is="emby-checkbox" type="checkbox" id="updateMovieScheduledTask" />
                         <span>Update Movie</span>
                     </label>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="updatePersonScheduledTask" />
+                        <span>Update Person</span>
+                    </label>
                     <div>
                         <button is="emby-button" type="submit" data-theme="b" class="raised button-submit block">
                             <span>Save</span>
@@ -126,6 +130,7 @@
                     document.getElementById('updateSeasonScheduledTask').checked = config.UpdateSeasonScheduledTask;
                     document.getElementById('updateEpisodeScheduledTask').checked = config.UpdateEpisodeScheduledTask;
                     document.getElementById('updateMovieScheduledTask').checked = config.UpdateMovieScheduledTask;
+                    document.getElementById('updatePersonScheduledTask').checked = config.UpdatePersonScheduledTask;
                     Dashboard.hideLoadingMsg();
                 });
             },
@@ -152,6 +157,7 @@
                     config.UpdateSeasonScheduledTask = document.getElementById('updateSeasonScheduledTask').checked;
                     config.UpdateEpisodeScheduledTask = document.getElementById('updateEpisodeScheduledTask').checked;
                     config.UpdateMovieScheduledTask = document.getElementById('updateMovieScheduledTask').checked;
+                    config.UpdatePersonScheduledTask = document.getElementById('updatePersonScheduledTask').checked;
 
                     ApiClient.updatePluginConfiguration(TvdbPluginConfiguration.uniquePluginId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);

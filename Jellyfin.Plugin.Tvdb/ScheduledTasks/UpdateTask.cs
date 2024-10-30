@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
@@ -70,6 +71,8 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
 
         private static bool UpdateMovieScheduledTask => TvdbPlugin.Instance?.Configuration.UpdateMovieScheduledTask ?? false;
 
+        private static bool UpdatePersonScheduledTask => TvdbPlugin.Instance?.Configuration.UpdatePersonScheduledTask ?? false;
+
         /// <inheritdoc/>
         public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         {
@@ -113,48 +116,57 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
         private async Task<HashSet<BaseItem>> GetItemsUpdated(CancellationToken cancellationToken)
         {
             double fromTime = DateTimeOffset.UtcNow.AddHours(MetadataUpdateInHours).ToUnixTimeSeconds();
-            List<EntityUpdate> allUpdates = new List<EntityUpdate>();
+
+            HashSet<BaseItem> toUpdateItems = new HashSet<BaseItem>();
 
             if (UpdateSeriesScheduledTask)
             {
                 var seriesUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Series, Action.Update).ConfigureAwait(false);
-                allUpdates.AddRange(seriesUpdates);
+                AddUpdateItemsToHashSet(toUpdateItems, seriesUpdates, BaseItemKind.Series);
             }
 
             if (UpdateSeasonScheduledTask)
             {
                 var seasonUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Seasons, Action.Update).ConfigureAwait(false);
-                allUpdates.AddRange(seasonUpdates);
+                AddUpdateItemsToHashSet(toUpdateItems, seasonUpdates, BaseItemKind.Season);
             }
 
             if (UpdateEpisodeScheduledTask)
             {
                 var episodeUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Episodes, Action.Update).ConfigureAwait(false);
-                allUpdates.AddRange(episodeUpdates);
+                AddUpdateItemsToHashSet(toUpdateItems, episodeUpdates, BaseItemKind.Episode);
             }
 
             if (UpdateMovieScheduledTask)
             {
                 var movieUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.Movies, Action.Update).ConfigureAwait(false);
-                allUpdates.AddRange(movieUpdates);
+                AddUpdateItemsToHashSet(toUpdateItems, movieUpdates, BaseItemKind.Movie);
             }
 
+            if (UpdatePersonScheduledTask)
+            {
+                var personUpdates = await _tvdbClientManager.GetUpdates(fromTime, cancellationToken, Type.People, Action.Update).ConfigureAwait(false);
+                AddUpdateItemsToHashSet(toUpdateItems, personUpdates, BaseItemKind.Person);
+            }
+
+            return toUpdateItems;
+        }
+
+        private void AddUpdateItemsToHashSet(HashSet<BaseItem> toUpdateItems, IReadOnlyList<EntityUpdate> tvdbUpdates, BaseItemKind baseItemKind)
+        {
             string providerId = MetadataProvider.Tvdb.ToString();
-
-            HashSet<BaseItem> toUpdateItems = new HashSet<BaseItem>();
-
             Dictionary<string, string> providerIdPair = new Dictionary<string, string>() { { providerId, string.Empty } };
-            InternalItemsQuery query = new InternalItemsQuery();
 
-            foreach (EntityUpdate update in allUpdates)
+            InternalItemsQuery query = new InternalItemsQuery();
+            query.IncludeItemTypes = new[] { baseItemKind };
+
+            foreach (EntityUpdate update in tvdbUpdates)
             {
                 providerIdPair[providerId] = update.RecordId!.Value.ToString(CultureInfo.InvariantCulture);
                 query.HasAnyProviderId = providerIdPair;
                 List<BaseItem> itemList = _libraryManager.GetItemList(query);
                 toUpdateItems.UnionWith(itemList);
             }
-
-            return toUpdateItems;
         }
     }
 }
