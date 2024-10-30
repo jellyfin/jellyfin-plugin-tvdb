@@ -50,6 +50,10 @@
                         <input is="emby-checkbox" type="checkbox" id="fallbackToOriginalLanguage" />
                         <span>Fallback to Original Language (Last resort if other fallback languages fails)</span>
                     </label>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="includeOriginalCountryInTags" />
+                        <span>Include original country of the movie or series in tags.</span>
+                    </label>
                     <div class="sectionTitleContainer flex align-items-center">
                         <h2 class="sectionTitle">Missing Episode Provider Settings:</h2>
                     </div>
@@ -60,10 +64,6 @@
                     <label class="checkboxContainer">
                         <input is="emby-checkbox" type="checkbox" id="removeAllMissingEpisodesOnRefresh" />
                         <span>Remove All Missing Episodes On Refresh</span>
-                    </label>
-                    <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="includeOriginalCountryInTags" />
-                        <span>Include original country of the movie or series in tags.</span>
                     </label>
                     <div class="sectionTitleContainer flex align-items-center">
                         <h2 class="sectionTitle">Check for Metadata Updates Scheduled Task Settings:</h2>
