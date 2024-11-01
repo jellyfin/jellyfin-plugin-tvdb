@@ -354,7 +354,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             person.SetProviderIdIfHasValue(MetadataProvider.Zap2It, zap2ItId);
 
             var tmdbId = tvdbPerson.RemoteIds?.FirstOrDefault(x => string.Equals(x.SourceName, "TheMovieDB.com", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
-            person.SetProviderIdIfHasValue(MetadataProvider.Tmdb, tmdbId);
+            // Sometimes, tvdb will return tmdbid as {tmdbid}-{title} like in the tmdb url. Grab the tmdbid only.
+            var tmdbIdLeft = StringExtensions.LeftPart(tmdbId, '-').ToString();
+            person.SetProviderIdIfHasValue(MetadataProvider.Tmdb, tmdbIdLeft);
 
             if (!string.IsNullOrWhiteSpace(tvdbPerson.BirthPlace))
             {
