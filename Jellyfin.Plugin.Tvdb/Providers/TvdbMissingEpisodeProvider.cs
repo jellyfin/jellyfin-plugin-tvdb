@@ -230,6 +230,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
 
             var orphanedEpisodes = existingEpisodes
+                .Where(e => e.ParentIndexNumber == season.IndexNumber)
                 .Where(e => e.IsVirtualItem)
                 .Where(e => !seasonEpisodes.Any(episodeRecord => EpisodeEquals(e, episodeRecord)))
                 .ToList();
