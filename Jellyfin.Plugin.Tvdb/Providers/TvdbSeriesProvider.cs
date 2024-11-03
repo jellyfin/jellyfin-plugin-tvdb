@@ -481,7 +481,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             series.SetProviderIdIfHasValue(MetadataProvider.Zap2It, zap2ItId);
 
             var tmdbId = tvdbSeries.RemoteIds?.FirstOrDefault(x => string.Equals(x.SourceName, "TheMovieDB.com", StringComparison.OrdinalIgnoreCase))?.Id.ToString();
-            series.SetProviderIdIfHasValue(MetadataProvider.Tmdb, tmdbId);
+            // Sometimes, tvdb will return tmdbid as {tmdbid}-{title} like in the tmdb url. Grab the tmdbid only.
+            var tmdbIdLeft = StringExtensions.LeftPart(tmdbId, '-').ToString();
+            series.SetProviderIdIfHasValue(MetadataProvider.Tmdb, tmdbIdLeft);
 
             if (Enum.TryParse(tvdbSeries.Status.Name, true, out SeriesStatus seriesStatus))
             {
