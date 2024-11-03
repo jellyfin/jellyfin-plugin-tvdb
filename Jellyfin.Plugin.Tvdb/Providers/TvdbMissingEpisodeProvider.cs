@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Globalization;
+using MediaBrowser.Model.IO;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Tvdb.Sdk;
@@ -35,6 +36,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         private readonly IProviderManager _providerManager;
         private readonly ILocalizationManager _localization;
         private readonly ILibraryManager _libraryManager;
+        private readonly IFileSystem _fileSystem;
         private readonly ILogger<TvdbMissingEpisodeProvider> _logger;
 
         /// <summary>
@@ -45,6 +47,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <param name="providerManager">Instance of the <see cref="IProviderManager"/> interface.</param>
         /// <param name="localization">Instance of the <see cref="ILocalizationManager"/> interface.</param>
         /// <param name="libraryManager">Instance of the <see cref="ILibraryManager"/> interface.</param>
+        /// <param name="fileSystem">Instance of the <see cref="IFileSystem"/> interface.</param>
         /// <param name="logger">Instance of the <see cref="ILogger{TvdbMissingEpisodeProvider}"/> interface.</param>
         public TvdbMissingEpisodeProvider(
             TvdbClientManager tvdbClientManager,
@@ -52,6 +55,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             IProviderManager providerManager,
             ILocalizationManager localization,
             ILibraryManager libraryManager,
+            IFileSystem fileSystem,
             ILogger<TvdbMissingEpisodeProvider> logger)
         {
             _tvdbClientManager = tvdbClientManager;
@@ -59,6 +63,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             _providerManager = providerManager;
             _localization = localization;
             _libraryManager = libraryManager;
+            _fileSystem = fileSystem;
             _logger = logger;
         }
 
@@ -428,6 +433,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             };
 
             series.AddChild(newSeason);
+            _providerManager.QueueRefresh(newSeason.Id, new MetadataRefreshOptions(new DirectoryService(_fileSystem)), RefreshPriority.High);
 
             return newSeason;
         }
@@ -481,6 +487,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 episode.Number);
 
             season.AddChild(newEpisode);
+            _providerManager.QueueRefresh(newEpisode.Id, new MetadataRefreshOptions(new DirectoryService(_fileSystem)), RefreshPriority.High);
         }
 
         /// <inheritdoc />
