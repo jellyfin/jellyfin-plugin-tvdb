@@ -14,7 +14,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
     /// </summary>
     public class TvdbExternalUrlProvider : IExternalUrlProvider
     {
-        private readonly FrozenSet<string> _supportedOrders = new[] { "official", "regional", "alternate", "altdvd", "dvd", "absolute" }.ToFrozenSet();
+        private readonly FrozenSet<string> _supportedOrders = new[] { "official", "regional", "alternate", "altdvd", "dvd", "absolute", "alttwo" }.ToFrozenSet();
 
         /// <inheritdoc/>
         public string Name => TvdbPlugin.ProviderName;
