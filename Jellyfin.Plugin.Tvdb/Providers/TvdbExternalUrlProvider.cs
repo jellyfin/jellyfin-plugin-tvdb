@@ -22,6 +22,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <inheritdoc/>
         public IEnumerable<string> GetExternalUrls(BaseItem item)
         {
+            if (item is null)
+            {
+                yield break;
+            }
+
             var externalId = item.GetProviderId(TvdbPlugin.ProviderId);
             var slugId = item.GetProviderId(TvdbPlugin.SlugProviderId);
 
@@ -39,12 +44,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
                     break;
                 case Season season:
-                    season.Series.ProviderIds.TryGetValue(TvdbPlugin.SlugProviderId, out var seriesSlugId);
-                    var displayOrder = season.Series.DisplayOrder;
-                    if (string.IsNullOrEmpty(displayOrder))
+                    if (season.Series is null || season.Series.ProviderIds is null)
                     {
-                        displayOrder = "official";
+                        yield break;
                     }
+
+                    season.Series.ProviderIds.TryGetValue(TvdbPlugin.SlugProviderId, out var seriesSlugId);
+                    var displayOrder = string.IsNullOrEmpty(season.Series.DisplayOrder) ? "official" : season.Series.DisplayOrder;
 
                     if (_supportedOrders.Contains(displayOrder) && !string.IsNullOrEmpty(seriesSlugId) && !string.IsNullOrEmpty(externalId))
                     {
@@ -58,6 +64,11 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
                     break;
                 case Episode episode:
+                    if (episode.Series is null || episode.Series.ProviderIds is null)
+                    {
+                        yield break;
+                    }
+
                     episode.Series.ProviderIds.TryGetValue(TvdbPlugin.SlugProviderId, out seriesSlugId);
                     if (!string.IsNullOrEmpty(seriesSlugId) && !string.IsNullOrEmpty(externalId))
                     {
@@ -82,6 +93,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                         yield return TvdbUtils.TvdbBaseUrl + $"people/{externalId}";
                     }
 
+                    break;
+
+                default:
                     break;
             }
         }
