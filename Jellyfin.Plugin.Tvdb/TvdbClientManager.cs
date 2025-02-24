@@ -601,7 +601,7 @@ public class TvdbClientManager : IDisposable
         bool special = false;
         string? key = null;
         // Prefer SxE over premiere date as it is more robust
-        if (searchInfo.IndexNumber.HasValue && searchInfo.ParentIndexNumber.HasValue)
+        if (searchInfo.IndexNumber.HasValue)
         {
             switch (searchInfo.SeriesDisplayOrder)
             {
@@ -611,10 +611,10 @@ public class TvdbClientManager : IDisposable
                 case "dvd":
                 case "alttwo":
                     episodeNumber = searchInfo.IndexNumber.Value;
-                    seasonNumber = searchInfo.ParentIndexNumber.Value;
+                    seasonNumber = searchInfo.ParentIndexNumber ?? 1;
                     break;
                 case "absolute":
-                    if (searchInfo.ParentIndexNumber.Value == 0) // check if special
+                    if (searchInfo.ParentIndexNumber == 0) // check if special
                     {
                         special = true;
                         seasonNumber = 0;
@@ -629,7 +629,7 @@ public class TvdbClientManager : IDisposable
                 default:
                     // aired order
                     episodeNumber = searchInfo.IndexNumber.Value;
-                    seasonNumber = searchInfo.ParentIndexNumber.Value;
+                    seasonNumber = searchInfo.ParentIndexNumber ?? 1;
                     break;
             }
 
