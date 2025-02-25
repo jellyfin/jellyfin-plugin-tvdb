@@ -65,12 +65,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 {
                     string? episodeTvdbId = null;
 
-                    if (episode.IndexNumber.HasValue && episode.ParentIndexNumber.HasValue)
+                    if (episode.IndexNumber.HasValue)
                     {
                         var episodeInfo = new EpisodeInfo
                         {
                             IndexNumber = episode.IndexNumber.Value,
-                            ParentIndexNumber = episode.ParentIndexNumber.Value,
+                            ParentIndexNumber = episode.ParentIndexNumber,
                             SeriesProviderIds = series.ProviderIds,
                             SeriesDisplayOrder = series.DisplayOrder
                         };
