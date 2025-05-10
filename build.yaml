@@ -2,14 +2,14 @@ name: "TheTVDB"
 guid: "a677c0da-fac5-4cde-941a-7134223f14c8"
 imageUrl: "https://repo.jellyfin.org/releases/plugin/images/jellyfin-plugin-tvdb.png"
 version: 19
-targetAbi: "10.10.6.0"
-framework: "net8.0"
+targetAbi: "10.11.0.0"
+framework: "net9.0"
 owner: "jellyfin"
 overview: "Get TV metadata from TheTvdb"
 description: >
   Get TV metadata from TheTvdb
 
-category: "Metadata"
+category: "MoviesAndShows"
 artifacts:
   - "Jellyfin.Plugin.Tvdb.dll"
   - "Tvdb.Sdk.dll"

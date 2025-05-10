@@ -263,7 +263,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             DeleteVirtualItems(existingVirtualItems);
         }
 
-        private List<BaseItem> GetVirtualItems(BaseItem item, BaseItem? parent)
+        private IReadOnlyList<BaseItem> GetVirtualItems(BaseItem item, BaseItem? parent)
         {
             var query = new InternalItemsQuery
             {
@@ -282,7 +282,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             return existingVirtualItems;
         }
 
-        private void DeleteVirtualItems<T>(List<T> existingVirtualItems)
+        private void DeleteVirtualItems<T>(IReadOnlyList<T> existingVirtualItems)
             where T : BaseItem
         {
             var deleteOptions = new DeleteOptions

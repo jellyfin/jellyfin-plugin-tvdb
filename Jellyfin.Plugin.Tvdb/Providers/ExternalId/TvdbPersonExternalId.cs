@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
@@ -23,9 +18,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
 
         /// <inheritdoc />
         public ExternalIdMediaType? Type => ExternalIdMediaType.Person;
-
-        /// <inheritdoc />
-        public string? UrlFormatString => null;
 
         /// <inheritdoc />
         public bool Supports(IHasProviderIds item) => item is Person;
