@@ -26,12 +26,13 @@ This plugin adds the metadata provider for [TVDB](https://www.thetvdb.com/).
 
 ## Build
 
-1. To build this plugin you will need [.Net 8.x](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
+1. To build this plugin you will need [.Net 9.x](https://dotnet.microsoft.com/en-us/download/dotnet/9.0).
 
 2. Build plugin with following command
-  ```
-  dotnet publish --configuration Release --output bin
-  ```
+
+```
+dotnet publish --configuration Release --output bin
+```
 
 3. Place the dll-file in the `plugins/tvdb` folder (you might need to create the folders) of your JF install
 
