@@ -24,7 +24,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
         /// <inheritdoc />
         public ExternalIdMediaType? Type => ExternalIdMediaType.Person;
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Gets the URL format string.
+        /// </summary>
         public string? UrlFormatString => null;
 
         /// <inheritdoc />

@@ -51,7 +51,7 @@ public class TvdbClientManager : IDisposable
 
         _tokenUpdatedAt = DateTime.MinValue;
 
-        // Set the cultures and countries for the TvdbCultureInfo
+        // Set the cultures for the TvdbCultureInfo
         TvdbCultureInfo.SetCultures(localizationManager.GetCultures().ToArray());
         TvdbCultureInfo.SetCountries(localizationManager.GetCountries().ToArray());
     }
@@ -179,7 +179,7 @@ public class TvdbClientManager : IDisposable
 
         var movieClient = _serviceProvider.GetRequiredService<IMoviesClient>();
         await LoginAsync().ConfigureAwait(false);
-        var movieResult = await movieClient.GetMovieExtendedAsync(id: tvdbId, meta: Meta2.Translations, @short: false,  cancellationToken: cancellationToken)
+        var movieResult = await movieClient.GetMovieExtendedAsync(id: tvdbId, meta: Meta2.Translations, @short: false, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         _memoryCache.Set(key, movieResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return movieResult.Data;
@@ -787,8 +787,8 @@ public class TvdbClientManager : IDisposable
     /// <inheritdoc/>
     public void Dispose()
     {
-       Dispose(true);
-       GC.SuppressFinalize(this);
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>

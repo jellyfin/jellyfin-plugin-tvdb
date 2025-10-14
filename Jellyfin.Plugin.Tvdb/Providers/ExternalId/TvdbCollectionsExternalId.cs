@@ -6,7 +6,9 @@ using MediaBrowser.Model.Providers;
 
 namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
 {
-    /// <inheritdoc/>
+    /// <summary>
+    /// External ID for a TVDB collection.
+    /// </summary>
     public class TvdbCollectionsExternalId : IExternalId
     {
         /// <inheritdoc/>
@@ -18,7 +20,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
         /// <inheritdoc/>
         public ExternalIdMediaType? Type => ExternalIdMediaType.BoxSet;
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Gets the URL format string.
+        /// </summary>
         public string? UrlFormatString => null;
 
         /// <inheritdoc/>

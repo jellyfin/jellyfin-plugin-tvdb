@@ -164,7 +164,7 @@ namespace Jellyfin.Plugin.Tvdb.ScheduledTasks
             {
                 providerIdPair[providerId] = update.RecordId!.Value.ToString(CultureInfo.InvariantCulture);
                 query.HasAnyProviderId = providerIdPair;
-                List<BaseItem> itemList = _libraryManager.GetItemList(query);
+                var itemList = _libraryManager.GetItemList(query);
                 toUpdateItems.UnionWith(itemList);
             }
         }

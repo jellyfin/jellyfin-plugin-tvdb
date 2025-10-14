@@ -279,7 +279,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             };
 
             var existingVirtualItems = _libraryManager.GetItemList(query);
-            return existingVirtualItems;
+            return existingVirtualItems.ToList();
         }
 
         private void DeleteVirtualItems<T>(List<T> existingVirtualItems)

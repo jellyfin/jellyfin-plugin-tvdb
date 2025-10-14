@@ -136,8 +136,7 @@ namespace Jellyfin.Plugin.Tvdb.SeasonClient
                     var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                     if (field != null)
                     {
-                        var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
-                            as System.Runtime.Serialization.EnumMemberAttribute;
+                        var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute<System.Runtime.Serialization.EnumMemberAttribute>(field);
                         if (attribute != null)
                         {
                             return attribute.Value != null ? attribute.Value : name;
