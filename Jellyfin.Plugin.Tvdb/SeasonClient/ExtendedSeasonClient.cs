@@ -1,5 +1,6 @@
 #pragma warning disable CA2016 // Forward the 'CancellationToken' parameter to methods
 
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Tvdb.Sdk;
 
@@ -136,16 +137,15 @@ namespace Jellyfin.Plugin.Tvdb.SeasonClient
                     var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                     if (field != null)
                     {
-                        var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
-                            as System.Runtime.Serialization.EnumMemberAttribute;
-                        if (attribute != null)
+                        var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute<EnumMemberAttribute>(field);
+                        if (attribute is not null)
                         {
-                            return attribute.Value != null ? attribute.Value : name;
+                            return attribute.Value ?? name;
                         }
                     }
 
                     var converted = System.Convert.ToString(System.Convert.ChangeType(value, System.Enum.GetUnderlyingType(value.GetType()), cultureInfo), cultureInfo);
-                    return converted == null ? string.Empty : converted;
+                    return converted ?? string.Empty;
                 }
             }
             else if (value is bool)
@@ -173,7 +173,7 @@ namespace Jellyfin.Plugin.Tvdb.SeasonClient
             }
 
             var result = System.Convert.ToString(value, cultureInfo);
-            return result == null ? string.Empty : result;
+            return result ?? string.Empty;
         }
     }
 }

@@ -19,9 +19,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
         public ExternalIdMediaType? Type => ExternalIdMediaType.BoxSet;
 
         /// <inheritdoc/>
-        public string? UrlFormatString => null;
-
-        /// <inheritdoc/>
         public bool Supports(IHasProviderIds item)
         {
             return item is Movie || item is Series;

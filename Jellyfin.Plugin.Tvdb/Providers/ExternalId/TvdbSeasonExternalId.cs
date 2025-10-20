@@ -18,9 +18,6 @@ namespace Jellyfin.Plugin.Tvdb.Providers.ExternalId
         public ExternalIdMediaType? Type => ExternalIdMediaType.Season;
 
         /// <inheritdoc />
-        public string? UrlFormatString => null;
-
-        /// <inheritdoc />
         public bool Supports(IHasProviderIds item) => item is Season;
     }
 }
