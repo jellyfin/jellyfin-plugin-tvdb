@@ -1,7 +1,7 @@
 name: "TheTVDB"
 guid: "a677c0da-fac5-4cde-941a-7134223f14c8"
 imageUrl: "https://repo.jellyfin.org/releases/plugin/images/jellyfin-plugin-tvdb.png"
-version: 19
+version: 20
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 owner: "jellyfin"
@@ -14,10 +14,4 @@ artifacts:
   - "Jellyfin.Plugin.Tvdb.dll"
   - "Tvdb.Sdk.dll"
 changelog: |-
-  - Improved null handling for tvdb provider (#207) @systemcrash
-
-  ### New features and improvements ###
-  - Added missing season type 'alttwo' (#200) @Kianda
-
-  ### Bug Fixes ###
-  - Handle empty ParentIndexNumber (#209) @Shadowghost
+  - Jellyfin 10.11 support (#211) @crobibero
