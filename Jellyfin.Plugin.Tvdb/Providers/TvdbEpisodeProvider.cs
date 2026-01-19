@@ -170,6 +170,15 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             {
                 if (string.Equals(episodeTvdbId, "0", StringComparison.OrdinalIgnoreCase) || ignoreTvdbIdField || searchInfo.IsAutomated)
                 {
+                    if (string.Equals(searchInfo.GetTvdbId(), "0", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogWarning(
+                            "Episode S{Season:00}E{Episode:00} not checked as series ID is 0 for {Name}",
+                            searchInfo.ParentIndexNumber,
+                            searchInfo.IndexNumber,
+                            searchInfo.Name);
+                        return result;
+                    }
                     episodeTvdbId = await _tvdbClientManager
                         .GetEpisodeTvdbId(searchInfo, searchInfo.MetadataLanguage, cancellationToken)
                         .ConfigureAwait(false);
