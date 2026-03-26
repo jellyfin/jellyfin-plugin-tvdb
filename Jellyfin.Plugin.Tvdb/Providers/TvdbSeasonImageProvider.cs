@@ -69,7 +69,7 @@ public class TvdbSeasonImageProvider : IRemoteImageProvider
         var season = (Season)item;
         var series = season.Series;
 
-        if (!series.IsSupported() || season.IndexNumber is null)
+        if (!season.HasTvdbId() && (!series.IsSupported() || season.IndexNumber is null))
         {
             return Enumerable.Empty<RemoteImageInfo>();
         }
@@ -87,7 +87,8 @@ public class TvdbSeasonImageProvider : IRemoteImageProvider
             .ToDictionary(t => t.Id!.Value);
 
         var seriesTvdbId = series.GetTvdbId();
-        var seasonNumber = season.IndexNumber.Value;
+        var seasonTvdbId = season.GetTvdbId();
+        var seasonNumber = season.IndexNumber ?? 0;
         var displayOrder = season.Series.DisplayOrder;
 
         if (string.IsNullOrEmpty(displayOrder))
@@ -95,7 +96,7 @@ public class TvdbSeasonImageProvider : IRemoteImageProvider
             displayOrder = "official";
         }
 
-        var seasonArtworks = await GetSeasonArtworks(seriesTvdbId, seasonNumber, displayOrder, cancellationToken)
+        var seasonArtworks = await GetSeasonArtworks(seasonTvdbId, seriesTvdbId, seasonNumber, displayOrder, cancellationToken)
             .ConfigureAwait(false);
 
         var remoteImages = new List<RemoteImageInfo>();
@@ -112,39 +113,69 @@ public class TvdbSeasonImageProvider : IRemoteImageProvider
         return remoteImages.OrderByLanguageDescending(item.GetPreferredMetadataLanguage());
     }
 
-    private async Task<IReadOnlyList<ArtworkBaseRecord>> GetSeasonArtworks(int seriesTvdbId, int seasonNumber, string displayOrder, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<ArtworkBaseRecord>> GetSeasonArtworks(int seasonTvdbId, int seriesTvdbId, int seasonNumber, string displayOrder, CancellationToken cancellationToken)
     {
         try
         {
-            var seriesInfo = await _tvdbClientManager.GetSeriesExtendedByIdAsync(seriesTvdbId, string.Empty, cancellationToken, small: true)
-                .ConfigureAwait(false);
-            // Get the season information for the particular display order and aired order display order
-            // Ensure that the aired order is always last in the list
-            var seasonBaseList = seriesInfo.Seasons.Where(s => s.Number == seasonNumber && (s.Type.Type == displayOrder || s.Type.Type == "official" )).OrderBy(s => s.Type.Type == "official");
+            var officialFallbackId = 0;
 
-            var seasonTvdbId = seasonBaseList?.FirstOrDefault()?.Id;
-            var seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(seasonTvdbId ?? 0, string.Empty, cancellationToken)
-                .ConfigureAwait(false);
-
-            // If no image are found for the particular display order and the display order is not aired order,
-            // try to get the aired order images
-            if ((seasonInfo.Artwork is null || seasonInfo.Artwork.Count == 0)
-                && !string.Equals(displayOrder, "official", StringComparison.OrdinalIgnoreCase))
+            // Do the series lookup if we need to find the season ID
+            if (seasonTvdbId == 0)
             {
-               seasonTvdbId = seasonBaseList?.Skip(1).FirstOrDefault()?.Id;
-               seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(seasonTvdbId ?? 0, string.Empty, cancellationToken)
-                 .ConfigureAwait(false);
+                var seasonsByNumber = await GetSeriesSeasonsByNumberAsync(seriesTvdbId, seasonNumber, cancellationToken)
+                    .ConfigureAwait(false);
+
+                seasonTvdbId = seasonsByNumber
+                    .FirstOrDefault(s => s.Type.Type == displayOrder)?.Id ?? 0;
+
+                officialFallbackId = seasonsByNumber
+                    .FirstOrDefault(s => s.Type.Type == "official")?.Id ?? 0;
             }
 
-            return seasonInfo.Artwork ?? Enumerable.Empty<ArtworkBaseRecord>().ToList();
+            var seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(seasonTvdbId, string.Empty, cancellationToken)
+                .ConfigureAwait(false);
+
+            // If no images found for the requested display order, fall back to the official order
+            if (seasonInfo.Artwork is null || seasonInfo.Artwork.Count == 0)
+            {
+                // lazy lookup of the official season ID if we didn't already have it from the initial lookup by season number and display order
+                if (officialFallbackId == 0)
+                {
+                    var seasonsByNumber = await GetSeriesSeasonsByNumberAsync(seriesTvdbId, seasonNumber, cancellationToken)
+                        .ConfigureAwait(false);
+                    officialFallbackId = seasonsByNumber.FirstOrDefault(s => s.Type.Type == "official")?.Id ?? 0;
+                }
+
+                if (officialFallbackId != seasonTvdbId)
+                {
+                    seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(officialFallbackId, string.Empty, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+            }
+
+            if (seasonInfo.Artwork is not null)
+            {
+                return seasonInfo.Artwork;
+            }
         }
         catch (Exception ex) when (
             (ex is SeriesException seriesEx && seriesEx.InnerException is JsonException)
             || (ex is SeasonsException seasonEx && seasonEx.InnerException is JsonException))
         {
             _logger.LogError(ex, "Failed to retrieve season images for series {TvDbId}", seriesTvdbId);
-            return Array.Empty<ArtworkBaseRecord>();
         }
+
+        return Array.Empty<ArtworkBaseRecord>();
+    }
+
+    private async Task<IReadOnlyList<SeasonBaseRecord>> GetSeriesSeasonsByNumberAsync(int seriesTvdbId, int seasonNumber, CancellationToken cancellationToken)
+    {
+        var seriesInfo = await _tvdbClientManager.GetSeriesExtendedByIdAsync(seriesTvdbId, string.Empty, cancellationToken, small: true)
+            .ConfigureAwait(false);
+
+        return seriesInfo.Seasons
+            .Where(s => s.Number == seasonNumber)
+            .ToList();
     }
 
     /// <inheritdoc />

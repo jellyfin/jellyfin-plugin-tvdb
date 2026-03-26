@@ -83,8 +83,9 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <inheritdoc />
         public async Task<MetadataResult<Episode>> GetMetadata(EpisodeInfo info, CancellationToken cancellationToken)
         {
-            if ((info.IndexNumber == null && info.PremiereDate == null)
-                || !info.SeriesProviderIds.IsSupported())
+            // If no direct episode ID, require series identification and episode index/date to look up
+            if (info.GetTvdbId() == 0
+                && ((info.IndexNumber == null && info.PremiereDate == null) || !info.SeriesProviderIds.IsSupported()))
             {
                 _logger.LogDebug("No series identity found for {EpisodeName}", info.Name);
                 return new MetadataResult<Episode>
@@ -168,7 +169,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var episodeTvdbId = searchInfo.GetTvdbId().ToString(CultureInfo.InvariantCulture);
             try
             {
-                if (string.Equals(episodeTvdbId, "0", StringComparison.OrdinalIgnoreCase) || ignoreTvdbIdField || searchInfo.IsAutomated)
+                if (string.Equals(episodeTvdbId, "0", StringComparison.OrdinalIgnoreCase) || ignoreTvdbIdField)
                 {
                     episodeTvdbId = await _tvdbClientManager
                         .GetEpisodeTvdbId(searchInfo, searchInfo.MetadataLanguage, cancellationToken)
