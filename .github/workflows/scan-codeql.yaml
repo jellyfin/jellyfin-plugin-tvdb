@@ -15,6 +15,6 @@ on:
 
 jobs:
   call:
-    uses: jellyfin/jellyfin-meta-plugins/.github/workflows/scan-codeql.yaml@master
+    uses: jellyfin/jellyfin-meta-plugins/.github/workflows/scan-codeql.yaml@b40eae0e963055a9981e8b076beee8ae1b1207ad # master
     with:
       repository-name: jellyfin/jellyfin-plugin-tvdb
