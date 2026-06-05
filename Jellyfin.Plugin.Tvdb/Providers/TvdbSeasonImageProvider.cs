@@ -26,6 +26,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers;
 /// </summary>
 public class TvdbSeasonImageProvider : IRemoteImageProvider
 {
+    private const string OfficialDisplayOrder = "official";
+
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<TvdbSeasonImageProvider> _logger;
     private readonly TvdbClientManager _tvdbClientManager;
@@ -66,6 +68,8 @@ public class TvdbSeasonImageProvider : IRemoteImageProvider
     /// <inheritdoc />
     public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(item);
+
         var season = (Season)item;
         var series = season.Series;
 
@@ -92,7 +96,7 @@ public class TvdbSeasonImageProvider : IRemoteImageProvider
 
         if (string.IsNullOrEmpty(displayOrder))
         {
-            displayOrder = "official";
+            displayOrder = OfficialDisplayOrder;
         }
 
         var seasonArtworks = await GetSeasonArtworks(seriesTvdbId, seasonNumber, displayOrder, cancellationToken)
@@ -120,20 +124,37 @@ public class TvdbSeasonImageProvider : IRemoteImageProvider
                 .ConfigureAwait(false);
             // Get the season information for the particular display order and aired order display order
             // Ensure that the aired order is always last in the list
-            var seasonBaseList = seriesInfo.Seasons.Where(s => s.Number == seasonNumber && (s.Type.Type == displayOrder || s.Type.Type == "official" )).OrderBy(s => s.Type.Type == "official");
+            var seasonBaseList = seriesInfo.Seasons
+                .Where(s => s.Number == seasonNumber
+                            && (string.Equals(s.Type.Type, displayOrder, StringComparison.OrdinalIgnoreCase)
+                                || string.Equals(s.Type.Type, OfficialDisplayOrder, StringComparison.OrdinalIgnoreCase)))
+                .OrderBy(s => string.Equals(s.Type.Type, OfficialDisplayOrder, StringComparison.OrdinalIgnoreCase))
+                .ToList();
 
-            var seasonTvdbId = seasonBaseList?.FirstOrDefault()?.Id;
-            var seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(seasonTvdbId ?? 0, string.Empty, cancellationToken)
+            var seasonTvdbId = seasonBaseList.FirstOrDefault()?.Id;
+            if (!seasonTvdbId.HasValue || seasonTvdbId.Value <= 0)
+            {
+                _logger.LogDebug("No season identity found for series {TvDbId}, season {SeasonNumber}, display order {DisplayOrder}", seriesTvdbId, seasonNumber, displayOrder);
+                return Array.Empty<ArtworkBaseRecord>();
+            }
+
+            var seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(seasonTvdbId.Value, string.Empty, cancellationToken)
                 .ConfigureAwait(false);
 
             // If no image are found for the particular display order and the display order is not aired order,
             // try to get the aired order images
             if ((seasonInfo.Artwork is null || seasonInfo.Artwork.Count == 0)
-                && !string.Equals(displayOrder, "official", StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(displayOrder, OfficialDisplayOrder, StringComparison.OrdinalIgnoreCase))
             {
-               seasonTvdbId = seasonBaseList?.Skip(1).FirstOrDefault()?.Id;
-               seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(seasonTvdbId ?? 0, string.Empty, cancellationToken)
-                 .ConfigureAwait(false);
+                seasonTvdbId = seasonBaseList.Skip(1).FirstOrDefault()?.Id;
+                if (!seasonTvdbId.HasValue || seasonTvdbId.Value <= 0)
+                {
+                    _logger.LogDebug("No fallback season identity found for series {TvDbId}, season {SeasonNumber}, display order official", seriesTvdbId, seasonNumber);
+                    return Array.Empty<ArtworkBaseRecord>();
+                }
+
+                seasonInfo = await _tvdbClientManager.GetSeasonByIdAsync(seasonTvdbId.Value, string.Empty, cancellationToken)
+                    .ConfigureAwait(false);
             }
 
             return seasonInfo.Artwork ?? Enumerable.Empty<ArtworkBaseRecord>().ToList();
