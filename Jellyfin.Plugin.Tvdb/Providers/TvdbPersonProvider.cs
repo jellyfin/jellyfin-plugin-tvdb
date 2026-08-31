@@ -122,7 +122,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (!tvdbId.HasValue)
             {
-                _logger.LogWarning("No valid tvdb id found for Person {TvdbId}:{PersonName}", tvdbId, personInfo.Name);
+                _logger.LogWarning(
+                    "No valid tvdb id found for person {PersonName}. Tried imdb: {ImdbId}, zap2it: {Zap2ItId}, tmdb: {TmdbId}",
+                    personInfo.Name,
+                    personInfo.GetProviderId(MetadataProvider.Imdb),
+                    personInfo.GetProviderId(MetadataProvider.Zap2It),
+                    personInfo.GetProviderId(MetadataProvider.Tmdb));
                 return Array.Empty<RemoteSearchResult>();
             }
 
@@ -148,7 +153,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 Name = person.Translations.GetTranslatedNamedOrDefault(language) ?? TvdbUtils.ReturnOriginalLanguageOrDefault(person.Name),
                 Overview = person.Translations.GetTranslatedOverviewOrDefault(language)?.Trim(),
                 SearchProviderName = Name,
-                ImageUrl = person.Image
+                ImageUrl = TvdbUtils.GetImageUrlOrDefault(person.Image)
             };
 
             var imdbID = person.RemoteIds?.FirstOrDefault(x => string.Equals(x.SourceName, "IMDB", StringComparison.OrdinalIgnoreCase))?.Id;
@@ -222,7 +227,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     SearchProviderName = Name
                 };
 
-                if (!string.IsNullOrEmpty(peopleSearchResult.Image_url))
+                if (TvdbUtils.IsValidImageUrl(peopleSearchResult.Image_url))
                 {
                     remoteSearchResult.ImageUrl = peopleSearchResult.Image_url;
                 }
@@ -318,7 +323,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (string.IsNullOrWhiteSpace(tvdbIdTxt))
             {
-                _logger.LogWarning("No valid tvdb id found for person {TvdbId}:{PersonName}", tvdbIdTxt, personInfo.Name);
+                _logger.LogWarning(
+                    "No valid tvdb id found for person {PersonName}. Tried imdb: {ImdbId}, zap2it: {Zap2ItId}, tmdb: {TmdbId}",
+                    personInfo.Name,
+                    imdbId,
+                    zap2It,
+                    tmdbId);
                 return;
             }
 
