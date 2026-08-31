@@ -126,7 +126,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (!tvdbId.HasValue)
             {
-                _logger.LogWarning("No valid tvdb id found for movie {TvdbId}:{MovieName}", tvdbId, movieInfo.Name);
+                _logger.LogWarning(
+                    "No valid tvdb id found for movie {MovieName}. Tried imdb: {ImdbId}, zap2it: {Zap2ItId}, tmdb: {TmdbId}",
+                    movieInfo.Name,
+                    movieInfo.GetProviderId(MetadataProvider.Imdb),
+                    movieInfo.GetProviderId(MetadataProvider.Zap2It),
+                    movieInfo.GetProviderId(MetadataProvider.Tmdb));
                 return Array.Empty<RemoteSearchResult>();
             }
 
@@ -152,7 +157,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 Name = movie.Translations.GetTranslatedNamedOrDefault(language) ?? TvdbUtils.ReturnOriginalLanguageOrDefault(movie.Name),
                 Overview = movie.Translations.GetTranslatedOverviewOrDefault(language)?.Trim(),
                 SearchProviderName = Name,
-                ImageUrl = movie.Image
+                ImageUrl = TvdbUtils.GetImageUrlOrDefault(movie.Image)
             };
 
             if (DateTime.TryParse(movie.First_release.Date, out var date))
@@ -251,7 +256,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     SearchProviderName = Name
                 };
 
-                if (!string.IsNullOrEmpty(movieSearchResult.Image_url))
+                if (TvdbUtils.IsValidImageUrl(movieSearchResult.Image_url))
                 {
                     remoteSearchResult.ImageUrl = movieSearchResult.Image_url;
                 }
@@ -348,7 +353,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             if (string.IsNullOrWhiteSpace(tvdbIdTxt))
             {
-                _logger.LogWarning("No valid tvdb id found for movie {TvdbId}:{MovieName}", tvdbIdTxt, movieInfo.Name);
+                _logger.LogWarning(
+                    "No valid tvdb id found for movie {MovieName}. Tried imdb: {ImdbId}, zap2it: {Zap2ItId}, tmdb: {TmdbId}",
+                    movieInfo.Name,
+                    imdbId,
+                    zap2It,
+                    tmdbId);
                 return;
             }
 
@@ -463,7 +473,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     Role = actor.Name
                 };
 
-                if (!string.IsNullOrEmpty(actor.PersonImgURL))
+                if (TvdbUtils.IsValidImageUrl(actor.PersonImgURL))
                 {
                     personInfo.ImageUrl = actor.PersonImgURL;
                 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.RegularExpressions;
 using Tvdb.Sdk;
@@ -59,6 +60,39 @@ namespace Jellyfin.Plugin.Tvdb
             {
                 yield return DayOfWeek.Saturday;
             }
+        }
+
+        /// <summary>
+        /// Checks whether an image url returned by the api points to an actual image.
+        /// </summary>
+        /// <remarks>
+        /// The api returns its image base url, e.g. <c>https://www.thetvdb.com/banners/</c>, for records without
+        /// an image. Those urls address a directory instead of a file and can never be downloaded.
+        /// </remarks>
+        /// <param name="url">The url to check.</param>
+        /// <returns><c>true</c> if the url points to an image, <c>false</c> otherwise.</returns>
+        public static bool IsValidImageUrl([NotNullWhen(true)] string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url)
+                || !Uri.TryCreate(url, UriKind.Absolute, out var uri)
+                || (!uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+                    && !uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
+            {
+                return false;
+            }
+
+            var path = uri.AbsolutePath;
+            return path.LastIndexOf('/') < path.Length - 1;
+        }
+
+        /// <summary>
+        /// Returns the url if it points to an actual image, <see langword="null"/> otherwise.
+        /// </summary>
+        /// <param name="url">The url to check.</param>
+        /// <returns>The image url, or <see langword="null"/>.</returns>
+        public static string? GetImageUrlOrDefault(string? url)
+        {
+            return IsValidImageUrl(url) ? url : null;
         }
 
         /// <summary>
