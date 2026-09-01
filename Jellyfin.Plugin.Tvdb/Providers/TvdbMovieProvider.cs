@@ -55,6 +55,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private static bool IncludeOriginalCountryInTags => TvdbPlugin.Instance?.Configuration.IncludeOriginalCountryInTags ?? false;
 
+        private static bool OriginalTitle => TvdbPlugin.Instance?.Configuration.OriginalTitle ?? false;
+
         /// <inheritdoc/>
         public async Task<IEnumerable<RemoteSearchResult>> GetSearchResults(MovieInfo searchInfo, CancellationToken cancellationToken)
         {
@@ -402,7 +404,12 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             // Reverts to OriginalName if no translation is found
             movie.Name = tvdbMovie.Translations.GetTranslatedNamedOrDefault(info.MetadataLanguage) ?? TvdbUtils.ReturnOriginalLanguageOrDefault(tvdbMovie.Name);
             movie.Overview = tvdbMovie.Translations.GetTranslatedOverviewOrDefault(info.MetadataLanguage);
-            movie.OriginalTitle = tvdbMovie.Name;
+
+            if (OriginalTitle)
+            {
+                movie.OriginalTitle = tvdbMovie.Name;
+            }
+
             result.ResultLanguage = info.MetadataLanguage;
             // Attempts to default to USA if not found
             movie.OfficialRating = tvdbMovie.ContentRatings?.FirstOrDefault(x => string.Equals(x.Country, TvdbCultureInfo.GetCountryInfo(info.MetadataCountryCode)?.ThreeLetterISORegionName, StringComparison.OrdinalIgnoreCase))?.Name ?? tvdbMovie.ContentRatings?.FirstOrDefault(x => string.Equals(x.Country, "usa", StringComparison.OrdinalIgnoreCase))?.Name;
