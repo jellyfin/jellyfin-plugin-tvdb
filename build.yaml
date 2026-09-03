@@ -1,8 +1,8 @@
 name: "TheTVDB"
 guid: "a677c0da-fac5-4cde-941a-7134223f14c8"
 imageUrl: "https://repo.jellyfin.org/releases/plugin/images/jellyfin-plugin-tvdb.png"
-version: 22
-targetAbi: "10.11.8.0"
+version: 23
+targetAbi: "12.0.0.0"
 framework: "net9.0"
 owner: "jellyfin"
 overview: "Get TV metadata from TheTvdb"
@@ -14,4 +14,7 @@ artifacts:
   - "Jellyfin.Plugin.Tvdb.dll"
   - "Tvdb.Sdk.dll"
 changelog: |-
-  - Revert "Update dependency Microsoft.Extensions.Http to v10" (#228) @Shadowghost
+  - Add additional crew types to movies (#254) @theguymadmax
+  - Assign season and episode numbers for daily shows (#253) @theguymadmax
+  - added a zero check (#234) @trajano
+  - Fix combined episode processing (#232) @Spacetech
