@@ -52,21 +52,22 @@ namespace Jellyfin.Plugin.Tvdb.Providers
         /// <inheritdoc/>
         public async Task<MetadataResult<Season>> GetMetadata(SeasonInfo info, CancellationToken cancellationToken)
         {
-            if (info.IndexNumber == null || !info.SeriesProviderIds.IsSupported())
+            int? seasonId = info.GetTvdbId();
+
+            // If no direct season ID, require series identification and season number to look up
+            if (seasonId == 0 && (info.IndexNumber == null || !info.SeriesProviderIds.IsSupported()))
             {
-                _logger.LogDebug("No series identity found for {EpisodeName}", info.Name);
+                _logger.LogDebug("No series identity found for {SeasonName}", info.Name);
                 return new MetadataResult<Season>
                 {
                     QueriedById = true
                 };
             }
 
-            int? seasonId = info.GetTvdbId();
             string displayOrder = info.SeriesDisplayOrder;
 
             // If the seasonId is 0, it means the season is not yet identified and we need to find it
-            // If IsAutomated is true, it means that the order has changed and we need to find the new season id
-            if (seasonId == 0 || info.IsAutomated)
+            if (seasonId == 0)
             {
                 if (string.IsNullOrWhiteSpace(displayOrder))
                 {

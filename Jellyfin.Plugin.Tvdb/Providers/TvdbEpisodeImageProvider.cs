@@ -58,49 +58,52 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             var series = episode.Series;
             var imageResult = new List<RemoteImageInfo>();
             var language = item.GetPreferredMetadataLanguage();
-            if (series.IsSupported())
+
+            var episodeTvdbId = episode.GetTvdbId();
+
+            // Need either a direct episode ID or a supported series with an episode number
+            if (episodeTvdbId == 0 && (!series.IsSupported() || !episode.IndexNumber.HasValue))
             {
-                // Process images
-                try
+                return imageResult;
+            }
+
+            try
+            {
+                if (episodeTvdbId == 0)
                 {
-                    string? episodeTvdbId = null;
-
-                    if (episode.IndexNumber.HasValue)
+                    var episodeInfo = new EpisodeInfo
                     {
-                        var episodeInfo = new EpisodeInfo
-                        {
-                            IndexNumber = episode.IndexNumber.Value,
-                            ParentIndexNumber = episode.ParentIndexNumber,
-                            SeriesProviderIds = series.ProviderIds,
-                            SeriesDisplayOrder = series.DisplayOrder
-                        };
+                        IndexNumber = episode.IndexNumber!.Value,
+                        ParentIndexNumber = episode.ParentIndexNumber,
+                        SeriesProviderIds = series.ProviderIds,
+                        SeriesDisplayOrder = series.DisplayOrder
+                    };
 
-                        episodeTvdbId = await _tvdbClientManager
-                            .GetEpisodeTvdbId(episodeInfo, language, cancellationToken).ConfigureAwait(false);
-                    }
-
-                    if (string.IsNullOrEmpty(episodeTvdbId))
-                    {
-                        _logger.LogError(
-                            "Episode {SeasonNumber}x{EpisodeNumber} not found for series {SeriesTvdbId}:{Name}",
-                            episode.ParentIndexNumber,
-                            episode.IndexNumber,
-                            series.GetTvdbId(),
-                            series.Name);
-                        return imageResult;
-                    }
-
-                    var episodeResult =
-                        await _tvdbClientManager
-                            .GetEpisodesAsync(Convert.ToInt32(episodeTvdbId, CultureInfo.InvariantCulture), language, cancellationToken)
-                            .ConfigureAwait(false);
-
-                    imageResult.AddIfNotNull(episodeResult.CreateImageInfo(Name));
+                    var episodeTvdbIdStr = await _tvdbClientManager
+                        .GetEpisodeTvdbId(episodeInfo, language, cancellationToken).ConfigureAwait(false);
+                    episodeTvdbId = Convert.ToInt32(episodeTvdbIdStr, CultureInfo.InvariantCulture);
                 }
-                catch (Exception e)
+
+                if (episodeTvdbId == 0)
                 {
-                    _logger.LogError(e, "Failed to retrieve episode images for series {TvDbId}:{Name}", series.GetTvdbId(), series.Name);
+                    _logger.LogError(
+                        "Episode {SeasonNumber}x{EpisodeNumber} not found for series {SeriesTvdbId}:{Name}",
+                        episode.ParentIndexNumber,
+                        episode.IndexNumber,
+                        series.GetTvdbId(),
+                        series.Name);
+                    return imageResult;
                 }
+
+                var episodeResult = await _tvdbClientManager
+                    .GetEpisodesAsync(episodeTvdbId, language, cancellationToken)
+                    .ConfigureAwait(false);
+
+                imageResult.AddIfNotNull(episodeResult.CreateImageInfo(Name));
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to retrieve episode images for series {TvDbId}:{Name}", series.GetTvdbId(), series.Name);
             }
 
             return imageResult;
