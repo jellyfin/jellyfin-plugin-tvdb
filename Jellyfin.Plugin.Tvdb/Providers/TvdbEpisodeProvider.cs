@@ -114,16 +114,16 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
             for (int? episode = startIndex; episode <= endIndex; episode++)
             {
-                var tempEpisodeInfo = info;
                 info.IndexNumber = episode;
+
                 // First step in the loop, try use the tvdbid field. Else, ignore the field
                 if (episode == startIndex)
                 {
-                    results.Add(await GetEpisode(tempEpisodeInfo, cancellationToken).ConfigureAwait(false));
+                    results.Add(await GetEpisode(info, cancellationToken).ConfigureAwait(false));
                 }
                 else
                 {
-                    results.Add(await GetEpisode(tempEpisodeInfo, cancellationToken, true).ConfigureAwait(false));
+                    results.Add(await GetEpisode(info, cancellationToken, true).ConfigureAwait(false));
                 }
             }
 
@@ -134,7 +134,17 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
         private MetadataResult<Episode> CombineResults(List<MetadataResult<Episode>> results)
         {
-            // Use first result as baseline
+            results = results.Where(r => r.HasMetadata).ToList();
+
+            if (results.Count == 0)
+            {
+                return new MetadataResult<Episode>
+                {
+                    QueriedById = true
+                };
+            }
+
+            // Use first valid result as baseline
             var result = results[0];
 
             var name = new StringBuilder(result.Item.Name);
