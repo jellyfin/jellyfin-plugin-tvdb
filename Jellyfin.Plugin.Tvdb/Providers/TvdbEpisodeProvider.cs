@@ -232,8 +232,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 HasMetadata = true,
                 Item = new Episode
                 {
-                    IndexNumber = id.IndexNumber,
-                    ParentIndexNumber = id.ParentIndexNumber ?? 1,
+                    IndexNumber = id.IndexNumber ?? episode.Number,
+                    ParentIndexNumber = id.ParentIndexNumber ?? episode.SeasonNumber ?? 1,
                     IndexNumberEnd = id.IndexNumberEnd,
                     // Tvdb uses 3 letter code for language (prob ISO 639-2)
                     // Reverts to OriginalName if no translation is found
