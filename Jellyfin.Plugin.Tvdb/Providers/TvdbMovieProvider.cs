@@ -362,19 +362,13 @@ namespace Jellyfin.Plugin.Tvdb.Providers
 
                 result.ResetPeople();
 
-                List<Character> people = new List<Character>();
                 if (movieResult.Characters is not null)
                 {
-                    foreach (Character character in movieResult.Characters)
-                    {
-                        people.Add(character);
-                    }
-
-                    MapActorsToResult(result, people);
+                    MapPeopleToResult(result, movieResult.Characters);
                 }
                 else
                 {
-                    _logger.LogError("Failed to retrieve actors for movie {TvdbId}:{MovieName}", tvdbId, movieInfo.Name);
+                    _logger.LogError("Failed to retrieve people for movie {TvdbId}:{MovieName}", tvdbId, movieInfo.Name);
                 }
 
                 if (IncludeOriginalCountryInTags && !string.IsNullOrWhiteSpace(movieResult.OriginalCountry))
@@ -451,31 +445,54 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             }
         }
 
-        private static void MapActorsToResult(MetadataResult<Movie> result, IEnumerable<Character> actors)
+        private static void MapPeopleToResult(MetadataResult<Movie> result, IEnumerable<Character> people)
         {
-            foreach (Character actor in actors)
+            foreach (var currentPerson in people)
             {
-                var personInfo = new PersonInfo
+                if (string.IsNullOrWhiteSpace(currentPerson.PersonName))
                 {
-                    Type = PersonKind.Actor,
-                    Name = (actor.PersonName ?? string.Empty).Trim(),
-                    Role = actor.Name
+                    // Skip people with no person name
+                    continue;
+                }
+
+                var person = new PersonInfo
+                {
+                    Name = currentPerson.PersonName.Trim()
                 };
 
-                if (!string.IsNullOrEmpty(actor.PersonImgURL))
+                if (!string.IsNullOrEmpty(currentPerson.PersonImgURL))
                 {
-                    personInfo.ImageUrl = actor.PersonImgURL;
+                    person.ImageUrl = currentPerson.PersonImgURL;
                 }
 
-                if (actor.PeopleId.HasValue)
+                if (currentPerson.PeopleId.HasValue)
                 {
-                    personInfo.SetTvdbId(actor.PeopleId.Value);
+                    person.SetTvdbId(currentPerson.PeopleId.Value);
                 }
 
-                if (!string.IsNullOrWhiteSpace(personInfo.Name))
+                if (string.Equals(currentPerson.PeopleType, "Actor", StringComparison.OrdinalIgnoreCase))
                 {
-                    result.AddPerson(personInfo);
+                    person.Type = PersonKind.Actor;
+                    person.Role = currentPerson.Name;
                 }
+                else if (string.Equals(currentPerson.PeopleType, "Director", StringComparison.OrdinalIgnoreCase))
+                {
+                    person.Type = PersonKind.Director;
+                }
+                else if (string.Equals(currentPerson.PeopleType, "Producer", StringComparison.OrdinalIgnoreCase))
+                {
+                    person.Type = PersonKind.Producer;
+                }
+                else if (string.Equals(currentPerson.PeopleType, "Writer", StringComparison.OrdinalIgnoreCase))
+                {
+                    person.Type = PersonKind.Writer;
+                }
+                else
+                {
+                    continue;
+                }
+
+                result.AddPerson(person);
             }
         }
 
