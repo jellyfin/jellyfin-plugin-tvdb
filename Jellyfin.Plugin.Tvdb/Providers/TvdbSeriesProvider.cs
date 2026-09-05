@@ -18,6 +18,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
 using Tvdb.Sdk;
+using SearchResult = Tvdb.Sdk.SearchResult;
 
 namespace Jellyfin.Plugin.Tvdb.Providers
 {
