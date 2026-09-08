@@ -196,12 +196,14 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             IReadOnlyList<SearchResult> result;
             try
             {
-                result = await _tvdbClientManager.GetActorByNameAsync(comparableName, cancellationToken)
+                result = await TvdbUtils.SearchByNameAsync(
+                        parsedName.Name,
+                        query => _tvdbClientManager.GetActorByNameAsync(query, cancellationToken))
                     .ConfigureAwait(false);
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "No person results found for {Name}", comparableName);
+                _logger.LogError(e, "No person results found for {Name}", parsedName.Name);
                 return new List<RemoteSearchResult>();
             }
 

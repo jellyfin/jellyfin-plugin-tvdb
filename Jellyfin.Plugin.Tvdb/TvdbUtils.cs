@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Tvdb.Sdk;
 
 namespace Jellyfin.Plugin.Tvdb
@@ -87,6 +88,34 @@ namespace Jellyfin.Plugin.Tvdb
             name = Regex.Replace(name, @"[\p{Lm}\p{Mn}]", string.Empty); // Remove diacritics, etc
             name = Regex.Replace(name, @"[\W\p{Pc}]+", " "); // Replace sequences of non-word characters and _ with " "
             return name.Trim();
+        }
+
+        /// <summary>
+        /// Searches Tvdb for a name, falling back to its comparable form if nothing was found.
+        /// </summary>
+        /// <param name="name">The name of the item, as parsed from its path.</param>
+        /// <param name="search">Performs the search for a single query string.</param>
+        /// <returns>The search results, empty if neither query matched anything.</returns>
+        public static async Task<IReadOnlyList<SearchResult>> SearchByNameAsync(
+            string name,
+            Func<string, Task<IReadOnlyList<SearchResult>>> search)
+        {
+            ArgumentNullException.ThrowIfNull(search);
+
+            // Tvdb matches a title as it is written, so the name is searched for unchanged first.
+            // Its comparable form is only a fallback, because collapsing punctuation to spaces
+            // splits a word in two.
+            var results = await search(name).ConfigureAwait(false);
+            if (results.Count > 0)
+            {
+                return results;
+            }
+
+            var comparableName = GetComparableName(name);
+
+            return string.Equals(name, comparableName, StringComparison.OrdinalIgnoreCase)
+                ? results
+                : await search(comparableName).ConfigureAwait(false);
         }
     }
 }
