@@ -171,7 +171,7 @@ public static class TvdbSdkExtensions
     /// <returns>A <see cref="RemoteImageInfo"/>, or null if <see cref="EpisodeExtendedRecord"/> does not contain image information.</returns>
     public static RemoteImageInfo? CreateImageInfo(this EpisodeExtendedRecord episodeRecord, string providerName)
     {
-        if (string.IsNullOrEmpty(episodeRecord.Image))
+        if (!TvdbUtils.IsValidImageUrl(episodeRecord.Image))
         {
             return null;
         }
@@ -224,7 +224,7 @@ public static class TvdbSdkExtensions
 
     private static RemoteImageInfo? CreateRemoteImageInfo(string imageUrl, string thumbnailUrl, (long? Width, long? Height) imageDimension, string providerName, ImageType? type, Language? language)
     {
-        if (type is null)
+        if (type is null || !TvdbUtils.IsValidImageUrl(imageUrl))
         {
             return null;
         }
@@ -238,7 +238,7 @@ public static class TvdbSdkExtensions
             Type = type.Value,
             Language = language.NormalizeToJellyfin()?.ToLowerInvariant(),
             ProviderName = providerName,
-            ThumbnailUrl = thumbnailUrl
+            ThumbnailUrl = TvdbUtils.GetImageUrlOrDefault(thumbnailUrl)
         };
     }
 }
