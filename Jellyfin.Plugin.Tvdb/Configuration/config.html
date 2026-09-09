@@ -43,6 +43,10 @@
                         </div>
                     </div>
                     <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="originalTitle" />
+                        <span>Import Original Title for Movie/Series. Allows other lower ranked provider to set original title.</span>
+                    </label>
+                    <label class="checkboxContainer">
                         <input is="emby-checkbox" type="checkbox" id="importSeasonName" />
                         <span>Import season name from provider</span>
                     </label>
@@ -116,7 +120,8 @@
                     document.getElementById('cacheDurationInHours').value = config.CacheDurationInHours;
                     document.getElementById('cacheDurationInDays').value = config.CacheDurationInDays;
                     document.getElementById('fallbackLanguages').value = config.FallbackLanguages;
-                    document.getElementById('importSeasonName').checked = config.ImportSeasonName
+                    document.getElementById('importSeasonName').checked = config.ImportSeasonName;
+                    document.getElementById('originalTitle').checked = config.OriginalTitle;
                     document.getElementById('fallbackToOriginalLanguage').checked = config.FallbackToOriginalLanguage;
                     document.getElementById('includeOriginalCountryInTags').checked = config.IncludeOriginalCountryInTags;
                   
@@ -144,6 +149,7 @@
                     config.CacheDurationInDays = document.getElementById('cacheDurationInDays').value;
                     config.FallbackLanguages = document.getElementById('fallbackLanguages').value;
                     config.ImportSeasonName = document.getElementById('importSeasonName').checked;
+                    config.OriginalTitle = document.getElementById('originalTitle').checked;
                     config.FallbackToOriginalLanguage = document.getElementById('fallbackToOriginalLanguage').checked;
                     config.IncludeOriginalCountryInTags = document.getElementById('includeOriginalCountryInTags').checked;
                   
