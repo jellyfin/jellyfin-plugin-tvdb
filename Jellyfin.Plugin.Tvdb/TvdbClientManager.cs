@@ -277,7 +277,7 @@ public class TvdbClientManager : IDisposable
     /// <param name="language">Metadata language.</param>
     /// <param name="seasonType">Season type: default, dvd, absolute etc.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>All episodes of series.</returns>
+    /// <returns>All episodes of series across all pages.</returns>
     public async Task<Data2> GetSeriesEpisodesAsync(
         int tvdbId,
         string language,
@@ -295,8 +295,30 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var seriesResult = await seriesClient.GetSeriesEpisodesAsync(id: tvdbId, season_type: seasonType, cancellationToken: cancellationToken, page: 0)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours));
-        return seriesResult.Data;
+
+        // Each page has a limit of 500 episodes. Fetch all remaining pages.
+        var allEpisodes = new List<EpisodeBaseRecord>(seriesResult.Data?.Episodes ?? Array.Empty<EpisodeBaseRecord>());
+        int page = 1;
+        while (seriesResult.Data?.Episodes?.Count >= 500)
+        {
+            seriesResult = await seriesClient.GetSeriesEpisodesAsync(id: tvdbId, season_type: seasonType, cancellationToken: cancellationToken, page: page)
+                .ConfigureAwait(false);
+            if (seriesResult.Data?.Episodes != null)
+            {
+                allEpisodes.AddRange(seriesResult.Data.Episodes);
+            }
+
+            page++;
+        }
+
+        var allEpisodesData = seriesResult.Data;
+        if (allEpisodesData != null)
+        {
+            allEpisodesData.Episodes = allEpisodes;
+        }
+
+        _memoryCache.Set(key, allEpisodesData, TimeSpan.FromHours(CacheDurationInHours));
+        return allEpisodesData!;
     }
 
     /// <summary>
@@ -647,7 +669,7 @@ public class TvdbClientManager : IDisposable
             return episodeTvdbId;
         }
 
-        Response56 seriesResponse;
+        string seasonType;
         if (!special)
         {
             switch (searchInfo.SeriesDisplayOrder)
@@ -658,27 +680,43 @@ public class TvdbClientManager : IDisposable
                 case "dvd":
                 case "absolute":
                 case "alttwo":
-                    seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: seriesTvdbId, season_type: searchInfo.SeriesDisplayOrder, season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    seasonType = searchInfo.SeriesDisplayOrder;
                     break;
                 default:
-                    seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: seriesTvdbId, season_type: "official", season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    seasonType = "official";
                     break;
             }
         }
         else // when special use aired order
         {
-            seriesResponse = await seriesClient.GetSeriesEpisodesAsync(page: 0, id: seriesTvdbId, season_type: "official", season: seasonNumber, episodeNumber: episodeNumber, airDate: airDate, cancellationToken: cancellationToken).ConfigureAwait(false);
+            seasonType = "official";
         }
 
-        Data2 seriesData = seriesResponse.Data;
+        // Use the paginated GetSeriesEpisodesAsync which fetches all pages and caches the result.
+        var allEpisodesData = await GetSeriesEpisodesAsync(seriesTvdbId, language, seasonType, cancellationToken).ConfigureAwait(false);
 
-        if (seriesData?.Episodes == null || seriesData.Episodes.Count == 0)
+        EpisodeBaseRecord? matchingEpisode = null;
+        if (allEpisodesData?.Episodes != null)
+        {
+            if (seasonNumber.HasValue && episodeNumber.HasValue)
+            {
+                matchingEpisode = allEpisodesData.Episodes.FirstOrDefault(
+                    e => e.SeasonNumber == seasonNumber.Value && e.Number == episodeNumber.Value);
+            }
+            else if (airDate != null)
+            {
+                matchingEpisode = allEpisodesData.Episodes.FirstOrDefault(
+                    e => string.Equals(e.Aired, airDate, StringComparison.Ordinal));
+            }
+        }
+
+        if (matchingEpisode?.Id == null)
         {
             return null;
         }
         else
         {
-            var tvdbId = seriesData.Episodes[0].Id?.ToString(CultureInfo.InvariantCulture);
+            var tvdbId = matchingEpisode.Id.Value.ToString(CultureInfo.InvariantCulture);
             if (key != null)
             {
                 _memoryCache.Set(key, tvdbId, TimeSpan.FromHours(CacheDurationInHours));
