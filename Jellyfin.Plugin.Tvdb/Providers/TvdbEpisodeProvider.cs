@@ -181,7 +181,8 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             {
                 if (string.Equals(episodeTvdbId, "0", StringComparison.OrdinalIgnoreCase) || ignoreTvdbIdField)
                 {
-                    if (searchInfo.GetTvdbId() == 0)
+                    searchInfo.SeriesProviderIds.TryGetValue(MetadataProvider.Tvdb.ToString(), out var seriesTvdbIdString);
+                    if (string.IsNullOrEmpty(seriesTvdbIdString))
                     {
                         _logger.LogWarning(
                             "Episode S{Season:00}E{Episode:00} not checked as series ID is 0 for {Name}",
@@ -200,7 +201,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                             "Episode S{Season:00}E{Episode:00} not found for series {SeriesTvdbId}:{Name}",
                             searchInfo.ParentIndexNumber,
                             searchInfo.IndexNumber,
-                            searchInfo.GetTvdbId(),
+                            seriesTvdbIdString,
                             searchInfo.Name);
                         return result;
                     }
