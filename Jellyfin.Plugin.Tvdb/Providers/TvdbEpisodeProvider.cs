@@ -184,12 +184,21 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                     searchInfo.SeriesProviderIds.TryGetValue(MetadataProvider.Tvdb.ToString(), out var seriesTvdbIdString);
                     if (string.IsNullOrEmpty(seriesTvdbIdString))
                     {
-                        _logger.LogWarning(
-                            "Episode S{Season:00}E{Episode:00} not checked as series ID is 0 for {Name}",
-                            searchInfo.ParentIndexNumber,
-                            searchInfo.IndexNumber,
-                            searchInfo.Name);
-                        return result;
+                        seriesTvdbIdString = await GetSeriesTvdbIdByRemoteId(searchInfo, cancellationToken).ConfigureAwait(false);
+                        if (string.IsNullOrEmpty(seriesTvdbIdString))
+                        {
+                            _logger.LogWarning(
+                                "Episode S{Season:00}E{Episode:00} not checked as no series ID could be found for {Name}",
+                                searchInfo.ParentIndexNumber,
+                                searchInfo.IndexNumber,
+                                searchInfo.Name);
+                            return result;
+                        }
+
+                        searchInfo.SeriesProviderIds = new Dictionary<string, string>(searchInfo.SeriesProviderIds, StringComparer.OrdinalIgnoreCase)
+                        {
+                            [MetadataProvider.Tvdb.ToString()] = seriesTvdbIdString
+                        };
                     }
 
                     episodeTvdbId = await _tvdbClientManager
@@ -227,6 +236,55 @@ namespace Jellyfin.Plugin.Tvdb.Providers
             return result;
         }
 
+        private async Task<string?> GetSeriesTvdbIdByRemoteId(EpisodeInfo searchInfo, CancellationToken cancellationToken)
+        {
+            foreach (var provider in new[] { MetadataProvider.Imdb, MetadataProvider.Zap2It, MetadataProvider.Tmdb })
+            {
+                if (!searchInfo.SeriesProviderIds.TryGetValue(provider.ToString(), out var remoteId)
+                    || string.IsNullOrEmpty(remoteId))
+                {
+                    continue;
+                }
+
+                IReadOnlyList<SearchByRemoteIdResult> resultData;
+                try
+                {
+                    resultData = await _tvdbClientManager
+                        .GetSeriesByRemoteIdAsync(remoteId, searchInfo.MetadataLanguage, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to retrieve series with remote id {RemoteId}", remoteId);
+                    continue;
+                }
+
+                var seriesTvdbId = resultData.FirstOrDefault()?.Series?.Id;
+                if (seriesTvdbId.HasValue)
+                {
+                    return seriesTvdbId.Value.ToString(CultureInfo.InvariantCulture);
+                }
+            }
+
+            return null;
+        }
+
+        private static int GetParentIndexNumber(EpisodeInfo id, EpisodeExtendedRecord episode)
+        {
+            if (id.ParentIndexNumber.HasValue)
+            {
+                return id.ParentIndexNumber.Value;
+            }
+
+            if (!string.IsNullOrEmpty(id.SeriesDisplayOrder)
+                && !string.Equals(id.SeriesDisplayOrder, "official", StringComparison.OrdinalIgnoreCase))
+            {
+                return episode.SeasonNumber == 0 ? 0 : 1;
+            }
+
+            return episode.SeasonNumber ?? 1;
+        }
+
         private async Task<MetadataResult<Episode>> MapEpisodeToResult(EpisodeInfo id, EpisodeExtendedRecord episode, CancellationToken cancellationToken)
         {
             var result = new MetadataResult<Episode>
@@ -235,7 +293,7 @@ namespace Jellyfin.Plugin.Tvdb.Providers
                 Item = new Episode
                 {
                     IndexNumber = id.IndexNumber ?? episode.Number,
-                    ParentIndexNumber = id.ParentIndexNumber ?? episode.SeasonNumber ?? 1,
+                    ParentIndexNumber = GetParentIndexNumber(id, episode),
                     IndexNumberEnd = id.IndexNumberEnd,
                     // Tvdb uses 3 letter code for language (prob ISO 639-2)
                     // Reverts to OriginalName if no translation is found
