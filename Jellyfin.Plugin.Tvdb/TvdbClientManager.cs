@@ -295,6 +295,26 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var seriesResult = await seriesClient.GetSeriesEpisodesAsync(id: tvdbId, season_type: seasonType, cancellationToken: cancellationToken, page: 0)
             .ConfigureAwait(false);
+        // Work around API fault with certain season types
+        if (seriesResult.Data.Episodes.Count == 0)
+        {
+            // Get all season records for the series
+            var seriesExt = await seriesClient.GetSeriesExtendedAsync(id: tvdbId, meta: null, @short: true, cancellationToken: cancellationToken);
+            // Filter the seasons by the desired season type
+            var seasonsByType = seriesExt.Data.Seasons.Where(s => s.Type = seasonType);
+            // Set up a List to collect all the episodes for the season type
+            var missingEpisodes = new List<EpisodeBaseRecord>();
+            // Set up a seasons client (I don't know if this is the correct way to do it)
+            var seasonsClient = _serviceProvider.GetRequiredService<ISeasonsClient>();
+            foreach (var season in seasonsByType)
+            {
+                // Get the episodes from the extended season record
+                var thisSeasonExt = await seasonsClient.GetSeasonExtendedAsync(id: season.id, cancellationToken: cancellationToken);
+                missingEpisodes.AddRange(thisSeasonExt.Data.Episodes);
+            }
+            // Replace the empty episode list with all the collected episodes. If it's empty, we're no worse off than before.
+            seriesResult.Data.Episodes.Set(missingEpisodes);
+        }
         _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours));
         return seriesResult.Data;
     }
