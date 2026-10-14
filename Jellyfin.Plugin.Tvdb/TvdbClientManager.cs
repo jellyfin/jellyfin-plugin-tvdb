@@ -295,8 +295,80 @@ public class TvdbClientManager : IDisposable
         await LoginAsync().ConfigureAwait(false);
         var seriesResult = await seriesClient.GetSeriesEpisodesAsync(id: tvdbId, season_type: seasonType, cancellationToken: cancellationToken, page: 0)
             .ConfigureAwait(false);
-        _memoryCache.Set(key, seriesResult.Data, TimeSpan.FromHours(CacheDurationInHours));
-        return seriesResult.Data;
+        var data = seriesResult.Data;
+        var primaryCount = data?.Episodes?.Count ?? 0;
+
+        if (data is not null && primaryCount == 0)
+        {
+            var aggregated = await TryAggregateEpisodesPerSeasonAsync(tvdbId, language, seasonType, cancellationToken).ConfigureAwait(false);
+            if (aggregated.Count > 0)
+            {
+                data.Episodes = aggregated;
+            }
+        }
+
+        _memoryCache.Set(key, data, TimeSpan.FromHours(CacheDurationInHours));
+        return data!;
+    }
+
+    /// <summary>
+    /// Workaround for https://github.com/thetvdb/v4-api/issues/340. Fetches the extended
+    /// series record, filters the seasons by the requested type and pulls each matching
+    /// season's extended record to collect its episodes. Returns an empty list if the
+    /// series has no seasons of that type or the API calls fail.
+    /// </summary>
+    /// <param name="tvdbId">The series tvdb id.</param>
+    /// <param name="language">Metadata language.</param>
+    /// <param name="seasonType">Season type slug (e.g. <c>altdvd</c>, <c>alttwo</c>).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The aggregated episode list, in season-number order.</returns>
+    private async Task<IReadOnlyList<EpisodeBaseRecord>> TryAggregateEpisodesPerSeasonAsync(
+        int tvdbId,
+        string language,
+        string seasonType,
+        CancellationToken cancellationToken)
+    {
+        SeriesExtendedRecord? seriesExtended;
+        try
+        {
+            seriesExtended = await GetSeriesExtendedByIdAsync(tvdbId, language, cancellationToken, small: true).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            return Array.Empty<EpisodeBaseRecord>();
+        }
+
+        var allSeasons = seriesExtended?.Seasons;
+        var matchingSeasons = allSeasons?
+            .Where(s => s?.Type is not null
+                && string.Equals(s.Type.Type, seasonType, StringComparison.OrdinalIgnoreCase)
+                && s.Id.HasValue)
+            .OrderBy(s => s.Number ?? 0)
+            .ToList();
+
+        if (matchingSeasons is null || matchingSeasons.Count == 0)
+        {
+            return Array.Empty<EpisodeBaseRecord>();
+        }
+
+
+        var aggregated = new List<EpisodeBaseRecord>();
+        foreach (var season in matchingSeasons)
+        {
+            try
+            {
+                var seasonRecord = await GetSeasonByIdAsync(season.Id!.Value, language, cancellationToken).ConfigureAwait(false);
+                if (seasonRecord?.Episodes is not null && seasonRecord.Episodes.Count > 0)
+                {
+                    aggregated.AddRange(seasonRecord.Episodes);
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        return aggregated;
     }
 
     /// <summary>
@@ -645,6 +717,30 @@ public class TvdbClientManager : IDisposable
         if (key != null && _memoryCache.TryGetValue(key, out string? episodeTvdbId))
         {
             return episodeTvdbId;
+        }
+
+        if (!special
+            && (string.Equals(searchInfo.SeriesDisplayOrder, "altdvd", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(searchInfo.SeriesDisplayOrder, "alttwo", StringComparison.OrdinalIgnoreCase)))
+        {
+            var bulkData = await GetSeriesEpisodesAsync(seriesTvdbId, language, searchInfo.SeriesDisplayOrder!, cancellationToken).ConfigureAwait(false);
+            var match = bulkData?.Episodes?.FirstOrDefault(e =>
+            {
+                if (seasonNumber.HasValue && episodeNumber.HasValue)
+                {
+                    return e.SeasonNumber == seasonNumber.Value && e.Number == episodeNumber.Value;
+                }
+
+                return !string.IsNullOrEmpty(airDate) && string.Equals(e.Aired, airDate, StringComparison.OrdinalIgnoreCase);
+            });
+
+            var resolvedId = match?.Id?.ToString(CultureInfo.InvariantCulture);
+            if (key != null)
+            {
+                _memoryCache.Set(key, resolvedId, TimeSpan.FromHours(CacheDurationInHours));
+            }
+
+            return resolvedId;
         }
 
         Response56 seriesResponse;
